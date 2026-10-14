@@ -1,0 +1,1841 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Harness Engineering (夹具工程) — LLM 输入输出信息空间交互式阐释</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Noto Sans SC"', 'Inter', 'system-ui', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          colors: {
+            blueprint: {
+              bg: '#090D16',
+              panel: '#111827',
+              border: '#1E293B',
+              blue: '#38BDF8',
+              indigo: '#6366F1',
+              red: '#F43F5E',
+              amber: '#F59E0B',
+              emerald: '#10B981'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #070B12;
+      color: #F1F5F9;
+      overflow-x: hidden;
+    }
+    .blueprint-grid {
+      background-image: 
+        linear-gradient(to right, rgba(56, 189, 248, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(56, 189, 248, 0.05) 1px, transparent 1px),
+        linear-gradient(to right, rgba(56, 189, 248, 0.11) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(56, 189, 248, 0.11) 1px, transparent 1px);
+      background-size: 24px 24px, 24px 24px, 120px 120px, 120px 120px;
+    }
+    /* Custom Range Slider */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 6px;
+      border-radius: 999px;
+      background: #1E293B;
+      border: 1px solid #334155;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #38BDF8;
+      border: 2px solid #0F172A;
+      box-shadow: 0 0 12px rgba(56, 189, 248, 0.8);
+      margin-top: -7px;
+      transition: transform 0.15s ease, background-color 0.15s ease;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.18);
+      background: #7DD3FC;
+    }
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #090D16;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+    .stage-btn-active {
+      background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(99, 102, 241, 0.18));
+      border-color: #38BDF8 !important;
+      box-shadow: 0 0 20px -4px rgba(56, 189, 248, 0.35);
+    }
+    .glow-blue {
+      box-shadow: 0 0 25px -5px rgba(56, 189, 248, 0.4);
+    }
+    .glow-red {
+      box-shadow: 0 0 25px -5px rgba(244, 63, 94, 0.4);
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-sky-500/30 selection:text-sky-200">
+
+  <header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur-md sticky top-0 z-30">
+    <div class="max-w-[1600px] mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500/20 to-indigo-500/20 border border-sky-400/40 flex items-center justify-center shadow-inner">
+          <!-- Clamp / Harness SVG Icon -->
+          <svg class="w-6 h-6 text-sky-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 6h16M4 4v4M20 4v4" stroke-linecap="round"/>
+            <rect x="8" y="9" width="8" height="6" rx="1.5" stroke="#F8FAFC" stroke-width="1.8"/>
+            <path d="M4 18h16M4 16v4M20 16v4" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2.5">
+            <h1 class="text-base sm:text-lg font-bold tracking-tight text-white">
+              Harness Engineering <span class="text-sky-400 font-normal text-sm sm:text-base">（夹具/挽具工程）概念阐释</span>
+            </h1>
+            <span class="hidden md:inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-mono font-medium bg-sky-500/15 text-sky-300 border border-sky-500/30">
+              Agent = LLM + Harness
+            </span>
+          </div>
+          <p class="text-xs text-slate-400 mt-0.5">
+            基于手稿原图还原：以 <span class="text-slate-200 font-medium">LLM 输入-输出信息空间演化 (Information Space vs. Interaction Time)</span> 为中心的动态几何与控制论演示
+          </p>
+        </div>
+      </div>
+
+      <!-- Right Action Controls -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <button id="btnToggleCoord" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-900 hover:bg-slate-800 text-sky-300 border border-sky-500/40 flex items-center gap-1.5 transition">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 3v18h18" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M7 14l4-4 4 4 5-5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>坐标轴参照系: 开启</span>
+        </button>
+
+        <button id="btnAutoPlay" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-900 hover:bg-slate-800 text-slate-200 border border-slate-700 flex items-center gap-1.5 transition">
+          <span id="autoPlayDot" class="w-2 h-2 rounded-full bg-slate-500"></span>
+          <span id="autoPlayText">自动巡航演进</span>
+        </button>
+
+        <button id="btnOpenSketchModal" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white shadow-lg shadow-sky-500/20 flex items-center gap-1.5 transition">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span>手稿还原与调研核对</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <nav class="bg-slate-900/70 border-b border-slate-800/80 px-4 sm:px-6 py-2.5">
+    <div class="max-w-[1600px] mx-auto flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-2.5">
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 flex-1" id="stageTabsContainer">
+        <!-- Populated by JS or static buttons -->
+        <button data-stage="0" class="stage-tab stage-btn-active text-left px-3 py-2 rounded-xl border border-slate-800 bg-slate-900/90 hover:border-slate-700 transition flex flex-col justify-between">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-mono text-sky-400 font-semibold">STAGE 01</span>
+            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+          </div>
+          <div class="text-xs sm:text-sm font-bold text-white mt-0.5 truncate">① 理想收敛态</div>
+          <div class="text-[11px] text-slate-400 truncate">明确建议 + 强大模型</div>
+        </button>
+
+        <button data-stage="1" class="stage-tab text-left px-3 py-2 rounded-xl border border-slate-800 bg-slate-900/90 hover:border-slate-700 transition flex flex-col justify-between">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-mono text-amber-400 font-semibold">STAGE 02</span>
+            <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+          </div>
+          <div class="text-xs sm:text-sm font-bold text-white mt-0.5 truncate">② 现实发散态 (痛点)</div>
+          <div class="text-[11px] text-slate-400 truncate">难问题 / 弱模型 / 缺工具</div>
+        </button>
+
+        <button data-stage="2" class="stage-tab text-left px-3 py-2 rounded-xl border border-slate-800 bg-slate-900/90 hover:border-slate-700 transition flex flex-col justify-between">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-mono text-sky-400 font-semibold">STAGE 03</span>
+            <span class="w-2 h-2 rounded-full bg-sky-400"></span>
+          </div>
+          <div class="text-xs sm:text-sm font-bold text-white mt-0.5 truncate">③ 单轮 Harness 约束</div>
+          <div class="text-[11px] text-slate-400 truncate">蓝线夹具：减 Slots 与噪音</div>
+        </button>
+
+        <button data-stage="3" class="stage-tab text-left px-3 py-2 rounded-xl border border-slate-800 bg-slate-900/90 hover:border-slate-700 transition flex flex-col justify-between">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-mono text-indigo-400 font-semibold">STAGE 04</span>
+            <span class="w-2 h-2 rounded-full bg-indigo-400"></span>
+          </div>
+          <div class="text-xs sm:text-sm font-bold text-white mt-0.5 truncate">④ 多轮交互演进</div>
+          <div class="text-[11px] text-slate-400 truncate">逐轮扩大 vs. Real Output 夹住</div>
+        </button>
+
+        <button data-stage="4" class="stage-tab text-left px-3 py-2 rounded-xl border border-slate-800 bg-slate-900/90 hover:border-slate-700 transition flex flex-col justify-between">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-mono text-rose-400 font-semibold">STAGE 05</span>
+            <span class="w-2 h-2 rounded-full bg-rose-400"></span>
+          </div>
+          <div class="text-xs sm:text-sm font-bold text-white mt-0.5 truncate">⑤ 强化学习 (RL) 协同</div>
+          <div class="text-[11px] text-slate-400 truncate">夹具内 Good vs 夹具外 Bad</div>
+        </button>
+
+        <button data-stage="5" class="stage-tab text-left px-3 py-2 rounded-xl border border-slate-800 bg-slate-900/90 hover:border-slate-700 transition flex flex-col justify-between">
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-mono text-cyan-300 font-semibold">STAGE 06</span>
+            <span class="w-2 h-2 rounded-full bg-cyan-300"></span>
+          </div>
+          <div class="text-xs sm:text-sm font-bold text-white mt-0.5 truncate">⑥ 生产化 Agent 决策</div>
+          <div class="text-[11px] text-slate-400 truncate">极强夹具力度 ➔ 生产确定性</div>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <main class="flex-1 max-w-[1600px] w-full mx-auto px-4 sm:px-6 py-4 grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+    
+    <!-- LEFT / CENTER: Interactive LLM Input-Output Information Space Stage (8 cols on lg) -->
+    <section class="lg:col-span-8 flex flex-col gap-4">
+      
+      <!-- Canvas Card Container -->
+      <div class="relative rounded-2xl border border-slate-800 bg-[#080C14] blueprint-grid overflow-hidden shadow-2xl flex flex-col">
+        
+        <!-- Top Overlay HUD inside Canvas Box -->
+        <div class="px-4 py-3 bg-slate-950/80 border-b border-slate-800/80 flex flex-wrap items-center justify-between gap-2 z-10">
+          <div class="flex items-center gap-2.5">
+            <span id="canvasStageBadge" class="px-2.5 py-0.5 rounded-md text-xs font-mono font-bold bg-sky-500/20 text-sky-300 border border-sky-400/30">
+              图 1 / 6
+            </span>
+            <h2 id="canvasStageTitle" class="text-sm sm:text-base font-bold text-white">
+              理想收敛态：明确的建议 + 强大的模型
+            </h2>
+          </div>
+
+          <!-- Legend for Ink Colors matching Handwritten Sketch -->
+          <div class="flex flex-wrap items-center gap-3 text-xs">
+            <span class="flex items-center gap-1.5 text-slate-300">
+              <span class="w-3 h-0.5 bg-slate-200 inline-block"></span> 原始轨迹 / 模型边界
+            </span>
+            <span class="flex items-center gap-1.5 text-sky-300 font-medium">
+              <span class="w-3 h-1 bg-sky-400 inline-block rounded-full shadow-[0_0_8px_#38BDF8]"></span> Harness 蓝线夹具 (|—|)
+            </span>
+            <span class="flex items-center gap-1.5 text-rose-300 font-medium">
+              <span class="w-3 h-1 bg-rose-500 inline-block rounded-full shadow-[0_0_8px_#F43F5E]"></span> 夹住的实际输出 / RL 反馈
+            </span>
+          </div>
+        </div>
+
+        <!-- Stage 2 Sub-Toggles (Only visible in Stage 2: 3 Root Causes of Divergence) -->
+        <div id="stage2SubToolbar" class="hidden px-4 py-2.5 bg-amber-950/30 border-b border-amber-500/30 flex-wrap items-center justify-between gap-2 z-10">
+          <span class="text-xs font-semibold text-amber-300 flex items-center gap-1.5">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            手稿右上角：切换导致 Output 信息空间急剧发散的 3 大根因：
+          </span>
+          <div class="flex flex-wrap items-center gap-1.5">
+            <button data-cause="all" class="cause-btn px-2.5 py-1 rounded-lg text-xs font-medium bg-amber-500/25 text-amber-200 border border-amber-400/50 transition">
+              全部叠加展示
+            </button>
+            <button data-cause="1" class="cause-btn px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-900/90 text-slate-300 border border-slate-700 hover:border-amber-400/40 transition">
+              ① 难的问题 ➔ 详细的思考
+            </button>
+            <button data-cause="2" class="cause-btn px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-900/90 text-slate-300 border border-slate-700 hover:border-amber-400/40 transition">
+              ② 弱的模型 ➔ 过多 slots、噪音
+            </button>
+            <button data-cause="3" class="cause-btn px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-900/90 text-slate-300 border border-slate-700 hover:border-amber-400/40 transition">
+              ③ 工具/信息缺失 ➔ 过大幻觉、噪音
+            </button>
+          </div>
+        </div>
+
+        <!-- Interactive Canvas Viewport -->
+        <div class="relative w-full h-[460px] sm:h-[520px] select-none" id="canvasContainer">
+          <canvas id="harnessCanvas" class="w-full h-full block cursor-crosshair"></canvas>
+
+          <!-- Floating Coordinate Reference Card (Handwritten Dashed Box Replica) -->
+          <div id="coordLegendOverlay" class="absolute bottom-3 left-3 pointer-events-none bg-slate-950/90 backdrop-blur-md border border-dashed border-sky-400/50 rounded-xl p-3 shadow-lg max-w-[260px]">
+            <div class="text-[11px] font-mono text-sky-400 font-semibold mb-1 flex items-center justify-between">
+              <span>坐标：(用于所有图)</span>
+              <span class="text-[10px] px-1.5 py-0.2 bg-sky-500/10 rounded">手稿左上角基准</span>
+            </div>
+            <div class="text-xs text-slate-300 space-y-1">
+              <div class="flex items-center gap-1.5">
+                <span class="text-sky-400 font-bold">↑ 纵轴 (Y)：</span>
+                <span><strong class="text-white">信息空间</strong> (宽度 = 自由度 / 发散熵 / Slots)</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <span class="text-sky-400 font-bold">→ 横轴 (X)：</span>
+                <span><strong class="text-white">交互时间 ➔ 决断</strong> (从输入向确定性收敛)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Interactive Hint Pill on Canvas -->
+          <div class="absolute top-3 right-3 pointer-events-none bg-slate-900/85 backdrop-blur border border-slate-700/80 rounded-full px-3 py-1 text-[11px] text-slate-300 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-sky-400 animate-pulse"></span>
+            <span id="canvasInteractiveHint">可拖动下方「夹具力度」滑块实时观察蓝线夹紧效应</span>
+          </div>
+        </div>
+
+        <!-- Bottom Live Telemetry & Sliders Bar -->
+        <div class="p-4 bg-slate-950/95 border-t border-slate-800/90 grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+          
+          <!-- Sliders (7 cols) -->
+          <div class="md:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <!-- Clamping Force Slider -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3">
+              <div class="flex items-center justify-between text-xs mb-1.5">
+                <label for="sliderHarnessForce" class="font-semibold text-sky-300 flex items-center gap-1.5">
+                  <span>🔧 夹具力度 (Harness 蓝线收紧度)</span>
+                </label>
+                <span id="valHarnessForce" class="font-mono font-bold text-sky-400 bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">65%</span>
+              </div>
+              <input id="sliderHarnessForce" type="range" min="0" max="100" value="65" class="w-full" />
+              <div class="flex justify-between text-[10px] text-slate-400 mt-1">
+                <span>0% (无 Harness 裸跑)</span>
+                <span>50% (常规 Guardrails)</span>
+                <span>100% (强确定性工作流)</span>
+              </div>
+            </div>
+
+            <!-- Problem Complexity / Divergence Slider -->
+            <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3">
+              <div class="flex items-center justify-between text-xs mb-1.5">
+                <label for="sliderTaskEntropy" class="font-semibold text-amber-300 flex items-center gap-1.5">
+                  <span>🌪️ 原始任务发散度 (问题难度 / 噪音)</span>
+                </label>
+                <span id="valTaskEntropy" class="font-mono font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">70%</span>
+              </div>
+              <input id="sliderTaskEntropy" type="range" min="15" max="100" value="70" class="w-full" />
+              <div class="flex justify-between text-[10px] text-slate-400 mt-1">
+                <span>简单明确指令</span>
+                <span>多跳复杂推理</span>
+                <span>开放式长程多轮任务</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Live Quantitative Metrics (5 cols) -->
+          <div class="md:col-span-5 grid grid-cols-3 gap-2.5">
+            <div class="bg-slate-900/90 border border-slate-800/90 rounded-xl p-2.5 text-center">
+              <div class="text-[11px] text-slate-400">未决 Slots / 散度</div>
+              <div id="metricSlots" class="text-base sm:text-lg font-mono font-bold text-amber-400 mt-0.5">14.2 bits</div>
+              <div id="metricSlotsSub" class="text-[10px] text-slate-400">已拦截 62% 噪音</div>
+            </div>
+            <div class="bg-slate-900/90 border border-slate-800/90 rounded-xl p-2.5 text-center">
+              <div class="text-[11px] text-slate-400">有效轨迹占比</div>
+              <div id="metricInBounds" class="text-base sm:text-lg font-mono font-bold text-sky-400 mt-0.5">88.5%</div>
+              <div class="text-[10px] text-slate-400">夹具内 Good 样本</div>
+            </div>
+            <div class="bg-slate-900/90 border border-slate-800/90 rounded-xl p-2.5 text-center">
+              <div class="text-[11px] text-slate-400">生产确定性指数</div>
+              <div id="metricDeterminism" class="text-base sm:text-lg font-mono font-bold text-emerald-400 mt-0.5">84.0%</div>
+              <div id="metricDeterminismSub" class="text-[10px] text-slate-400">契合 SLA 要求</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Bottom Quick Stage Switcher & Core Takeaway Banner -->
+      <div class="rounded-2xl border border-slate-800 bg-slate-900/60 p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-start gap-3">
+          <div class="w-8 h-8 rounded-lg bg-sky-500/15 border border-sky-500/30 flex items-center justify-center text-sky-400 shrink-0 mt-0.5 font-mono font-bold text-xs">
+            核心
+          </div>
+          <div>
+            <div class="text-xs font-semibold text-sky-300 uppercase tracking-wider">当前图解手稿原话精髓</div>
+            <p id="stageCoreQuote" class="text-sm text-slate-200 mt-0.5 font-medium">
+              “明确的建议 + 强大的模型 ➔ 将宽广的 User Input 信息空间直接坍缩为窄矩形确定性 Output。”
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 shrink-0 w-full sm:w-auto justify-end">
+          <button id="btnPrevStage" class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+            ← 上一阶段
+          </button>
+          <button id="btnNextStage" class="px-4 py-2 rounded-xl text-xs font-semibold bg-sky-500 hover:bg-sky-400 text-slate-950 font-bold transition shadow-lg shadow-sky-500/20">
+            下一阶段 →
+          </button>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- RIGHT PANEL: Deep Concept Analysis & Industry Research Restoration (4 cols on lg) -->
+    <aside class="lg:col-span-4 flex flex-col gap-4">
+      
+      <!-- Card 1: Current Stage Deep Explanation -->
+      <div class="rounded-2xl border border-slate-800 bg-slate-900/75 p-5 shadow-xl flex flex-col gap-4">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div>
+            <span class="text-[11px] font-mono uppercase tracking-wider text-sky-400 font-semibold">手稿深度还原与理论扩充</span>
+            <h3 id="panelStageTitle" class="text-base font-bold text-white mt-0.5">
+              1. 理想收敛态 (Ideal Convergence)
+            </h3>
+          </div>
+          <span id="panelStageIcon" class="text-2xl">🎯</span>
+        </div>
+
+        <!-- Original Sketch Notes Box -->
+        <div class="rounded-xl bg-slate-950/90 border border-slate-800/90 p-3.5">
+          <div class="text-xs font-semibold text-slate-400 mb-2 flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-sky-400"></span>
+            <span>手稿原图视觉结构与批注：</span>
+          </div>
+          <div id="panelSketchOriginal" class="text-xs sm:text-sm text-slate-200 space-y-1.5 leading-relaxed font-sans">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <!-- Information Space Interpretation -->
+        <div>
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+            信息空间动力学解析 (Information Space Dynamics)
+          </h4>
+          <div id="panelTheoryExplain" class="text-xs sm:text-sm text-slate-300 space-y-2 leading-relaxed">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <!-- Concrete Engineering Mechanisms (Harness Primitives) -->
+        <div class="border-t border-slate-800 pt-3.5">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-sky-400 mb-2.5 flex items-center justify-between">
+            <span>对应 Harness 工程落地手段</span>
+            <span class="text-[10px] font-mono bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">Agent = Model + Harness</span>
+          </h4>
+          <div id="panelEngineeringList" class="grid grid-cols-1 gap-2">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 2: Industry Architecture Mapping (AgentScope / LangGraph / RLVR) -->
+      <div class="rounded-2xl border border-slate-800 bg-slate-900/75 p-5 shadow-xl flex flex-col gap-3">
+        <div class="flex items-center justify-between">
+          <h3 class="text-sm font-bold text-white flex items-center gap-2">
+            <svg class="w-4 h-4 text-sky-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>为什么业界都在提 Harness Engineering？</span>
+          </h3>
+          <span class="text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+            调研核对
+          </span>
+        </div>
+
+        <p class="text-xs text-slate-300 leading-relaxed">
+          在 AI 工程实践中，<strong class="text-white">Prompt 工程</strong>仅作用于输入端（左端），而 <strong class="text-sky-300">Harness Engineering（夹具/挽具工程）</strong>则是环绕在 LLM 四周的<strong>全套确定性控制层</strong>——通过类型约束、状态机、沙箱验证和上下文压缩，将高熵的概率生成模型夹紧在工程可交付的轨道内。
+        </p>
+
+        <!-- Interactive Framework Accordion / Pills -->
+        <div class="space-y-2 mt-1">
+          <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 hover:border-sky-500/40 transition">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-sky-300">1. LangGraph (图状态机强夹具)</span>
+              <span class="text-[10px] font-mono text-slate-400">手稿左下角点名</span>
+            </div>
+            <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+              用有向状态图（StateGraph）和 TypedDict Schema 锁死节点转移边界。不让 LLM 自由决定任意工作流走向，而是只允许在预定义边（Edges）内做有限路由决断。
+            </p>
+          </div>
+
+          <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 hover:border-indigo-500/40 transition">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-indigo-300">2. AgentScope (企业级 Harness 控制面)</span>
+              <span class="text-[10px] font-mono text-slate-400">手稿左下角点名</span>
+            </div>
+            <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+              通过 <code class="text-indigo-200">AgentScope Harness Runtime</code> 将「大脑推理 (Brain)」与「受控工具沙箱执行 (Hands)」解耦，内置会话上下文压缩（Compaction）、消息 Schema 校验与多智能体容错护栏。
+            </p>
+          </div>
+
+          <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 hover:border-rose-500/40 transition">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-rose-300">3. RLVR / 夹具内强化学习 (Stage 5)</span>
+              <span class="text-[10px] font-mono text-slate-400">外部约束内化为权重</span>
+            </div>
+            <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+              手稿倒数第二图揭示了前沿范式：<strong>Harness 不仅是推理时的护栏，更是训练时的天然奖励验证器 (Verifier)</strong>。落在夹具内的轨迹作为 <code class="text-rose-300">good Answer</code> 回流更新策略，夹具外作为 <code class="text-slate-400">bad Answer</code> 剪枝，实现外挂夹具向模型直觉的内化。
+            </p>
+          </div>
+        </div>
+      </div>
+
+    </aside>
+  </main>
+
+  <!-- MODAL: Handwritten Sketch Restoration & Research Verification Table -->
+  <div id="sketchModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/80 backdrop-blur-md p-4 overflow-y-auto">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-4xl w-full p-5 sm:p-6 shadow-2xl my-8 max-h-[90vh] flex flex-col">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+        <div>
+          <span class="text-xs font-mono text-sky-400 uppercase font-semibold">Architecture Verification & Mapping</span>
+          <h2 class="text-lg sm:text-xl font-bold text-white mt-0.5">手稿全要素核对与 Harness Engineering 概念映射表</h2>
+        </div>
+        <button id="btnCloseSketchModal" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="overflow-y-auto pr-1 mt-4 space-y-4 text-xs sm:text-sm">
+        <div class="p-3.5 rounded-xl bg-sky-500/10 border border-sky-500/30 text-slate-200 leading-relaxed">
+          <strong class="text-sky-300">💡 调研核对结论：</strong>
+          您的手稿非常精准地用<strong>「信息空间（Information Space）随交互时间（Interaction Time）向决断（Decision）演化的几何包络」</strong>形式化了当下大模型工程的核心命题。在 2025–2026 工业界（如 LangChain、Databricks、阿里 AgentScope 架构演进）中，这被称为 <strong>Harness Engineering（夹具/挽具工程）</strong>：即通过外部确定性工程夹具，对抗 LLM 自回归生成中的熵增（Slots 泛滥、幻觉与多轮级联发散）。
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-slate-700 text-slate-400 font-mono text-xs">
+                <th class="py-2.5 px-3">手稿区块</th>
+                <th class="py-2.5 px-3">手稿原图视觉与文字批注</th>
+                <th class="py-2.5 px-3">核心控制论含义</th>
+                <th class="py-2.5 px-3">现代 Harness 工程实现对照</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800 text-slate-300">
+              <tr>
+                <td class="py-3 px-3 font-semibold text-sky-300 whitespace-nowrap">左上角：统一坐标系</td>
+                <td class="py-3 px-3">
+                  <code class="text-white">坐标：(用于所有图)</code><br/>
+                  纵轴 ↑：<code class="text-sky-300">信息空间</code><br/>
+                  横轴 →：<code class="text-sky-300">交互时间 ➔ 决断</code>
+                </td>
+                <td class="py-3 px-3">定义了所有 LLM 交互的相空间：纵轴高度代表可能状态的熵（不确定性/分支宽度），横轴代表向最终可执行动作收敛的过程。</td>
+                <td class="py-3 px-3">Token 概率分布熵监控、状态空间收敛度评估 (Trajectory Convergence)</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-3 font-semibold text-emerald-300 whitespace-nowrap">左上图：理想收敛</td>
+                <td class="py-3 px-3">
+                  大圆 <code class="text-white">User Input</code> ➔ 箭头收缩进 <code class="text-white">[LLM]</code> ➔ 窄长条 <code class="text-white">output.</code><br/>
+                  批注：<code class="text-emerald-300">明确的建议 + 强大的模型</code>
+                </td>
+                <td class="py-3 px-3">当 Prompt 信息量极充足且模型能力极强时，模型自身即可完成从高维模糊上下文向窄带确定性结果的坍缩。</td>
+                <td class="py-3 px-3">Zero-shot 强指令遵循、高确定性单步结构化提取</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-3 font-semibold text-amber-300 whitespace-nowrap">右上图：现实发散</td>
+                <td class="py-3 px-3">
+                  小圆 <code class="text-white">User Input</code> ➔ <code class="text-white">[LLM]</code> ➔ 射线向外发散成巨大圆 <code class="text-white">Output</code><br/>
+                  ① 难的问题 ➔ 详细的思考<br/>
+                  ② 弱的模型 ➔ 过多 slots、噪音<br/>
+                  ③ 工具、信息的缺失 ➔ 过大幻觉、噪音
+                </td>
+                <td class="py-3 px-3">揭示了为何裸用 LLM 无法直接上生产：CoT 推理展开、小模型未决槽位（Slots）过多或缺少外部事实锚点，都会导致输出空间剧烈膨胀。</td>
+                <td class="py-3 px-3">识别发散源：区分良性推理展开（需引导收敛）与恶性幻觉噪音（需工具注入与剪枝）</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-3 font-semibold text-sky-400 whitespace-nowrap">中部一：单轮 Harness</td>
+                <td class="py-3 px-3">
+                  输出端上下两条蓝色 T 型线：<br/>
+                  <code class="text-sky-300">Harness (这条蓝线，让回答在它之内)</code><br/>
+                  <code class="text-white">output ➔ 被 Harness 限制：减少 slots、噪音、发散.</code>
+                </td>
+                <td class="py-3 px-3">引入外部机械边界（蓝线夹具），物理截断超出容许范围的生成分支，强行降低输出态的自由度。</td>
+                <td class="py-3 px-3">Constrained Decoding (JSON Schema / Grammar 约束)、正则/Linter 拦截、工具入参校验</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-3 font-semibold text-indigo-300 whitespace-nowrap">中部二：多轮演进</td>
+                <td class="py-3 px-3">
+                  两级 <code class="text-white">[LLM]</code> 串联（含 <code class="text-white">new input</code>）：<br/>
+                  黑虚线：<code class="text-slate-300">原本无 harness 的回答：更发散（逐轮扩大）</code><br/>
+                  蓝夹具向内挤压 ➔ 红实线：<code class="text-rose-400">real output : 被夹住</code>
+                </td>
+                <td class="py-3 px-3">多轮对话/Agent 循环中存在<strong>复合误差（Compounding Error）</strong>：上一轮发散的 Output 成为下一轮更复杂的 Input。Harness 必须在每一轮重置/夹紧包络线。</td>
+                <td class="py-3 px-3">Context Compaction (上下文摘要压缩)、每步状态快照清洗、子任务隔离 (Sub-agent Isolation)</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-3 font-semibold text-rose-400 whitespace-nowrap">下部一：强化学习</td>
+                <td class="py-3 px-3">
+                  夹具上方红线涂抹剔除，输出分为：<br/>
+                  红框 <code class="text-rose-300">good Answer | 夹具内</code> (红箭头回流 LLM)<br/>
+                  黑框 <code class="text-slate-400">bad Answer | 夹具外</code><br/>
+                  右侧括号：<code class="text-white">学习、多轮.</code>
+                </td>
+                <td class="py-3 px-3">将运行时 Harness 的边界判据转化为强化学习的 Reward / Verifier 信号，通过多轮采样过滤（Rejection Sampling / GRPO / PPO）让模型内化夹具边界。</td>
+                <td class="py-3 px-3">RLVR (基于可验证奖励的强化学习)、沙箱单元测试通过率作为 Reward、好轨迹回流微调</td>
+              </tr>
+              <tr>
+                <td class="py-3 px-3 font-semibold text-cyan-300 whitespace-nowrap">下部二：生产级 Agent</td>
+                <td class="py-3 px-3">
+                  <code class="text-white">生产化 Agent、Dev 决策 model</code><br/>
+                  上下极强蓝色夹具 <code class="text-sky-300">↓↓↓ / ↑↑↑</code> 压成窄矩形<br/>
+                  <code class="text-cyan-300">极强的夹具力度 ➔ 生产确定性</code><br/>
+                  左指：<code class="text-indigo-300">如 AgentScope, LangGraph</code>
+                </td>
+                <td class="py-3 px-3">在工业生产或研发决策（Dev 决策）场景中，依靠极高强度的上下游夹具，将概率性的 LLM 彻底改造为具备工程 SLA 确定性的决策算子。</td>
+                <td class="py-3 px-3">LangGraph 状态图编排、AgentScope 沙箱与控制面、确定性 SOP 节点流</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="border-t border-slate-800 pt-4 mt-4 flex justify-end">
+        <button id="btnCloseSketchModalBottom" class="px-5 py-2 rounded-xl text-xs font-bold bg-sky-500 hover:bg-sky-400 text-slate-950 transition">
+          返回交互式演示画布
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * Stage Data Configuration faithfully mapping the 6 diagrams in the user's handwritten sketch
+     */
+    const STAGES = [
+      {
+        id: 0,
+        badge: '图 1 / 6 · 手稿左上',
+        title: '理想收敛态：明确的建议 + 强大的模型',
+        icon: '🎯',
+        defaultForce: 85,
+        defaultEntropy: 25,
+        quote: '“明确的建议 + 强大的模型 ➔ 宽广的 User Input 信息空间自然坍缩为窄长条确定性 output.”',
+        sketchOriginal: `
+          <p>• <strong>左侧输入：</strong>较大的圆形 <code class="text-sky-300">User Input</code>，通过收敛箭头 <code class="text-slate-300">↘ → ↗</code> 进入中央方形 <code class="text-white">[ LLM ]</code>。</p>
+          <p>• <strong>右侧输出：</strong>直接输出一个高度极窄的矩形条 <code class="text-emerald-300">output.</code>（低熵、高确定性决断）。</p>
+          <p>• <strong>手稿批注：</strong>下方明确标注前提条件——<strong class="text-white">「明确的建议」</strong>与<strong class="text-white">「强大的模型」</strong>。</p>
+        `,
+        theoryExplain: `
+          <p>在统一的<strong>（信息空间 × 交互时间）</strong>坐标系下，用户的原始意图往往包含大量背景上下文，但在<strong>指令极其清晰（无歧义）</strong>且<strong>底层模型能力足够强</strong>的理想假设下，LLM 充当了一个完美的「信息压缩与决断漏斗」。</p>
+          <p>此时随着交互时间向右推进，信息空间的垂直跨度（不确定性）迅速收敛，无需复杂外挂即可直接获得窄带稳定的 <code class="text-emerald-300">output</code>。</p>
+        `,
+        engineeringList: [
+          { title: '精准 System Prompt 与 Few-shot 示例', desc: '通过高质量上下文提供「明确的建议」，预先消除输入端歧义。' },
+          { title: '旗舰级 SOTA 底座模型', desc: '依靠模型自身强大的先验知识与指令遵循能力直接完成收敛。' }
+        ]
+      },
+      {
+        id: 1,
+        badge: '图 2 / 6 · 手稿右上',
+        title: '现实发散态：为什么裸跑 LLM 会失控？',
+        icon: '💥',
+        defaultForce: 0,
+        defaultEntropy: 88,
+        quote: '“① 难的问题 ➔ 详细的思考 or ② 弱的模型 ➔ 过多 slots、噪音 or ③ 工具/信息缺失 ➔ 过大幻觉、噪音”',
+        sketchOriginal: `
+          <p>• <strong>几何形态：</strong>简短的 <code class="text-amber-300">User Input</code> 进入 <code class="text-white">[ LLM ]</code> 后，输出射线大幅向外张开（<code class="text-amber-400">↗ → ↘</code>），膨胀为巨大的圆形 <code class="text-rose-300">Output</code>。</p>
+          <p>• <strong>三大发散根因（手稿完整列举）：</strong></p>
+          <p class="pl-2 text-amber-200">① <strong>难的问题</strong> ➔ 详细的思考（长思维链探索撑大信息空间）</p>
+          <p class="pl-2 text-amber-200">② <strong>弱的模型</strong> ➔ 过多 slots、噪音（大量未决变量与发散废话）</p>
+          <p class="pl-2 text-amber-200">③ <strong>工具、信息的缺失</strong> ➔ 过大幻觉、噪音（缺乏外部事实锚点，盲目猜测）</p>
+        `,
+        theoryExplain: `
+          <p>这是手稿中最关键的<strong>问题诊断图</strong>：在真实工程中，随交互时间向右推移，信息空间不仅没有向「决断」收敛，反而发生了剧烈的<strong>熵增爆炸（发散）</strong>。</p>
+          <p>您可以在画布上方切换 <strong>① / ② / ③</strong> 三种模式观察粒子流态：无论是良性的深度思考展开，还是恶性的未闭合槽位（Slots）与幻觉噪音，都会导致下游系统无法对接。</p>
+        `,
+        engineeringList: [
+          { title: '推理发散 vs. 噪音发散解耦', desc: '允许模型在中间思考阶段展开，但必须在输出接口处收敛。' },
+          { title: '识别 Slots 泛滥与幻觉源', desc: '当外部信息或工具缺失时，单纯调 Prompt 无法阻止模型靠脑补填充未知槽位。' }
+        ]
+      },
+      {
+        id: 2,
+        badge: '图 3 / 6 · 手稿中部',
+        title: 'Harness Engineering：蓝线夹具限制输出空间',
+        icon: '🛠️',
+        defaultForce: 68,
+        defaultEntropy: 75,
+        quote: '“Harness（这条蓝线，让回答在它之内）➔ output 被 Harness 限制：减少 slots、噪音、发散.”',
+        sketchOriginal: `
+          <p>• <strong>核心视觉符号：</strong>在 <code class="text-white">[ LLM ]</code> 右侧发散的 <code class="text-white">output</code> 上下边缘，用<strong>蓝笔</strong>画出了两条醒目的 T 型机械限位杆 <code class="text-sky-400">|———|</code>。</p>
+          <p>• <strong>手稿批注：</strong>上方蓝线标注 <strong class="text-sky-300">「Harness (这条蓝线，让回答在它之内)」</strong>；中间引出结论：<strong class="text-white">「output ➔ 被 Harness 限制：减少 slots、噪音、发散.」</strong></p>
+        `,
+        theoryExplain: `
+          <p><strong>Harness（挽具/夹具）</strong>的本质是在 LLM 的输出相空间两侧加装<strong>刚性工程边界</strong>。当模型的生成轨迹试图向高噪音、多未决 Slots 或幻觉区域发散时，蓝线夹具会将其物理拦截、重定向或修正回受控锥角内。</p>
+          <p>试着拖动下方<strong>「夹具力度」</strong>滑块，直观感受两条蓝线收紧时对发散粒子的束缚作用。</p>
+        `,
+        engineeringList: [
+          { title: '结构化输出与语法夹具 (Schema Clamping)', desc: '使用 Pydantic / JSON Schema / CFG 约束解码，强制消除多余 Slots 与格式噪音。' },
+          { title: '工具与事实锚定 (Tool & RAG Grounding)', desc: '用确定性的 API/检索结果填补信息缺失，直接砍掉第 ③ 类幻觉发散。' },
+          { title: '运行时护栏与校验器 (Guardrails & Linters)', desc: '在输出送达下游前执行 AST 语法检查、类型校验与规则过滤。' }
+        ]
+      },
+      {
+        id: 3,
+        badge: '图 4 / 6 · 手稿多轮',
+        title: '多轮交互演进：误差逐轮扩大 vs. Real Output 被夹住',
+        icon: '🔄',
+        defaultForce: 72,
+        defaultEntropy: 80,
+        quote: '“更复杂的 input 导致更发散的 Output，逐轮扩大 ➔ 蓝线夹具向内挤压 ➔ real output : 被夹住”',
+        sketchOriginal: `
+          <p>• <strong>串联多轮结构：</strong>第一轮 <code class="text-white">[ LLM ]</code> 的 <code class="text-white">Output</code> 叠加 <code class="text-amber-300">new input</code> 进入第二轮 <code class="text-white">[ LLM ]</code>。</p>
+          <p>• <strong>三层对比包络线（手稿精妙之处）：</strong></p>
+          <p class="pl-2">1. 最外层黑虚线：<code class="text-slate-300">原本无 harness 的回答：更发散</code>（下方批注：<code class="text-amber-300">更复杂的 input 导致更发散的 Output，逐轮扩大</code>）。</p>
+          <p class="pl-2">2. 中间蓝线夹具 <code class="text-sky-400">|———|</code>：带向内挤压箭头 <code class="text-sky-400">↙ ↖</code>。</p>
+          <p class="pl-2">3. 内层红实线：<code class="text-rose-400 font-bold">real output : 被夹住</code>。</p>
+        `,
+        theoryExplain: `
+          <p>在长程 Agent 循环或多轮对话中，最大的杀手是<strong>复合误差发散（Compounding Divergence）</strong>：第 $t$ 轮残留的噪音与发散 Slots 会混入第 $t+1$ 轮的输入，引发雪崩式的上下文腐败（Context Rot）。</p>
+          <p>Harness 在多轮中的核心使命是<strong>「逐轮重置包络」</strong>：每一轮结束时通过蓝线夹具剪除发散分支，确保进入下一轮的 <code class="text-rose-400">real output</code> 始终收敛。</p>
+        `,
+        engineeringList: [
+          { title: '上下文压缩与提纯 (Context Compaction)', desc: '每轮或阶段结束后将冗长历史提炼为结构化 State，防止历史噪音逐轮放大。' },
+          { title: '沙箱执行反馈闭环 (Sandbox Execution Loop)', desc: '每轮代码/动作在沙箱验证后再进入下一轮，及时截断错误推理分支。' }
+        ]
+      },
+      {
+        id: 4,
+        badge: '图 5 / 6 · 手稿强化学习',
+        title: '强化学习 (RL)：夹具内 Good Answer 回流训练',
+        icon: '🧠',
+        defaultForce: 70,
+        defaultEntropy: 78,
+        quote: '“good Answer : 夹具内（红线回流训练 LLM） | bad Answer : 夹具外 ➔ 学习、多轮.”',
+        sketchOriginal: `
+          <p>• <strong>夹具分界判据：</strong>在 <code class="text-white">[ LLM ]</code> 输出侧，蓝线夹具之外的区域被红/蓝斜线涂抹剔除。</p>
+          <p>• <strong>正负样本分流：</strong></p>
+          <p class="pl-2">• <span class="text-rose-400 font-bold">红框 [ good Answer ] 夹具内</span>：有一条醒目的<strong>红色弧形箭头逆向指回 [ LLM ]</strong>！</p>
+          <p class="pl-2">• <span class="text-slate-400 font-bold">黑框 [ bad Answer ] 夹具外</span>：被判定为劣质轨迹丢弃。</p>
+          <p>• <strong>右侧大括号：</strong>标注 <strong class="text-white">「学习、多轮.」</strong></p>
+        `,
+        theoryExplain: `
+          <p>这张图深刻揭示了<strong>运行时 Harness 与模型训练（Post-training / RL）的共生飞轮</strong>！</p>
+          <p>外部的 Harness（如编译器、单元测试沙箱、规则校验器）天然就是一个<strong>零成本、高精度的验证器（Verifier）</strong>。在多轮交互采样中，落在夹具内的轨迹被标记为正样本（<code class="text-rose-300">good Answer</code>），通过强化学习（如 RLVR / GRPO）或拒绝采样微调回流更新 LLM 权重，从而把「外部硬夹具」内化为模型的「内在直觉」。</p>
+        `,
+        engineeringList: [
+          { title: 'RLVR (Reinforcement Learning with Verifiable Rewards)', desc: '用 Harness 的确定性检查（测试通过、Schema 合法）直接生成 Reward 信号。' },
+          { title: '多轮轨迹蒸馏 (Trajectory Rejection Sampling)', desc: '收集生产环境中「夹具内」成功的多轮轨迹反哺微调底座模型。' }
+        ]
+      },
+      {
+        id: 5,
+        badge: '图 6 / 6 · 手稿底部终态',
+        title: '生产化 Agent 与决策模型：极强夹具 ➔ 生产确定性',
+        icon: '🏭',
+        defaultForce: 95,
+        defaultEntropy: 60,
+        quote: '“生产化 Agent、Dev 决策 model（如 AgentScope, LangGraph）：极强的夹具力度 ➔ 生产确定性”',
+        sketchOriginal: `
+          <p>• <strong>极强平行夹压：</strong>在 <code class="text-white">[ LLM ]</code> 输出侧，上下两条粗壮的水平蓝色夹具 <code class="text-sky-400">|———|</code> 伴随密集的向内施压箭头 <code class="text-sky-300">↓↓↓</code> 与 <code class="text-sky-300">↑↑↑</code>，将输出死死压成一个窄长矩形。</p>
+          <p>• <strong>手稿核心点名：</strong>左侧箭头指向 <strong class="text-indigo-300">「如 AgentScope / LangGraph」</strong>；底部总结 <strong class="text-cyan-300">「极强的夹具力度 ➔ 生产确定性」</strong>。</p>
+        `,
+        theoryExplain: `
+          <p>首尾呼应手稿第一张图！在图 1 中，只有「理想问题+理想模型」才能输出窄矩形；而在图 6 的工业生产与研发决策（Dev 决策 model）场景中，我们依靠<strong>极强的 Harness 夹具力度（状态图编排、严苛 Schema、权限沙箱）</strong>，强制将任何复杂输入下的 LLM 输出压缩回窄带矩形，实现<strong>工程级 SLA 生产确定性</strong>。</p>
+        `,
+        engineeringList: [
+          { title: 'LangGraph 状态机编排', desc: '将开放式 Agent 约束为受控图节点（Nodes）与条件边（Conditional Edges），消除流程发散。' },
+          { title: 'AgentScope Harness 控制面與沙箱', desc: '提供企业级运行时护栏、工具执行沙箱隔离、会话状态恢复与强确定性协同。' }
+        ]
+      }
+    ];
+
+    const state = {
+      currentStage: 0,
+      harnessForce: 85,     // 0 to 100
+      taskEntropy: 25,      // 15 to 100
+      showCoordOverlay: true,
+      autoPlay: false,
+      autoPlayTimer: null,
+      stage2Cause: 'all',   // 'all', '1', '2', '3'
+      particles: [],
+      rlPulses: [],
+      time: 0
+    };
+
+    const canvas = document.getElementById('harnessCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Initialize particles for flowing token trajectories
+    function initParticles() {
+      state.particles = [];
+      for (let i = 0; i < 65; i++) {
+        state.particles.push(createParticle(Math.random()));
+      }
+      state.rlPulses = [
+        { t: 0.0 },
+        { t: 0.33 },
+        { t: 0.66 }
+      ];
+    }
+
+    function createParticle(initialProgress = 0) {
+      // Normalized angle offset [-1, 1]
+      const angleNorm = (Math.random() - 0.5) * 2;
+      const typeRoll = Math.random();
+      let pType = 'core';
+      if (typeRoll > 0.65) pType = 'slot';
+      if (typeRoll > 0.85) pType = 'hallucination';
+
+      return {
+        progress: initialProgress, // 0 to 1 across the diagram X axis
+        speed: 0.0035 + Math.random() * 0.003,
+        angleNorm: angleNorm,
+        freq: 2 + Math.random() * 4,
+        phase: Math.random() * Math.PI * 2,
+        size: 2.2 + Math.random() * 2,
+        pType: pType
+      };
+    }
+
+    function selectStage(stageIdx, fromAutoPlay = false) {
+      if (!fromAutoPlay && state.autoPlay) {
+        toggleAutoPlay(false);
+      }
+      state.currentStage = (stageIdx + STAGES.length) % STAGES.length;
+      const st = STAGES[state.currentStage];
+
+      // Set stage recommended slider values smoothly
+      state.harnessForce = st.defaultForce;
+      state.taskEntropy = st.defaultEntropy;
+
+      document.getElementById('sliderHarnessForce').value = state.harnessForce;
+      document.getElementById('sliderTaskEntropy').value = state.taskEntropy;
+
+      // Update Top Stage Tabs
+      document.querySelectorAll('.stage-tab').forEach((btn, idx) => {
+        if (idx === state.currentStage) {
+          btn.classList.add('stage-btn-active');
+        } else {
+          btn.classList.remove('stage-btn-active');
+        }
+      });
+
+      // Show/Hide Stage 2 Sub-Toolbar
+      const subBar = document.getElementById('stage2SubToolbar');
+      if (state.currentStage === 1) {
+        subBar.classList.remove('hidden');
+        subBar.classList.add('flex');
+      } else {
+        subBar.classList.add('hidden');
+        subBar.classList.remove('flex');
+      }
+
+      // Update Texts
+      document.getElementById('canvasStageBadge').textContent = st.badge;
+      document.getElementById('canvasStageTitle').textContent = st.title;
+      document.getElementById('stageCoreQuote').textContent = st.quote;
+      document.getElementById('panelStageTitle').textContent = `${st.id + 1}. ${st.title}`;
+      document.getElementById('panelStageIcon').textContent = st.icon;
+      document.getElementById('panelSketchOriginal').innerHTML = st.sketchOriginal;
+      document.getElementById('panelTheoryExplain').innerHTML = st.theoryExplain;
+
+      // Render Engineering List
+      const engContainer = document.getElementById('panelEngineeringList');
+      engContainer.innerHTML = st.engineeringList.map(item => `
+        <div class="p-3 rounded-xl bg-slate-950/90 border border-slate-800/90">
+          <div class="text-xs font-bold text-sky-300 flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-sky-400"></span>
+            <span>${item.title}</span>
+          </div>
+          <p class="text-xs text-slate-400 mt-1 leading-relaxed">${item.desc}</p>
+        </div>
+      `).join('');
+
+      updateMetricsUI();
+    }
+
+    function updateMetricsUI() {
+      const force = state.harnessForce;
+      const entropy = state.taskEntropy;
+
+      document.getElementById('valHarnessForce').textContent = `${force}%`;
+      document.getElementById('valTaskEntropy').textContent = `${entropy}%`;
+
+      // Compute effective residual divergence after harness clamping
+      const rawSpread = entropy * (state.currentStage === 3 ? 1.35 : 1.0); // Multi-turn compounds raw spread
+      const clampReduction = (force / 100) * 0.85;
+      const residualBits = Math.max(1.2, (rawSpread * (1 - clampReduction) * 0.28)).toFixed(1);
+      const interceptedPct = Math.round(clampReduction * 100);
+
+      // In-bounds ratio
+      const inBoundsPct = Math.min(99.8, Math.max(18.0, 100 - (rawSpread * (1 - clampReduction) * 0.65))).toFixed(1);
+
+      // Production determinism
+      const determinism = Math.min(99.5, Math.max(12.0, (100 - rawSpread * 0.7) + (force * 0.72))).toFixed(1);
+
+      const elSlots = document.getElementById('metricSlots');
+      const elSlotsSub = document.getElementById('metricSlotsSub');
+      const elInBounds = document.getElementById('metricInBounds');
+      const elDet = document.getElementById('metricDeterminism');
+      const elDetSub = document.getElementById('metricDeterminismSub');
+
+      elSlots.textContent = `${residualBits} bits`;
+      elSlotsSub.textContent = force > 5 ? `夹具已消减 ${interceptedPct}% 发散` : '无夹具约束 · 自由发散';
+
+      elInBounds.textContent = `${inBoundsPct}%`;
+      elDet.textContent = `${determinism}%`;
+
+      if (determinism >= 85) {
+        elDet.className = 'text-base sm:text-lg font-mono font-bold text-emerald-400 mt-0.5';
+        elDetSub.textContent = '生产级高确定性 (SLA 达标)';
+      } else if (determinism >= 55) {
+        elDet.className = 'text-base sm:text-lg font-mono font-bold text-sky-400 mt-0.5';
+        elDetSub.textContent = '中等受控 · 偶发发散';
+      } else {
+        elDet.className = 'text-base sm:text-lg font-mono font-bold text-rose-400 mt-0.5';
+        elDetSub.textContent = '高风险发散 · 不可直接上生产';
+      }
+    }
+
+    function resizeCanvas() {
+      const container = document.getElementById('canvasContainer');
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = container.clientWidth * dpr;
+      canvas.height = container.clientHeight * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+
+    function drawArrow(x1, y1, x2, y2, color = '#94A3B8', lineWidth = 1.8, headLen = 8, dashed = false) {
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = lineWidth;
+      if (dashed) ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+
+      const angle = Math.atan2(y2 - y1, x2 - x1);
+      ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.moveTo(x2, y2);
+      ctx.lineTo(x2 - headLen * Math.cos(angle - Math.PI / 6), y2 - headLen * Math.sin(angle - Math.PI / 6));
+      ctx.lineTo(x2 - headLen * Math.cos(angle + Math.PI / 6), y2 - headLen * Math.sin(angle + Math.PI / 6));
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    /**
+     * Draws the signature blue T-shaped Harness bar (|———|) from the user's sketch
+     */
+    function drawBlueHarnessBar(x1, y1, x2, y2, capSize = 9, glow = true) {
+      ctx.save();
+      if (glow) {
+        ctx.shadowColor = '#38BDF8';
+        ctx.shadowBlur = 12;
+      }
+      ctx.strokeStyle = '#38BDF8';
+      ctx.lineWidth = 3.2;
+      ctx.lineCap = 'round';
+
+      // Main bar
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      ctx.stroke();
+
+      // Perpendicular T-caps at both ends (|———|)
+      const angle = Math.atan2(y2 - y1, x2 - x1);
+      const perpX = Math.cos(angle + Math.PI / 2) * capSize;
+      const perpY = Math.sin(angle + Math.PI / 2) * capSize;
+
+      ctx.lineWidth = 2.8;
+      ctx.beginPath();
+      // Start cap
+      ctx.moveTo(x1 - perpX, y1 - perpY);
+      ctx.lineTo(x1 + perpX, y1 + perpY);
+      // End cap
+      ctx.moveTo(x2 - perpX, y2 - perpY);
+      ctx.lineTo(x2 + perpX, y2 + perpY);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    /**
+     * Draws an LLM square box node matching the handwritten sketch `[ LLM ]`
+     */
+    function drawLLMBox(cx, cy, size, label = 'LLM', subLabel = '') {
+      ctx.save();
+      const half = size / 2;
+
+      // Subtle outer glow
+      ctx.shadowColor = 'rgba(56, 189, 248, 0.25)';
+      ctx.shadowBlur = 18;
+
+      ctx.fillStyle = '#0F172A';
+      ctx.strokeStyle = '#E2E8F0';
+      ctx.lineWidth = 2.4;
+
+      ctx.beginPath();
+      ctx.roundRect(cx - half, cy - half, size, size, 8);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = '#F8FAFC';
+      ctx.font = 'bold 16px "JetBrains Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(label, cx, subLabel ? cy - 6 : cy);
+
+      if (subLabel) {
+        ctx.fillStyle = '#94A3B8';
+        ctx.font = '11px "Noto Sans SC", sans-serif';
+        ctx.fillText(subLabel, cx, cy + 13);
+      }
+      ctx.restore();
+    }
+
+    /**
+     * Draws persistent Coordinate System Axes (`坐标：用于所有图`) in the background
+     */
+    function drawCoordinateSystem(w, h) {
+      if (!state.showCoordOverlay) return;
+      ctx.save();
+      const originX = 54;
+      const originY = h - 42;
+      const topY = 48;
+      const rightX = w - 42;
+
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.28)';
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.75)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([6, 6]);
+
+      // Vertical Axis: 信息空间
+      ctx.beginPath();
+      ctx.moveTo(originX, originY);
+      ctx.lineTo(originX, topY);
+      ctx.stroke();
+
+      // Horizontal Axis: 交互时间 -> 决断
+      ctx.beginPath();
+      ctx.moveTo(originX, originY);
+      ctx.lineTo(rightX, originY);
+      ctx.stroke();
+
+      ctx.setLineDash([]);
+      // Arrowheads
+      drawArrow(originX, topY + 10, originX, topY, 'rgba(56, 189, 248, 0.7)', 1.5, 7);
+      drawArrow(rightX - 10, originY, rightX, originY, 'rgba(56, 189, 248, 0.7)', 1.5, 7);
+
+      // Axis Labels matching sketch
+      ctx.font = 'bold 12px "Noto Sans SC", sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('信息空间 (Information Space / 发散度)', originX + 8, topY + 10);
+
+      ctx.textAlign = 'center';
+      ctx.fillText('交互时间 (Interaction Time)', (originX + rightX) * 0.5, originY - 10);
+
+      ctx.textAlign = 'right';
+      ctx.fillStyle = '#38BDF8';
+      ctx.fillText('➔ 决断 (Decision)', rightX - 6, originY - 10);
+
+      ctx.restore();
+    }
+
+    function renderStage0_Ideal(w, h, cy) {
+      const inputX = w * 0.20;
+      const llmX = w * 0.48;
+      const outX = w * 0.76;
+      const llmSize = 74;
+
+      // 1. Large User Input Circle (Wide initial info space)
+      const inputRadius = 56 + state.taskEntropy * 0.2;
+      ctx.save();
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.07)';
+      ctx.strokeStyle = '#E2E8F0';
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.arc(inputX, cy, inputRadius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#F8FAFC';
+      ctx.font = 'bold 14px "JetBrains Mono", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('User', inputX, cy - 8);
+      ctx.fillText('Input', inputX, cy + 12);
+
+      // Converging arrows into LLM
+      drawArrow(inputX + inputRadius + 8, cy - 28, llmX - llmSize / 2 - 10, cy - 12, '#94A3B8', 2);
+      drawArrow(inputX + inputRadius + 10, cy, llmX - llmSize / 2 - 10, cy, '#E2E8F0', 2);
+      drawArrow(inputX + inputRadius + 8, cy + 28, llmX - llmSize / 2 - 10, cy + 12, '#94A3B8', 2);
+
+      // Central LLM Box
+      drawLLMBox(llmX, cy, llmSize, 'LLM', '强大的模型');
+
+      // Arrow to tight Output Rectangle
+      const rectHalfH = Math.max(7, (100 - state.harnessForce) * 0.28 + 7);
+      drawArrow(llmX + llmSize / 2 + 10, cy, outX - 65, cy, '#10B981', 2.2);
+
+      // Tight horizontal rectangle `output.`
+      ctx.fillStyle = 'rgba(16, 185, 129, 0.14)';
+      ctx.strokeStyle = '#10B981';
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.roundRect(outX - 55, cy - rectHalfH, 120, rectHalfH * 2, 4);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#ECFDF5';
+      ctx.font = 'bold 14px "JetBrains Mono", monospace';
+      ctx.fillText('output.', outX + 5, cy + rectHalfH + 20);
+
+      // Handwritten caption below LLM
+      ctx.fillStyle = '#38BDF8';
+      ctx.font = 'bold 14px "Noto Sans SC", sans-serif';
+      ctx.fillText('明确的建议 + 强大的模型', llmX, cy + 72);
+      ctx.fillStyle = '#94A3B8';
+      ctx.font = '12px "Noto Sans SC", sans-serif';
+      ctx.fillText('信息空间自然收敛为窄带确定性决断', llmX, cy + 94);
+
+      // Flowing particles
+      state.particles.forEach(p => {
+        p.progress = (p.progress + p.speed) % 1;
+        let px, py;
+        if (p.progress < 0.48) {
+          const t = p.progress / 0.48;
+          px = inputX + t * (llmX - inputX);
+          const spread = (1 - t * 0.85) * (inputRadius * 0.75);
+          py = cy + p.angleNorm * spread;
+        } else {
+          const t = (p.progress - 0.48) / 0.52;
+          px = llmX + t * (outX + 55 - llmX);
+          py = cy + p.angleNorm * (rectHalfH * 0.65);
+        }
+        ctx.fillStyle = p.progress < 0.48 ? '#38BDF8' : '#10B981';
+        ctx.beginPath();
+        ctx.arc(px, py, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      ctx.restore();
+    }
+
+    function renderStage1_Divergence(w, h, cy) {
+      const inputX = w * 0.16;
+      const llmX = w * 0.40;
+      const outX = w * 0.75;
+      const llmSize = 68;
+
+      ctx.save();
+
+      // 1. Small User Input Circle
+      const inR = 32;
+      ctx.fillStyle = 'rgba(245, 158, 11, 0.08)';
+      ctx.strokeStyle = '#E2E8F0';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(inputX, cy, inR, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#F8FAFC';
+      ctx.font = 'bold 12px "JetBrains Mono", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('User', inputX, cy - 6);
+      ctx.fillText('Input', inputX, cy + 10);
+
+      // Converging input rays (as drawn on top-right of sketch)
+      drawArrow(inputX + inR + 6, cy - 34, llmX - llmSize / 2 - 6, cy - 14, '#94A3B8', 1.8);
+      drawArrow(inputX + inR + 6, cy + 34, llmX - llmSize / 2 - 6, cy + 14, '#94A3B8', 1.8);
+
+      // LLM Box
+      drawLLMBox(llmX, cy, llmSize, 'LLM');
+
+      // Calculate effective divergence based on slider
+      const maxSpread = 45 + state.taskEntropy * 0.95;
+      const clampFactor = 1 - (state.harnessForce / 100) * 0.78;
+      const outRadius = Math.max(28, maxSpread * clampFactor);
+
+      // Diverging Rays exiting LLM
+      drawArrow(llmX + llmSize / 2 + 6, cy - 16, outX - outRadius * 0.6, cy - outRadius * 0.85, '#F59E0B', 2);
+      drawArrow(llmX + llmSize / 2 + 8, cy, outX - outRadius - 8, cy, '#F59E0B', 2);
+      drawArrow(llmX + llmSize / 2 + 6, cy + 16, outX - outRadius * 0.6, cy + outRadius * 0.85, '#F59E0B', 2);
+
+      // Huge Output Circle
+      ctx.fillStyle = 'rgba(244, 63, 94, 0.07)';
+      ctx.strokeStyle = '#F43F5E';
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.arc(outX, cy, outRadius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#FFE4E6';
+      ctx.font = 'bold 16px "JetBrains Mono", sans-serif';
+      ctx.fillText('Output', outX, cy - 6);
+      ctx.font = '11px "Noto Sans SC", sans-serif';
+      ctx.fillStyle = '#FDA4AF';
+      ctx.fillText('(信息空间剧烈发散)', outX, cy + 14);
+
+      // Optional preview of Harness Clamps if user drags slider > 5% in Stage 2
+      if (state.harnessForce > 5) {
+        drawBlueHarnessBar(llmX + 46, cy - 22, outX, cy - outRadius - 6, 8);
+        drawBlueHarnessBar(llmX + 46, cy + 22, outX, cy + outRadius + 6, 8);
+      }
+
+      // Particles inside the diverging cone
+      state.particles.forEach(p => {
+        p.progress = (p.progress + p.speed * 1.1) % 1;
+        let px, py;
+        if (p.progress < 0.38) {
+          const t = p.progress / 0.38;
+          px = inputX + t * (llmX - inputX);
+          py = cy + p.angleNorm * inR * (1 - t * 0.6);
+          ctx.fillStyle = '#E2E8F0';
+        } else {
+          const t = (p.progress - 0.38) / 0.62;
+          px = llmX + t * (outX + outRadius * 0.7 - llmX);
+          const wave = Math.sin(t * p.freq * 3 + state.time * 3 + p.phase) * (state.stage2Cause === '3' ? 18 : 8);
+          py = cy + p.angleNorm * (20 + t * outRadius * 1.05) + wave * t;
+
+          if (state.stage2Cause === '1') ctx.fillStyle = '#38BDF8';
+          else if (state.stage2Cause === '2') ctx.fillStyle = '#F59E0B';
+          else if (state.stage2Cause === '3') ctx.fillStyle = '#F43F5E';
+          else ctx.fillStyle = p.pType === 'hallucination' ? '#F43F5E' : (p.pType === 'slot' ? '#F59E0B' : '#38BDF8');
+        }
+        ctx.beginPath();
+        ctx.arc(px, py, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Handwritten 3 Causes Annotation Box at bottom
+      const boxY = cy + Math.max(outRadius + 22, 118);
+      if (boxY < h - 25) {
+        ctx.font = '12px "Noto Sans SC", sans-serif';
+        ctx.textAlign = 'left';
+        const startX = w * 0.24;
+        ctx.fillStyle = (state.stage2Cause === 'all' || state.stage2Cause === '1') ? '#38BDF8' : '#64748B';
+        ctx.fillText('① 难的问题 ➔ 详细的思考 (CoT 搜索树展开)', startX, boxY - 26);
+        ctx.fillStyle = (state.stage2Cause === 'all' || state.stage2Cause === '2') ? '#FBBF24' : '#64748B';
+        ctx.fillText('② 弱的模型 ➔ 过多 slots、噪音 (未决变量与冗余发散)', startX, boxY - 6);
+        ctx.fillStyle = (state.stage2Cause === 'all' || state.stage2Cause === '3') ? '#FB7185' : '#64748B';
+        ctx.fillText('③ 工具、信息的缺失 ➔ 过大幻觉、噪音 (缺乏外部事实校验)', startX, boxY + 14);
+      }
+
+      ctx.restore();
+    }
+
+    function renderStage2_SingleHarness(w, h, cy) {
+      const inX = w * 0.14;
+      const llmX = w * 0.36;
+      const outEndX = w * 0.64;
+      const llmSize = 72;
+
+      ctx.save();
+
+      // Input Label & Converging Lines (as drawn in middle-left of sketch)
+      ctx.fillStyle = '#F8FAFC';
+      ctx.font = 'bold 15px "JetBrains Mono", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Input', inX + 20, cy + 5);
+
+      ctx.strokeStyle = '#CBD5E1';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(inX + 55, cy - 55);
+      ctx.lineTo(llmX - llmSize / 2, cy - 22);
+      ctx.moveTo(inX + 55, cy + 55);
+      ctx.lineTo(llmX - llmSize / 2, cy + 22);
+      ctx.stroke();
+
+      // Central LLM Box
+      drawLLMBox(llmX, cy, llmSize, 'LLM');
+
+      // Calculate Unclamped vs Clamped Angles
+      const rawHalfSpan = 35 + state.taskEntropy * 0.95;
+      const clampedHalfSpan = Math.max(14, rawHalfSpan * (1 - (state.harnessForce / 100) * 0.82));
+
+      // Ghost Dashed Lines showing original un-harnessed spread
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.3)';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([5, 5]);
+      ctx.beginPath();
+      ctx.moveTo(llmX + llmSize / 2, cy - 20);
+      ctx.lineTo(outEndX, cy - rawHalfSpan);
+      ctx.moveTo(llmX + llmSize / 2, cy + 20);
+      ctx.lineTo(outEndX, cy + rawHalfSpan);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Clamped Output Black Rays inside the Harness
+      drawArrow(llmX + llmSize / 2, cy - 18, outEndX - 8, cy - clampedHalfSpan + 8, '#F8FAFC', 2);
+      drawArrow(llmX + llmSize / 2, cy + 18, outEndX - 8, cy + clampedHalfSpan - 8, '#F8FAFC', 2);
+
+      // Top & Bottom Blue Harness T-Bars (|———|)
+      const barStartX = llmX + llmSize / 2 + 10;
+      const barEndX = outEndX + 4;
+      drawBlueHarnessBar(barStartX, cy - 26, barEndX, cy - clampedHalfSpan - 2, 9);
+      drawBlueHarnessBar(barStartX, cy + 26, barEndX, cy + clampedHalfSpan + 2, 9);
+
+      // Handwritten Callout Arrows & Text for Blue Harness Lines
+      const topBarMidX = (barStartX + barEndX) * 0.52;
+      const topBarMidY = cy - (26 + clampedHalfSpan) * 0.5;
+      drawArrow(topBarMidX, topBarMidY - 6, topBarMidX + 28, topBarMidY - 46, '#38BDF8', 1.8);
+      ctx.fillStyle = '#38BDF8';
+      ctx.font = 'bold 13px "Noto Sans SC", sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('Harness (这条蓝线，让回答在它之内)', topBarMidX + 34, topBarMidY - 44);
+
+      const botBarMidX = (barStartX + barEndX) * 0.52;
+      const botBarMidY = cy + (26 + clampedHalfSpan) * 0.5;
+      drawArrow(botBarMidX, botBarMidY + 6, botBarMidX - 10, botBarMidY + 46, '#38BDF8', 1.8);
+      ctx.fillText('Harness', botBarMidX - 35, botBarMidY + 64);
+
+      // Center Output Text & Right Explanation
+      ctx.fillStyle = '#F8FAFC';
+      ctx.font = 'bold 14px "JetBrains Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('output', (llmX + llmSize / 2 + outEndX) * 0.5, cy + 4);
+
+      drawArrow(outEndX - 15, cy, outEndX + 32, cy, '#38BDF8', 2);
+      ctx.textAlign = 'left';
+      ctx.fillStyle = '#F8FAFC';
+      ctx.font = 'bold 14px "Noto Sans SC", sans-serif';
+      ctx.fillText('被 Harness 限制：', outEndX + 40, cy - 8);
+      ctx.fillStyle = '#7DD3FC';
+      ctx.font = '13px "Noto Sans SC", sans-serif';
+      ctx.fillText('减少 slots、噪音、发散.', outEndX + 40, cy + 14);
+
+      // Particles bouncing inside the Blue Harness Bars
+      state.particles.forEach(p => {
+        p.progress = (p.progress + p.speed) % 1;
+        let px, py;
+        if (p.progress < 0.42) {
+          const t = p.progress / 0.42;
+          px = (inX + 55) + t * (llmX - inX - 55);
+          py = cy + p.angleNorm * (1 - t * 0.65) * 48;
+          ctx.fillStyle = '#CBD5E1';
+        } else {
+          const t = (p.progress - 0.42) / 0.58;
+          px = (llmX + llmSize / 2) + t * (outEndX - llmX - llmSize / 2);
+          const maxAllowedY = 18 + t * (clampedHalfSpan - 18);
+          let rawY = p.angleNorm * (20 + t * rawHalfSpan);
+          // Clamp / bounce off the blue Harness walls
+          if (Math.abs(rawY) > maxAllowedY) {
+            rawY = Math.sign(rawY) * (maxAllowedY - Math.abs(rawY - Math.sign(rawY) * maxAllowedY) * 0.25);
+            ctx.fillStyle = '#38BDF8'; // Highlighted blue when clamped by Harness
+          } else {
+            ctx.fillStyle = '#10B981';
+          }
+          py = cy + rawY;
+        }
+        ctx.beginPath();
+        ctx.arc(px, py, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      ctx.restore();
+    }
+
+    function renderStage3_MultiTurn(w, h, cy) {
+      const llm1X = w * 0.25;
+      const llm2X = w * 0.52;
+      const out2EndX = w * 0.80;
+      const llmSize = 64;
+
+      ctx.save();
+
+      // Turn 1 Input rays
+      drawArrow(llm1X - 95, cy - 42, llm1X - llmSize / 2 - 4, cy - 16, '#94A3B8', 1.8);
+      drawArrow(llm1X - 95, cy + 42, llm1X - llmSize / 2 - 4, cy + 16, '#94A3B8', 1.8);
+
+      // Turn 1 LLM
+      drawLLMBox(llm1X, cy, llmSize, 'LLM', 'Turn 1');
+
+      // Turn 1 Output diverging toward Turn 2
+      drawArrow(llm1X + llmSize / 2 + 4, cy - 16, llm1X + 95, cy - 38, '#CBD5E1', 1.8);
+      drawArrow(llm1X + llmSize / 2 + 4, cy + 16, llm1X + 95, cy + 38, '#CBD5E1', 1.8);
+      ctx.fillStyle = '#E2E8F0';
+      ctx.font = 'italic 13px "JetBrains Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('Output', (llm1X + llm2X) * 0.5, cy - 4);
+
+      // `new input` entering Turn 2 LLM from bottom-left (exact replica of sketch)
+      const newInX = llm2X - 95;
+      const newInY = cy + 92;
+      drawArrow(newInX, newInY, llm2X - llmSize / 2 - 6, cy + 20, '#F59E0B', 2);
+      ctx.fillStyle = '#FBBF24';
+      ctx.font = 'bold 13px "JetBrains Mono", monospace';
+      ctx.fillText('new input', newInX - 10, newInY + 18);
+
+      // Upper input ray into Turn 2
+      drawArrow(llm2X - 85, cy - 46, llm2X - llmSize / 2 - 6, cy - 18, '#CBD5E1', 1.8);
+
+      // Turn 2 LLM
+      drawLLMBox(llm2X, cy, llmSize, 'LLM', 'Turn 2');
+
+      // Turn 2 Output Envelopes:
+      // 1) Outer Black Un-harnessed Cone (Compounded Divergence)
+      const outerSpan = 65 + state.taskEntropy * 0.95;
+      ctx.strokeStyle = '#94A3B8';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(llm2X + llmSize / 2, cy - 20);
+      ctx.lineTo(out2EndX, cy - outerSpan);
+      ctx.moveTo(llm2X + llmSize / 2, cy + 20);
+      ctx.lineTo(out2EndX, cy + outerSpan);
+      ctx.stroke();
+
+      // Dashed callout on top outer black ray: `原本无 harness 的回答：更发散`
+      drawArrow(out2EndX - 35, cy - outerSpan + 16, out2EndX + 10, cy - outerSpan - 18, '#CBD5E1', 1.6, 7, true);
+      ctx.fillStyle = '#E2E8F0';
+      ctx.font = 'bold 13px "Noto Sans SC", sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('原本无 harness 的回答：更发散', out2EndX - 95, cy - outerSpan - 24);
+
+      // Callout on bottom outer black ray: `更复杂的 input 导致更发散的 Output，逐轮扩大`
+      const botRayMidX = (llm2X + out2EndX) * 0.56;
+      const botRayMidY = cy + outerSpan * 0.68;
+      drawArrow(botRayMidX, botRayMidY + 6, botRayMidX + 18, cy + outerSpan + 28, '#F59E0B', 1.8);
+      ctx.fillStyle = '#FBBF24';
+      ctx.font = '13px "Noto Sans SC", sans-serif';
+      ctx.fillText('↳ 更复杂的 input 导致更发散的 Output，逐轮扩大', botRayMidX - 40, cy + outerSpan + 44);
+
+      // 2) Blue Harness Bars pressing inward
+      const clampedSpan = Math.max(16, outerSpan * (1 - (state.harnessForce / 100) * 0.78));
+      const blueSpan = clampedSpan + 14;
+      drawBlueHarnessBar(llm2X + llmSize / 2 + 12, cy - 26, out2EndX + 4, cy - blueSpan, 8);
+      drawBlueHarnessBar(llm2X + llmSize / 2 + 12, cy + 26, out2EndX + 4, cy + blueSpan, 8);
+
+      // Inward compression arrows between outer black ray and inner red ray
+      const midConeX = (llm2X + llmSize / 2 + out2EndX) * 0.58;
+      drawArrow(midConeX, cy - outerSpan * 0.58, midConeX - 8, cy - clampedSpan * 0.58 - 4, '#38BDF8', 2, 7);
+      drawArrow(midConeX, cy + outerSpan * 0.58, midConeX - 8, cy + clampedSpan * 0.58 + 4, '#38BDF8', 2, 7);
+
+      // 3) Inner Red Bounded Cone (`real output : 被夹住`)
+      ctx.save();
+      ctx.shadowColor = '#F43F5E';
+      ctx.shadowBlur = 10;
+      ctx.strokeStyle = '#F43F5E';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(llm2X + llmSize / 2, cy - 16);
+      ctx.lineTo(out2EndX, cy - clampedSpan);
+      ctx.moveTo(llm2X + llmSize / 2, cy + 16);
+      ctx.lineTo(out2EndX, cy + clampedSpan);
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.fillStyle = '#FB7185';
+      ctx.font = 'bold 15px "Noto Sans SC", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('real output : 被夹住', (llm2X + llmSize / 2 + out2EndX) * 0.58, cy + 5);
+
+      // Multi-turn particles
+      state.particles.forEach(p => {
+        p.progress = (p.progress + p.speed) % 1;
+        let px, py;
+        if (p.progress < 0.45) {
+          const t = p.progress / 0.45;
+          px = (llm1X - 80) + t * (llm2X - llm1X + 80);
+          py = cy + p.angleNorm * 28;
+          ctx.fillStyle = '#94A3B8';
+        } else {
+          const t = (p.progress - 0.45) / 0.55;
+          px = (llm2X + llmSize / 2) + t * (out2EndX - llm2X - llmSize / 2);
+          const maxR = 14 + t * (clampedSpan - 14);
+          let rawY = p.angleNorm * (18 + t * outerSpan);
+          if (Math.abs(rawY) > maxR) {
+            rawY = Math.sign(rawY) * maxR * 0.92;
+            ctx.fillStyle = '#F43F5E'; // Clamped red real output
+          } else {
+            ctx.fillStyle = '#FB7185';
+          }
+          py = cy + rawY;
+        }
+        ctx.beginPath();
+        ctx.arc(px, py, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      ctx.restore();
+    }
+
+    function renderStage4_RL(w, h, cy) {
+      const llmX = w * 0.24;
+      const clampEndX = w * 0.46;
+      const boxX = w * 0.55;
+      const llmSize = 68;
+
+      ctx.save();
+
+      // Input arrows
+      drawArrow(llmX - 90, cy - 38, llmX - llmSize / 2 - 6, cy - 16, '#94A3B8', 1.8);
+      drawArrow(llmX - 90, cy + 38, llmX - llmSize / 2 - 6, cy + 16, '#94A3B8', 1.8);
+
+      // LLM Box
+      drawLLMBox(llmX, cy, llmSize, 'LLM');
+
+      // Output Cone + Blue Harness Clamp
+      const rawSpan = 72;
+      const clampedSpan = Math.max(20, rawSpan * (1 - (state.harnessForce / 100) * 0.65));
+
+      // Red Diagonal Scribble / Hatching outside the clamp (matching sketch's red scribble over out-of-bounds area)
+      ctx.save();
+      ctx.strokeStyle = 'rgba(244, 63, 94, 0.55)';
+      ctx.lineWidth = 2.2;
+      for (let i = 0; i < 9; i++) {
+        const frac = i / 8;
+        const hx = (llmX + llmSize / 2 + 12) + frac * (clampEndX - llmX - llmSize / 2 - 12);
+        const hyTop1 = cy - (18 + frac * (clampedSpan - 10));
+        const hyTop2 = cy - (32 + frac * (rawSpan + 16));
+        ctx.beginPath();
+        ctx.moveTo(hx - 6, hyTop1);
+        ctx.lineTo(hx + 8, hyTop2);
+        ctx.stroke();
+      }
+      ctx.restore();
+
+      // Top & Bottom Blue Harness Clamps
+      drawBlueHarnessBar(llmX + llmSize / 2 + 10, cy - 22, clampEndX, cy - clampedSpan, 8);
+      drawBlueHarnessBar(llmX + llmSize / 2 + 10, cy + 22, clampEndX, cy + clampedSpan, 8);
+
+      // Arrows pointing to Good Answer and Bad Answer boxes
+      drawArrow(clampEndX + 8, cy - 14, boxX - 10, cy - 22, '#38BDF8', 2.2);
+      drawArrow(clampEndX + 8, cy + 24, boxX - 10, cy + 28, '#64748B', 2);
+
+      // 1) Good Answer Box (Outlined in Red as in sketch)
+      const boxW = 128;
+      const boxH = 36;
+      ctx.fillStyle = 'rgba(244, 63, 94, 0.14)';
+      ctx.strokeStyle = '#F43F5E';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.roundRect(boxX, cy - 42, boxW, boxH, 6);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#FFE4E6';
+      ctx.font = 'bold 14px "JetBrains Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('good Answer', boxX + boxW / 2, cy - 24);
+
+      ctx.fillStyle = '#F8FAFC';
+      ctx.font = 'bold 14px "Noto Sans SC", sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('夹具内', boxX + boxW + 12, cy - 20);
+
+      // 2) Bad Answer Box (Outlined in Black/Slate as in sketch)
+      ctx.fillStyle = 'rgba(30, 41, 59, 0.7)';
+      ctx.strokeStyle = '#94A3B8';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(boxX, cy + 8, boxW, boxH, 6);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#94A3B8';
+      ctx.font = 'bold 14px "JetBrains Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('bad Answer', boxX + boxW / 2, cy + 26);
+
+      ctx.fillStyle = '#94A3B8';
+      ctx.font = 'bold 14px "Noto Sans SC", sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('夹具外', boxX + boxW + 12, cy + 30);
+
+      // Right Curly Brace `}` and `学习、多轮.`
+      const braceX = boxX + boxW + 72;
+      ctx.strokeStyle = '#E2E8F0';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(braceX, cy - 40);
+      ctx.quadraticCurveTo(braceX + 12, cy - 40, braceX + 12, cy - 15);
+      ctx.quadraticCurveTo(braceX + 12, cy + 2, braceX + 22, cy + 2);
+      ctx.quadraticCurveTo(braceX + 12, cy + 2, braceX + 12, cy + 19);
+      ctx.quadraticCurveTo(braceX + 12, cy + 44, braceX, cy + 44);
+      ctx.stroke();
+
+      ctx.fillStyle = '#38BDF8';
+      ctx.font = 'bold 16px "Noto Sans SC", sans-serif';
+      ctx.fillText('学习、多轮.', braceX + 32, cy + 7);
+
+      // Prominent Red Curved Feedback Arrow from `good Answer` back to `[ LLM ]`
+      const startFX = boxX + boxW * 0.45;
+      const startFY = cy - 44;
+      const ctrlX = (startFX + llmX) * 0.5;
+      const ctrlY = cy - 145;
+      const endFX = llmX + 8;
+      const endFY = cy - llmSize / 2 - 6;
+
+      ctx.save();
+      ctx.shadowColor = '#F43F5E';
+      ctx.shadowBlur = 12;
+      ctx.strokeStyle = '#F43F5E';
+      ctx.lineWidth = 2.6;
+      ctx.beginPath();
+      ctx.moveTo(startFX, startFY);
+      ctx.quadraticCurveTo(ctrlX, ctrlY, endFX, endFY);
+      ctx.stroke();
+
+      // Arrowhead at LLM
+      drawArrow(ctrlX - 18, ctrlY + 26, endFX, endFY, '#F43F5E', 2.6, 9);
+
+      // Animated RL Reward Pulses along the red feedback curve
+      state.rlPulses.forEach(pulse => {
+        pulse.t = (pulse.t + 0.008) % 1;
+        const t = pulse.t;
+        const invT = 1 - t;
+        const px = invT * invT * startFX + 2 * invT * t * ctrlX + t * t * endFX;
+        const py = invT * invT * startFY + 2 * invT * t * ctrlY + t * t * endFY;
+        ctx.fillStyle = '#FFE4E6';
+        ctx.beginPath();
+        ctx.arc(px, py, 4.5, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      ctx.fillStyle = '#FB7185';
+      ctx.font = 'bold 12px "Noto Sans SC", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('正样本奖励回流更新策略 (RLVR / Policy Update)', ctrlX, ctrlY + 18);
+      ctx.restore();
+
+      ctx.restore();
+    }
+
+    function renderStage5_Production(w, h, cy) {
+      const inX = w * 0.20;
+      const llmX = w * 0.44;
+      const outStartX = llmX + 54;
+      const outW = 190;
+      const llmSize = 76;
+
+      ctx.save();
+
+      // Top-left title from sketch: `生产化 Agent、Dev 决策 model`
+      ctx.fillStyle = '#F8FAFC';
+      ctx.font = 'bold 16px "Noto Sans SC", sans-serif';
+      ctx.textAlign = 'left';
+      ctx.fillText('生产化 Agent、Dev 决策 model', w * 0.12, cy - 125);
+
+      // Long downward blue arrow on left pointing to `如 AgentScope / LangGraph`
+      drawArrow(w * 0.16, cy - 105, w * 0.16, cy + 85, '#38BDF8', 2, 9);
+      ctx.fillStyle = '#38BDF8';
+      ctx.font = 'bold 15px "JetBrains Mono", "Noto Sans SC", sans-serif';
+      ctx.fillText('如 AgentScope', w * 0.11, cy + 112);
+      ctx.fillStyle = '#818CF8';
+      ctx.fillText('   LangGraph', w * 0.11, cy + 136);
+
+      // Input Label & Converging Arrows
+      ctx.fillStyle = '#E2E8F0';
+      ctx.font = 'bold 15px "JetBrains Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('input', inX + 20, cy + 5);
+      drawArrow(inX + 48, cy - 46, llmX - llmSize / 2 - 8, cy - 18, '#CBD5E1', 2);
+      drawArrow(inX + 48, cy + 46, llmX - llmSize / 2 - 8, cy + 18, '#CBD5E1', 2);
+
+      // Central LLM Box
+      drawLLMBox(llmX, cy, llmSize, 'LLM');
+
+      // Output narrow rectangle squeezed by parallel horizontal Blue Harness Clamps
+      const squeezeGap = Math.max(8, (100 - state.harnessForce) * 0.42 + 8);
+      const barOffset = squeezeGap + 12;
+
+      // Arrow into narrow output bar
+      drawArrow(llmX + llmSize / 2 + 4, cy, outStartX - 4, cy, '#E2E8F0', 2);
+
+      // Deterministic Narrow Rectangular Output Bar
+      ctx.fillStyle = 'rgba(16, 185, 129, 0.18)';
+      ctx.strokeStyle = '#E2E8F0';
+      ctx.lineWidth = 2.4;
+      ctx.beginPath();
+      ctx.roundRect(outStartX, cy - squeezeGap, outW, squeezeGap * 2, 3);
+      ctx.fill();
+      ctx.stroke();
+
+      // Horizontal Parallel Blue Harness Bars (`|———————|`) above and below
+      drawBlueHarnessBar(outStartX - 4, cy - barOffset, outStartX + outW + 4, cy - barOffset, 8);
+      drawBlueHarnessBar(outStartX - 4, cy + barOffset, outStartX + outW + 4, cy + barOffset, 8);
+
+      // Three downward arrows `↓↓↓` above top blue bar & three upward arrows `↑↑↑` below bottom blue bar
+      const arrowXs = [outStartX + outW * 0.25, outStartX + outW * 0.5, outStartX + outW * 0.75];
+      arrowXs.forEach(ax => {
+        drawArrow(ax, cy - barOffset - 34, ax, cy - barOffset - 6, '#38BDF8', 2.2, 7);
+        drawArrow(ax, cy + barOffset + 34, ax, cy + barOffset + 6, '#38BDF8', 2.2, 7);
+      });
+
+      // Bottom Caption: `极强的夹具力度 ➔ 生产确定性`
+      ctx.fillStyle = '#38BDF8';
+      ctx.font = 'bold 16px "Noto Sans SC", sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('极强的夹具力度  ➔  生产确定性', outStartX + outW * 0.4, cy + barOffset + 72);
+
+      // High-precision deterministic particles streaming in a tight beam
+      state.particles.forEach(p => {
+        p.progress = (p.progress + p.speed * 1.25) % 1;
+        let px, py;
+        if (p.progress < 0.45) {
+          const t = p.progress / 0.45;
+          px = (inX + 48) + t * (llmX - inX - 48);
+          py = cy + p.angleNorm * (1 - t * 0.75) * 42;
+          ctx.fillStyle = '#94A3B8';
+        } else {
+          const t = (p.progress - 0.45) / 0.55;
+          px = outStartX + t * outW;
+          py = cy + p.angleNorm * (squeezeGap * 0.65);
+          ctx.fillStyle = '#38BDF8';
+        }
+        ctx.beginPath();
+        ctx.arc(px, py, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      ctx.restore();
+    }
+
+    function animate() {
+      state.time += 0.016;
+      const w = canvas.clientWidth;
+      const h = canvas.clientHeight;
+      const cy = h * 0.47;
+
+      ctx.clearRect(0, 0, w, h);
+
+      // 1. Draw Persistent Coordinate System
+      drawCoordinateSystem(w, h);
+
+      // 2. Render Current Stage Diagram
+      switch (state.currentStage) {
+        case 0:
+          renderStage0_Ideal(w, h, cy);
+          break;
+        case 1:
+          renderStage1_Divergence(w, h, cy);
+          break;
+        case 2:
+          renderStage2_SingleHarness(w, h, cy);
+          break;
+        case 3:
+          renderStage3_MultiTurn(w, h, cy);
+          break;
+        case 4:
+          renderStage4_RL(w, h, cy);
+          break;
+        case 5:
+          renderStage5_Production(w, h, cy);
+          break;
+      }
+
+      requestAnimationFrame(animate);
+    }
+
+    function toggleAutoPlay(forceState) {
+      state.autoPlay = typeof forceState === 'boolean' ? forceState : !state.autoPlay;
+      const dot = document.getElementById('autoPlayDot');
+      const txt = document.getElementById('autoPlayText');
+
+      if (state.autoPlay) {
+        dot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-ping';
+        txt.textContent = '巡航中 (点击暂停)';
+        state.autoPlayTimer = setInterval(() => {
+          selectStage(state.currentStage + 1, true);
+        }, 5500);
+      } else {
+        dot.className = 'w-2 h-2 rounded-full bg-slate-500';
+        txt.textContent = '自动巡航演进';
+        if (state.autoPlayTimer) clearInterval(state.autoPlayTimer);
+      }
+    }
+
+    // Bind Events on Window Load
+    window.onload = function () {
+      resizeCanvas();
+      initParticles();
+      selectStage(0);
+      animate();
+
+      window.addEventListener('resize', resizeCanvas);
+
+      // Stage Tab Clicks
+      document.querySelectorAll('.stage-tab').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = parseInt(btn.getAttribute('data-stage'), 10);
+          selectStage(idx);
+        });
+      });
+
+      // Next / Prev Stage Buttons
+      document.getElementById('btnPrevStage').addEventListener('click', () => {
+        selectStage(state.currentStage - 1);
+      });
+      document.getElementById('btnNextStage').addEventListener('click', () => {
+        selectStage(state.currentStage + 1);
+      });
+
+      // Sliders
+      document.getElementById('sliderHarnessForce').addEventListener('input', (e) => {
+        state.harnessForce = parseInt(e.target.value, 10);
+        updateMetricsUI();
+      });
+      document.getElementById('sliderTaskEntropy').addEventListener('input', (e) => {
+        state.taskEntropy = parseInt(e.target.value, 10);
+        updateMetricsUI();
+      });
+
+      // Stage 2 Root Cause Sub-toggles
+      document.querySelectorAll('.cause-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.stage2Cause = btn.getAttribute('data-cause');
+          document.querySelectorAll('.cause-btn').forEach(b => {
+            b.className = 'cause-btn px-2.5 py-1 rounded-lg text-xs font-medium bg-slate-900/90 text-slate-300 border border-slate-700 hover:border-amber-400/40 transition';
+          });
+          btn.className = 'cause-btn px-2.5 py-1 rounded-lg text-xs font-medium bg-amber-500/25 text-amber-200 border border-amber-400/50 transition';
+        });
+      });
+
+      // Coordinate Overlay Toggle
+      document.getElementById('btnToggleCoord').addEventListener('click', () => {
+        state.showCoordOverlay = !state.showCoordOverlay;
+        const overlayCard = document.getElementById('coordLegendOverlay');
+        const btn = document.getElementById('btnToggleCoord');
+        if (state.showCoordOverlay) {
+          overlayCard.classList.remove('hidden');
+          btn.querySelector('span').textContent = '坐标轴参照系: 开启';
+        } else {
+          overlayCard.classList.add('hidden');
+          btn.querySelector('span').textContent = '坐标轴参照系: 隐藏';
+        }
+      });
+
+      // Auto-Play Toggle
+      document.getElementById('btnAutoPlay').addEventListener('click', () => {
+        toggleAutoPlay();
+      });
+
+      // Sketch Verification Modal
+      const modal = document.getElementById('sketchModal');
+      document.getElementById('btnOpenSketchModal').addEventListener('click', () => {
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+      });
+      const closeModal = () => {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      };
+      document.getElementById('btnCloseSketchModal').addEventListener('click', closeModal);
+      document.getElementById('btnCloseSketchModalBottom').addEventListener('click', closeModal);
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+      });
+    };
+  </script>
+</body>
+</html>

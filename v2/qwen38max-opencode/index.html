@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Harness Engineering · 以 LLM 输入输出图为中心的动画阐释</title>
+<style>
+:root{
+  --paper:#f6f3ea;
+  --paper2:#efeadd;
+  --ink:#26262b;
+  --ink-soft:#5c5b60;
+  --blue:#2447c5;
+  --red:#cf3327;
+  --hand:"Kaiti SC","STKaiti",KaiTi,"DFKai-SB","cursive";
+  --sans:system-ui,-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  background:var(--paper);
+  background-image:radial-gradient(rgba(38,38,43,.05) 1px,transparent 1px);
+  background-size:22px 22px;
+  color:var(--ink);
+  font-family:var(--sans);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+header{
+  flex:0 0 54px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 22px;border-bottom:2px solid var(--ink);
+}
+header .brand{font-family:var(--hand);font-size:20px;letter-spacing:1px}
+header .brand b{color:var(--blue)}
+header .meta{font-size:13px;color:var(--ink-soft)}
+main{flex:1;display:flex;min-height:0}
+.stagewrap{flex:1;position:relative;min-width:0}
+svg#stage{width:100%;height:100%;display:block}
+.panel{
+  flex:0 0 400px;border-left:2px solid var(--ink);background:var(--paper2);
+  padding:26px 26px 18px;overflow-y:auto;display:flex;flex-direction:column;gap:14px;
+}
+.panel .kicker{font-size:12px;letter-spacing:3px;color:var(--blue);font-weight:700}
+.panel h2{font-family:var(--hand);font-size:30px;line-height:1.25}
+.panel ul{list-style:none;display:flex;flex-direction:column;gap:10px}
+.panel li{font-size:14.5px;line-height:1.65;padding-left:18px;position:relative}
+.panel li::before{content:"—";position:absolute;left:0;color:var(--ink-soft)}
+.panel li b.b{color:var(--blue);font-weight:700}
+.panel li b.r{color:var(--red);font-weight:700}
+.panel .quote{
+  font-family:var(--hand);font-size:16px;color:var(--blue);line-height:1.6;
+  border-left:3px solid var(--blue);background:rgba(36,71,197,.07);
+  padding:10px 12px;border-radius:0 6px 6px 0;
+}
+.panel .src{margin-top:auto;font-size:11.5px;color:var(--ink-soft);line-height:1.6}
+footer{
+  flex:0 0 62px;border-top:2px solid var(--ink);display:flex;align-items:center;
+  gap:16px;padding:0 22px;
+}
+footer button{
+  font-family:var(--sans);font-size:14px;border:2px solid var(--ink);background:var(--paper);
+  color:var(--ink);border-radius:8px;padding:7px 14px;cursor:pointer;
+}
+footer button:hover{background:var(--ink);color:var(--paper)}
+footer button.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.dots{display:flex;gap:8px;flex:1;justify-content:center}
+.dots button{
+  width:13px;height:13px;padding:0;border-radius:50%;border:2px solid var(--ink);
+  background:transparent;cursor:pointer;
+}
+.dots button.on{background:var(--blue);border-color:var(--blue);transform:scale(1.25)}
+.hint{font-size:12px;color:var(--ink-soft)}
+.counter{font-size:13px;color:var(--ink-soft);min-width:52px;text-align:right}
+#cover{
+  position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:14px;pointer-events:none;text-align:center;
+  background:radial-gradient(ellipse at center,rgba(246,243,234,.92) 0%,rgba(246,243,234,.55) 55%,rgba(246,243,234,0) 80%);
+  opacity:0;transition:opacity .6s;
+}
+body[data-ch="0"] #cover{opacity:1}
+#cover h1{font-family:var(--hand);font-size:64px;letter-spacing:2px}
+#cover h1 span{color:var(--blue)}
+#cover p{font-size:16px;color:var(--ink-soft)}
+#cover .tags{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;max-width:640px}
+#cover .tags i{
+  font-style:normal;font-family:var(--hand);font-size:15px;color:var(--blue);
+  border:1.5px solid var(--blue);border-radius:999px;padding:4px 12px;background:rgba(36,71,197,.06);
+}
+#appendix{position:absolute;inset:0;display:none;flex-direction:column;gap:10px;padding:14px}
+body[data-ch="9"] #appendix{display:flex}
+body[data-ch="9"] .stagewrap svg{visibility:hidden}
+#appendix .bar{display:flex;gap:10px;align-items:center;font-size:13px;color:var(--ink-soft)}
+#appendix .bar button{
+  font-family:var(--sans);font-size:13px;border:2px solid var(--ink);background:var(--paper);
+  border-radius:8px;padding:5px 12px;cursor:pointer;
+}
+#appendix .box{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;min-height:0}
+#appendix img{transition:transform .45s ease;box-shadow:0 8px 30px rgba(0,0,0,.25);background:#fff}
+.layer{opacity:0;transition:opacity .55s ease;pointer-events:none}
+.layer.on{opacity:1}
+.hand{font-family:var(--hand)}
+@keyframes traj{
+  0%{transform:translate(0,0)}
+  25%{transform:translate(190px,-70px)}
+  50%{transform:translate(390px,-15px)}
+  75%{transform:translate(590px,-95px)}
+  100%{transform:translate(760px,-45px)}
+}
+.trajdot{animation:traj 7s linear infinite}
+@keyframes specmove{0%{transform:translateX(0)}100%{transform:translateX(800px)}}
+.specdot{animation:specmove 9s ease-in-out infinite alternate}
+@keyframes pulse{0%,100%{opacity:.25}50%{opacity:.9}}
+.ctrlarrow{animation:pulse 1.6s ease-in-out infinite}
+@media (max-width:980px){
+  main{flex-direction:column}
+  .panel{flex:0 0 38vh;border-left:none;border-top:2px solid var(--ink)}
+}
+</style>
+</head>
+<body data-ch="0">
+<header>
+  <div class="brand">Harness <b>Engineering</b> · 概念阐释</div>
+  <div class="meta">以「User Input → LLM → Output」图为中心的动画 · 还原手写白板</div>
+</header>
+<main>
+  <div class="stagewrap">
+    <svg id="stage" viewBox="0 0 1200 675" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#26262b"/>
+        </marker>
+        <marker id="arrB" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#2447c5"/>
+        </marker>
+        <marker id="arrR" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#cf3327"/>
+        </marker>
+      </defs>
+
+      <g id="coords" class="layer">
+        <rect x="150" y="110" width="900" height="450" fill="none" stroke="#26262b" stroke-width="2" stroke-dasharray="7 5"/>
+        <line x1="210" y1="520" x2="210" y2="155" stroke="#26262b" stroke-width="2" marker-end="url(#arr)"/>
+        <line x1="210" y1="520" x2="1005" y2="520" stroke="#26262b" stroke-width="2" marker-end="url(#arr)"/>
+        <text class="hand" x="176" y="330" font-size="19" fill="#26262b" transform="rotate(-90 176 330)">信息空间</text>
+        <text class="hand" x="880" y="548" font-size="19" fill="#26262b">交互时间</text>
+        <text class="hand" x="160" y="98" font-size="20" fill="#2447c5">坐标（俯瞰图）</text>
+        <circle class="trajdot" cx="235" cy="345" r="6" fill="#2447c5"/>
+      </g>
+
+      <g id="userIn" class="layer">
+        <circle cx="120" cy="337" r="40" fill="#f6f3ea" stroke="#26262b" stroke-width="2.5"/>
+        <text x="120" y="331" font-size="15" text-anchor="middle" fill="#26262b">User</text>
+        <text x="120" y="350" font-size="15" text-anchor="middle" fill="#26262b">Input</text>
+        <line x1="168" y1="300" x2="556" y2="308" stroke="#26262b" stroke-width="2"/>
+        <line x1="168" y1="374" x2="556" y2="366" stroke="#26262b" stroke-width="2"/>
+      </g>
+
+      <g id="llm" class="layer">
+        <rect x="556" y="297" width="118" height="80" rx="6" fill="#f6f3ea" stroke="#26262b" stroke-width="2.5"/>
+        <text x="615" y="345" font-size="22" font-weight="700" text-anchor="middle" fill="#26262b">LLM</text>
+      </g>
+
+      <g id="coneNarrow" class="layer">
+        <line x1="674" y1="321" x2="1080" y2="283" stroke="#26262b" stroke-width="2"/>
+        <line x1="674" y1="353" x2="1080" y2="391" stroke="#26262b" stroke-width="2"/>
+      </g>
+      <g id="coneWide" class="layer">
+        <line x1="674" y1="321" x2="1080" y2="185" stroke="#26262b" stroke-width="2"/>
+        <line x1="674" y1="353" x2="1080" y2="489" stroke="#26262b" stroke-width="2"/>
+      </g>
+      <g id="coneCompound" class="layer">
+        <line x1="674" y1="327" x2="880" y2="297" stroke="#26262b" stroke-width="2"/>
+        <line x1="674" y1="347" x2="880" y2="377" stroke="#26262b" stroke-width="2"/>
+        <line x1="674" y1="323" x2="980" y2="267" stroke="#26262b" stroke-width="2" opacity=".55"/>
+        <line x1="674" y1="351" x2="980" y2="407" stroke="#26262b" stroke-width="2" opacity=".55"/>
+        <line x1="674" y1="319" x2="1080" y2="215" stroke="#cf3327" stroke-width="2"/>
+        <line x1="674" y1="355" x2="1080" y2="459" stroke="#cf3327" stroke-width="2"/>
+      </g>
+      <g id="beam" class="layer">
+        <line x1="674" y1="327" x2="1060" y2="327" stroke="#26262b" stroke-width="2"/>
+        <line x1="674" y1="337" x2="1060" y2="337" stroke="#26262b" stroke-width="2"/>
+        <line x1="674" y1="347" x2="1060" y2="347" stroke="#26262b" stroke-width="2"/>
+        <rect x="1060" y="315" width="26" height="44" fill="#f6f3ea" stroke="#26262b" stroke-width="2"/>
+      </g>
+
+      <g id="rails" class="layer">
+        <line x1="700" y1="291" x2="1060" y2="291" stroke="#2447c5" stroke-width="7" stroke-linecap="round"/>
+        <line x1="700" y1="383" x2="1060" y2="383" stroke="#2447c5" stroke-width="7" stroke-linecap="round"/>
+        <line x1="700" y1="291" x2="686" y2="305" stroke="#2447c5" stroke-width="7" stroke-linecap="round"/>
+        <line x1="700" y1="383" x2="686" y2="369" stroke="#2447c5" stroke-width="7" stroke-linecap="round"/>
+        <text class="hand" x="712" y="272" font-size="20" fill="#2447c5">Harness：这条蓝线，让回答在它之内</text>
+      </g>
+
+      <g id="loop" class="layer">
+        <path d="M 900 405 C 870 560, 520 585, 300 500 C 240 478, 210 430, 200 402" fill="none" stroke="#26262b" stroke-width="2" marker-end="url(#arr)"/>
+        <text class="hand" x="452" y="556" font-size="19" fill="#26262b">output → new input</text>
+      </g>
+
+      <g id="evalG" class="layer">
+        <rect x="700" y="520" width="180" height="54" rx="6" fill="#f6f3ea" stroke="#26262b" stroke-width="2"/>
+        <text x="790" y="553" font-size="16" text-anchor="middle" fill="#26262b">评估 / 决策模块</text>
+        <path d="M 838 402 L 802 514" fill="none" stroke="#26262b" stroke-width="2" marker-end="url(#arr)"/>
+        <line x1="860" y1="320" x2="952" y2="178" stroke="#26262b" stroke-width="2" marker-end="url(#arr)"/>
+        <line x1="860" y1="354" x2="952" y2="446" stroke="#26262b" stroke-width="2" marker-end="url(#arr)"/>
+        <rect x="960" y="150" width="196" height="42" rx="4" fill="#f6f3ea" stroke="#cf3327" stroke-width="2.5"/>
+        <text class="hand" x="1058" y="178" font-size="18" text-anchor="middle" fill="#cf3327">Good Answer ✓ 夹具内</text>
+        <rect x="960" y="430" width="196" height="42" rx="4" fill="#f6f3ea" stroke="#26262b" stroke-width="2.5"/>
+        <text class="hand" x="1058" y="458" font-size="18" text-anchor="middle" fill="#26262b">Bad Answer ✗ 夹具外</text>
+        <path d="M 700 547 C 520 615, 320 560, 208 408" fill="none" stroke="#2447c5" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#arrB)"/>
+      </g>
+
+      <g id="script" class="layer">
+        <rect x="760" y="296" width="240" height="9" fill="#26262b"/>
+        <rect x="760" y="369" width="240" height="9" fill="#26262b"/>
+        <line class="ctrlarrow" x1="810" y1="262" x2="810" y2="288" stroke="#26262b" stroke-width="2.5" marker-end="url(#arr)"/>
+        <line class="ctrlarrow" x1="880" y1="262" x2="880" y2="288" stroke="#26262b" stroke-width="2.5" marker-end="url(#arr)"/>
+        <line class="ctrlarrow" x1="950" y1="262" x2="950" y2="288" stroke="#26262b" stroke-width="2.5" marker-end="url(#arr)"/>
+        <line class="ctrlarrow" x1="810" y1="412" x2="810" y2="386" stroke="#26262b" stroke-width="2.5" marker-end="url(#arr)"/>
+        <line class="ctrlarrow" x1="880" y1="412" x2="880" y2="386" stroke="#26262b" stroke-width="2.5" marker-end="url(#arr)"/>
+        <line class="ctrlarrow" x1="950" y1="412" x2="950" y2="386" stroke="#26262b" stroke-width="2.5" marker-end="url(#arr)"/>
+        <text class="hand" x="742" y="240" font-size="19" fill="#26262b">外部脚本 / 图（AgentScript、LangGraph）</text>
+      </g>
+
+      <g id="spectrum" class="layer">
+        <text class="hand" x="200" y="516" font-size="21" fill="#26262b">harness 强度光谱</text>
+        <line x1="200" y1="560" x2="1000" y2="560" stroke="#26262b" stroke-width="3"/>
+        <line x1="200" y1="550" x2="200" y2="570" stroke="#26262b" stroke-width="2.5"/>
+        <line x1="400" y1="550" x2="400" y2="570" stroke="#26262b" stroke-width="2.5"/>
+        <line x1="600" y1="550" x2="600" y2="570" stroke="#26262b" stroke-width="2.5"/>
+        <line x1="800" y1="550" x2="800" y2="570" stroke="#26262b" stroke-width="2.5"/>
+        <line x1="1000" y1="550" x2="1000" y2="570" stroke="#26262b" stroke-width="2.5"/>
+        <text class="hand" x="200" y="592" font-size="16" text-anchor="middle" fill="#26262b">裸调用</text>
+        <text class="hand" x="400" y="592" font-size="16" text-anchor="middle" fill="#26262b">提示·格式</text>
+        <text class="hand" x="600" y="592" font-size="16" text-anchor="middle" fill="#26262b">工具·校验</text>
+        <text class="hand" x="800" y="592" font-size="16" text-anchor="middle" fill="#26262b">代理循环·评估</text>
+        <text class="hand" x="1000" y="592" font-size="16" text-anchor="middle" fill="#26262b">脚本·图</text>
+        <text class="hand" x="200" y="622" font-size="15" fill="#cf3327">自由度↑ 上限↑ 风险↑</text>
+        <text class="hand" x="1000" y="622" font-size="15" text-anchor="end" fill="#2447c5">确定性↑ 灵活↓</text>
+        <circle class="specdot" cx="200" cy="560" r="8" fill="#2447c5"/>
+      </g>
+
+      <g id="ann1" class="layer">
+        <text class="hand" x="250" y="152" font-size="20" fill="#2447c5">明确的建议 + 强大的模型，就够了吗？</text>
+      </g>
+      <g id="ann2" class="layer">
+        <text class="hand" x="700" y="118" font-size="19" fill="#cf3327">① 难的问题 → 详细的解决方案</text>
+        <text class="hand" x="700" y="150" font-size="19" fill="#cf3327">② 复杂的模型 → 过多 slots、噪音</text>
+        <text class="hand" x="700" y="182" font-size="19" fill="#cf3327">③ 工具、信息的缺失 → 过大幻觉、噪音</text>
+      </g>
+      <g id="ann3" class="layer">
+        <text class="hand" x="250" y="152" font-size="20" fill="#2447c5">俯瞰：每种 harness 都在这张地图上圈定可行域</text>
+      </g>
+      <g id="ann4" class="layer">
+        <text class="hand" x="700" y="440" font-size="19" fill="#26262b">Output 被 Harness 限制：减少 slots、噪音、发散</text>
+      </g>
+      <g id="ann5" class="layer">
+        <text class="hand" x="720" y="140" font-size="20" fill="#cf3327">real output = 可能性（分布）</text>
+        <text class="hand" x="720" y="174" font-size="19" fill="#26262b">更复杂的 input → 更噪音的 output，逐轮扩大</text>
+      </g>
+      <g id="ann6" class="layer">
+        <text class="hand" x="250" y="150" font-size="20" fill="#2447c5">夹具内 / 夹具外 → 学习、多轮修正</text>
+        <text class="hand" x="250" y="184" font-size="19" fill="#26262b">坏分支标红打回重试，好分支放行</text>
+      </g>
+      <g id="ann7" class="layer">
+        <text class="hand" x="250" y="150" font-size="20" fill="#2447c5">极强的夹具力度 → 生产稳定性</text>
+        <text class="hand" x="250" y="184" font-size="19" fill="#26262b">代价：灵活性与上限受脚本约束</text>
+      </g>
+      <g id="ann8" class="layer">
+        <text class="hand" x="250" y="150" font-size="20" fill="#26262b">为任务在光谱上选点，并设计那条蓝线</text>
+      </g>
+
+      <g id="particles"></g>
+    </svg>
+
+    <div id="cover">
+      <h1>Harness <span>Engineering</span></h1>
+      <p>模型包含智能，harness 让智能可用 —— 以 LLM 输入/输出图为中心的动画阐释</p>
+      <div class="tags">
+        <i>问题：发散·噪音·幻觉</i>
+        <i>蓝线：让回答在它之内</i>
+        <i>多轮：发散会复利</i>
+        <i>反馈：Good / Bad Answer</i>
+        <i>固化：脚本与图</i>
+      </div>
+      <p>← → 或空格翻页 · 圆点跳转 · A 自动播放</p>
+    </div>
+
+    <div id="appendix">
+      <div class="bar">
+        <button id="rotBtn">旋转 90°</button>
+        <span>手写白板原图（本演示所还原的底稿）</span>
+      </div>
+      <div class="box" id="imgBox"><img id="originImg" src="origin.jpg" alt="手写白板原图" onerror="this.style.display='none';document.getElementById('imgMissing').style.display='';"><div id="imgMissing" class="hand" style="display:none;font-size:22px;color:#5c5b60">（未找到 origin.jpg：请将手写白板原图放在本文件同目录）</div></div>
+    </div>
+  </div>
+
+  <aside class="panel">
+    <div class="kicker" id="pKicker"></div>
+    <h2 id="pTitle"></h2>
+    <ul id="pBullets"></ul>
+    <div class="quote" id="pQuote"></div>
+    <div class="src">
+      概念核对：LangChain《The Anatomy of an Agent Harness》—— Agent = Model + Harness，「不是模型的部分就是 harness」；Anthropic《Effective harnesses for long-running agents》—— 用初始化、状态留存、自校验等 harness 设计约束长程代理。与白板思路一致：harness 是模型之外用于收敛输出的一切工程。
+    </div>
+  </aside>
+</main>
+<footer>
+  <button id="prevBtn">◀ 上一页</button>
+  <div class="dots" id="dots"></div>
+  <button id="nextBtn">下一页 ▶</button>
+  <button id="autoBtn">自动播放</button>
+  <div class="counter" id="counter"></div>
+  <div class="hint">←/→ 翻页 · A 自动</div>
+</footer>
+
+<script>
+const INK='#2b2b31', RED='#cf3327', BLUE='#2447c5';
+const CH=[
+ {k:'00 · 封面',t:'Harness Engineering',b:[
+   '以「<b class="b">User Input → LLM → Output</b>」这一张图为中心的动画阐释',
+   '还原手写白板的推演链：问题 → 蓝线 → 多轮 → 反馈 → 固化',
+   '中心动画：粒子=一次次采样；锥口=输出的可能分布；蓝线=harness'],
+  q:'白板原话：「这条蓝线，让回答在它之内」',
+  p:{spawn:520,spread:10,noise:.06}},
+ {k:'01 · 原点',t:'User Input → LLM → Output',b:[
+   '一切讨论的原点图：用户输入进入 LLM，吐出一个 Output',
+   '白板的初始假设：<b class="b">明确的建议</b> + <b class="b">强大的模型</b>，似乎就够',
+   '但单次调用的输出是一个<b class="r">不受约束的分布</b> —— 看锥口与飞散的粒子'],
+  q:'白板：回明确的建议、强大的模型',
+  p:{spawn:300,spread:12,noise:.08}},
+ {k:'02 · 问题',t:'为什么裸 LLM 不够',b:[
+   '① <b class="r">难的问题</b> → 需要详细的解决方案，一步输出撑不住',
+   '② <b class="r">复杂的模型</b> → 过多的 slots（自由度）、噪音',
+   '③ <b class="r">工具、信息的缺失</b> → 过大的幻觉、噪音',
+   '动画：锥口张开，红色粒子=噪音与幻觉采样'],
+  q:'白板：①难的问题→详细的解决 ②复杂的模型→过多slots、噪音 ③工具、信息的缺失→过大幻觉、噪音',
+  p:{spawn:210,spread:38,noise:.45}},
+ {k:'03 · 坐标',t:'俯瞰：信息空间 × 交互时间',b:[
+   '白板画了一个坐标系（俯瞰图）：纵轴=<b class="b">信息空间</b>，横轴=<b class="b">交互时间</b>',
+   '单次输出只是地图上的一个采样点；一次多轮任务是一条轨迹',
+   '后面每种 harness 手段，本质都是在这张地图上<b class="b">圈定可行域</b>'],
+  q:'白板：坐标（俯瞰图）：信息空间 ↑、交互时间 →',
+  p:{spawn:0}},
+ {k:'04 · 定义',t:'蓝线：让回答在它之内',b:[
+   'Harness = 模型之外的一切工程：提示、上下文、工具、流程、校验、护栏',
+   '作用：Output 被 Harness 限制 → <b class="b">减少 slots、噪音、发散</b>',
+   '动画：蓝色夹具合拢，越界粒子被压回带内（<b class="b">变蓝=被约束</b>）'],
+  q:'白板：Harness（这条蓝线，让回答在它之内）；Output→被Harness限制：减少slots、噪音、发散',
+  p:{spawn:250,spread:38,noise:.3,clamp:true}},
+ {k:'05 · 多轮',t:'output → new input：发散会复利',b:[
+   '上一轮 Output 成为下一轮 Input（<b class="b">new input</b>）',
+   '原本无 harness 的回答：<b class="r">更发散</b>；real output 是「可能性」而非答案',
+   '更复杂的 input → 更噪音的 output，<b class="r">逐轮扩大</b>（三层锥口=三代复利）',
+   'harness 的意义：切断复利，让每一轮重新落回蓝线内'],
+  q:'白板：多轮：原本无harness的回答：更发散；real output：可能性；更复杂的input导致更噪音的Output，逐渐扩大',
+  p:{spawn:250,spread:12,noise:.3,compound:true,loopBack:.55}},
+ {k:'06 · 反馈',t:'Good / Bad Answer：评估进场',b:[
+   '生产化 Agent 加入<b class="b">评估 / 决策模块</b>（judge、eval、RL reward）',
+   '<b class="r">Good Answer（夹具内）</b> / Bad Answer（夹具外）→ 学习、多轮修正',
+   '强化学习把蓝线逐渐<b class="b">内化进策略</b>；harness 在线兜底、负责打回重试',
+   '动画：坏分支标红落入 Bad Answer 并虚线打回，好分支放行'],
+  q:'白板：强化学习：生产化Agent、评估决策模块；Good/Bad Answer→夹具内/夹具外→学习、多轮',
+  p:{spawn:250,spread:30,noise:.3,evalSplit:true,loopBack:.5}},
+ {k:'07 · 固化',t:'极强夹具 → 生产确定性',b:[
+   '脚本 / 图编排：如 <b class="b">AgentScript、LangGraph</b>，节点与边预先写死',
+   '上下箭头=外部控制流：LLM 只在固定轨道内「填空」',
+   '<b class="b">极强的夹具力度 → 生产稳定性</b>：确定、可回归、可审计',
+   '代价：灵活性与能力上限受脚本约束（光谱的另一端）'],
+  q:'白板：极强的夹具力度→生产稳定性；如 Agentscript、LangGraph',
+  p:{spawn:300,spread:2,noise:.04,beam:true}},
+ {k:'08 · 光谱',t:'在自由度与确定性之间选点',b:[
+   '裸调用 → 提示/格式 → 工具+校验 → 代理循环+评估 → 脚本/图',
+   '向左：<b class="r">自由度↑ 上限↑ 风险↑</b>；向右：<b class="b">确定性↑ 成本↓ 灵活↓</b>',
+   'Harness engineering = 为任务在光谱上<b class="b">选点</b>，并设计那条蓝线',
+   '动画：中央图自动变形，锥口从张开到被夹成一条梁'],
+  q:'扩充：综合白板各段的取舍，harness 力度是一条连续光谱',
+  p:{spawn:300,spread:12,noise:.08}},
+ {k:'09 · 附录',t:'手写白板原图',b:[
+   '本演示所还原的原始手写稿',
+   '用「旋转 90°」按钮调整方向查看',
+   '蓝墨=harness/约束，红墨=风险/发散，与全片配色一致'],
+  q:'—',
+  p:{spawn:0}}
+];
+const VIS=[
+ ['userIn','llm','coneNarrow'],
+ ['userIn','llm','coneNarrow'],
+ ['userIn','llm','coneWide'],
+ ['coords'],
+ ['userIn','llm','coneNarrow','rails'],
+ ['userIn','llm','coneCompound','loop'],
+ ['userIn','llm','coneNarrow','rails','loop','evalG'],
+ ['userIn','llm','beam','script'],
+ ['userIn','llm','spectrum'],
+ []
+];
+const TOGGLE=['userIn','llm','coneNarrow','coneWide','coneCompound','beam','rails','loop','evalG','script','coords','spectrum'];
+const ANNS=[null,'ann1','ann2','ann3','ann4','ann5','ann6','ann7','ann8',null];
+let ch=0, cur=CH[0].p, P=[], acc=0, lastT=0, autoTimer=null;
+let cycTimer=null, cycIdx=0;
+const CYC=[
+ {add:['coneNarrow'],p:{spawn:300,spread:12,noise:.08}},
+ {add:['coneWide'],p:{spawn:210,spread:38,noise:.45}},
+ {add:['coneNarrow','rails'],p:{spawn:250,spread:38,noise:.3,clamp:true}},
+ {add:['beam','script'],p:{spawn:300,spread:2,noise:.04,beam:true}}
+];
+const $=id=>document.getElementById(id);
+const pLayer=$('particles');
+const NS='http://www.w3.org/2000/svg';
+
+function setVisual(list){
+  TOGGLE.forEach(id=>$(id).classList.toggle('on',list.includes(id)));
+}
+function clearParticles(){
+  P.forEach(p=>p.el.remove());
+  P=[];
+}
+function stopCycle(){
+  if(cycTimer){clearInterval(cycTimer);cycTimer=null;}
+}
+function startCycle(){
+  stopCycle();
+  cycIdx=0;
+  const c=CYC[0];
+  setVisual([...VIS[8],...c.add]);
+  cur=c.p;
+  cycTimer=setInterval(()=>{
+    cycIdx=(cycIdx+1)%CYC.length;
+    const c2=CYC[cycIdx];
+    setVisual([...VIS[8],...c2.add]);
+    cur=c2.p;
+    clearParticles();
+  },3000);
+}
+function applyChapter(i){
+  ch=i;
+  document.body.dataset.ch=i;
+  const c=CH[i];
+  $('pKicker').textContent=c.k;
+  $('pTitle').textContent=c.t;
+  $('pBullets').innerHTML=c.b.map(x=>'<li>'+x+'</li>').join('');
+  const q=$('pQuote');
+  if(c.q==='—'){q.style.display='none';}else{q.style.display='';q.textContent=c.q;}
+  [...$('dots').children].forEach((d,di)=>d.classList.toggle('on',di===i));
+  $('counter').textContent=(i+1)+' / '+CH.length;
+  stopCycle();
+  clearParticles();
+  acc=0;
+  if(i===8){setVisual(VIS[8]);startCycle();}
+  else{setVisual(VIS[i]);cur=c.p||{spawn:0};}
+  ANNS.forEach((a,ai)=>{if(a)$(a).classList.toggle('on',ai===i);});
+  if(i===9)fitImg();
+}
+function mkCircle(){
+  const el=document.createElementNS(NS,'circle');
+  el.setAttribute('r','3.2');
+  pLayer.appendChild(el);
+  return el;
+}
+function setColor(p,c){p.color=c;p.el.setAttribute('fill',c);}
+function restart(p,gen){
+  p.ph='in';p.t=0;p.dur=800+Math.random()*300;
+  p.sx=168;p.sy=240+Math.random()*194;
+  p.tx=556;p.ty=308+Math.random()*58;
+  p.x=p.sx;p.y=p.sy;p.gen=gen;
+  p.judged=false;p.dest=null;p.clamped=false;p.bad=false;
+  setColor(p,Math.random()<cur.noise?RED:INK);
+}
+function spawn(){
+  const el=mkCircle();
+  const p={el,sp:2.3+Math.random()*.8,ang:0,vx:0,vy:0};
+  P.push(p);
+  restart(p,0);
+}
+function emit(p){
+  const sd=cur.beam?2:(cur.compound?8+p.gen*4:(cur.spread||10));
+  const a=(Math.random()*2-1)*sd*Math.PI/180;
+  p.ang=a*180/Math.PI;
+  p.vx=Math.cos(a)*p.sp;
+  p.vy=Math.sin(a)*p.sp;
+  p.ph='out';
+  p.x=676;
+  p.y=337+(Math.random()*40-20);
+}
+function kill(p){
+  p.el.remove();
+  const i=P.indexOf(p);
+  if(i>=0)P.splice(i,1);
+}
+function step(dt){
+  const dtf=dt/16.7;
+  if(cur.spawn){
+    acc+=dt;
+    if(acc>=cur.spawn&&P.length<90){acc=0;spawn();}
+  }
+  for(let i=P.length-1;i>=0;i--){
+    const p=P[i];
+    if(p.ph==='in'){
+      p.t+=dt;
+      const k=Math.min(1,p.t/p.dur);
+      const e=k*k*(3-2*k);
+      p.x=p.sx+(p.tx-p.sx)*e;
+      p.y=p.sy+(p.ty-p.sy)*e;
+      if(k>=1)emit(p);
+    }else{
+      p.x+=p.vx*dtf;
+      p.y+=p.vy*dtf;
+      if(p.color===RED&&!p.dest)p.vy+=(Math.random()-.5)*.15*dtf;
+      if(cur.clamp&&p.x>700&&!p.dest){
+        if(p.y<291){p.y=291;p.vy=0;p.clamped=true;setColor(p,BLUE);}
+        if(p.y>383){p.y=383;p.vy=0;p.clamped=true;setColor(p,BLUE);}
+      }
+      if(cur.beam){
+        if(p.y<325){p.y=325;p.vy=0;}
+        if(p.y>349){p.y=349;p.vy=0;}
+      }
+      if(cur.evalSplit&&!p.judged&&p.x>=840){
+        p.judged=true;
+        if(Math.abs(p.ang)<=14){p.dest={x:972,y:171};setColor(p,BLUE);}
+        else{p.dest={x:972,y:451};setColor(p,RED);p.bad=true;}
+      }
+      if(p.dest){
+        const dx=p.dest.x-p.x,dy=p.dest.y-p.y;
+        const d=Math.hypot(dx,dy);
+        if(d<10){
+          if(p.bad&&Math.random()<cur.loopBack)restart(p,0);
+          else kill(p);
+          continue;
+        }
+        p.vx=dx/d*p.sp;
+        p.vy=dy/d*p.sp;
+      }
+      if(cur.compound&&p.x>1120){
+        if(Math.random()<cur.loopBack&&p.gen<2)restart(p,p.gen+1);
+        else kill(p);
+        continue;
+      }
+      if(p.x>1160||p.y<-20||p.y>695){kill(p);continue;}
+    }
+    p.el.setAttribute('cx',p.x.toFixed(1));
+    p.el.setAttribute('cy',p.y.toFixed(1));
+  }
+}
+function loop(t){
+  const dt=Math.min(50,t-lastT||16);
+  lastT=t;
+  if(ch!==9)step(dt);
+  requestAnimationFrame(loop);
+}
+function next(){applyChapter((ch+1)%CH.length);}
+function prev(){applyChapter((ch-1+CH.length)%CH.length);}
+
+CH.forEach((c,i)=>{
+  const d=document.createElement('button');
+  d.title=c.t;
+  d.onclick=()=>applyChapter(i);
+  $('dots').appendChild(d);
+});
+$('nextBtn').onclick=next;
+$('prevBtn').onclick=prev;
+$('autoBtn').onclick=()=>{
+  if(autoTimer){clearInterval(autoTimer);autoTimer=null;$('autoBtn').classList.remove('on');}
+  else{autoTimer=setInterval(next,9000);$('autoBtn').classList.add('on');}
+};
+window.addEventListener('keydown',e=>{
+  if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){e.preventDefault();next();}
+  else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();prev();}
+  else if(e.key==='Home'){applyChapter(0);}
+  else if(e.key==='End'){applyChapter(CH.length-1);}
+  else if(e.key==='a'||e.key==='A'){$('autoBtn').click();}
+});
+
+let rot=90;
+const img=$('originImg');
+function fitImg(){
+  const box=$('imgBox');
+  const W=box.clientWidth,H=box.clientHeight;
+  if(!img.naturalWidth)return;
+  const r=img.naturalWidth/img.naturalHeight;
+  if(rot%180===90){
+    const lh=Math.min(H/r,W);
+    img.style.height=lh+'px';
+    img.style.width=(lh*r)+'px';
+  }else{
+    const lw=Math.min(W,H*r);
+    img.style.width=lw+'px';
+    img.style.height=(lw/r)+'px';
+  }
+  img.style.transform='rotate('+rot+'deg)';
+}
+$('rotBtn').onclick=()=>{rot=(rot+90)%360;fitImg();};
+img.onload=()=>{if(ch===9)fitImg();};
+window.addEventListener('resize',()=>{if(ch===9)fitImg();});
+
+applyChapter(0);
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

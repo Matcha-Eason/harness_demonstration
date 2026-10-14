@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f5f5f0">
+<meta name="description" content="以 LLM 输入输出为中心，交互探索 Harness Engineering：生成、发散、约束、反馈、训练与可靠交付。">
+<title>Harness Engineering — 从发散到可靠</title>
+<style>
+:root{--paper:#f5f5f0;--white:#fff;--ink:#222c2b;--muted:#737c76;--line:#dfe3da;--green:#326753;--green-pale:#e8eee7;--orange:#cd7049;--purple:#8570b0;--serif:Georgia,"Songti SC","Noto Serif CJK SC",serif;--sans:Inter,"SF Pro Display",-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;--mono:"SFMono-Regular",Consolas,monospace}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}button,input{font:inherit}button,a,input{-webkit-tap-highlight-color:transparent}button{cursor:pointer}button{color:inherit}a{color:var(--green)}button:focus-visible,a:focus-visible,input:focus-visible{outline:3px solid #cfaa62;outline-offset:5px}button:disabled{cursor:default;opacity:.35}button{border:0}svg text{font-family:var(--sans)}.mono{font-family:var(--mono);font-size:11px;letter-spacing:.08em}.topbar{height:78px;padding:0 38px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:20px}.brand{display:flex;align-items:center;gap:13px;font-size:15px;font-weight:650;letter-spacing:-.3px}.brand-mark{width:31px;height:31px;display:grid;place-items:center;background:var(--green);color:white;border-radius:7px;font:23px var(--serif)}.brand span em{font-style:normal;font-weight:400;color:var(--muted)}.top-actions{display:flex;gap:24px;align-items:center}.source-button{background:none;font-size:12px;display:flex;gap:7px;align-items:center}.presentation-button{border:1px solid #cfd7cc;border-radius:6px;padding:9px 13px;background:transparent;font-size:12px;display:flex;gap:8px;align-items:center}.edition{color:var(--muted);font-size:10px;letter-spacing:.13em}.shell{max-width:1600px;margin:0 auto;display:grid;grid-template-columns:238px minmax(0,1fr);min-height:calc(100vh - 78px)}.sidebar{border-right:1px solid var(--line);padding:37px 23px 25px 30px;display:flex;flex-direction:column}.sidebar-label{font-size:10px;color:var(--muted);letter-spacing:.16em;margin:0 0 24px 10px}.chapter-list{display:flex;flex-direction:column;gap:7px}.chapter{padding:15px 12px;display:flex;align-items:center;gap:14px;text-align:left;background:transparent;border-radius:6px;position:relative;transition:background .2s}.chapter:hover{background:#eaeee6}.chapter.active{background:var(--green-pale);color:var(--green)}.chapter.active:before{content:"";position:absolute;left:0;top:18px;bottom:18px;width:3px;border-radius:3px;background:var(--green)}.chapter-number{font-family:var(--mono);font-size:11px;color:#939a91}.chapter.active .chapter-number{color:var(--green)}.chapter-name{font-size:13px;font-weight:550;display:block}.chapter-en{font-size:10px;color:var(--muted);display:block;margin-top:5px}.sidebar-note{margin-top:auto;padding:48px 10px 4px}.sidebar-note .sketch-icon{width:46px;display:block;margin-bottom:15px}.sidebar-note p{font-size:11px;line-height:1.9;color:var(--muted);margin:0}.sidebar-note a{display:inline-block;font-size:11px;text-decoration:none;margin-top:11px}.main{padding:39px 46px 24px;min-width:0}.eyebrow{color:var(--green);font-size:10px;letter-spacing:.14em;display:flex;align-items:center;gap:10px}.eyebrow:before{content:"";height:6px;width:6px;border-radius:100%;background:var(--green)}.hero{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;margin-bottom:27px}.hero h1{font-family:var(--serif);font-size:clamp(28px,2.7vw,43px);font-weight:500;line-height:1.3;letter-spacing:-1.7px;margin:15px 0 12px}.hero h1 em{font-style:normal;color:var(--green)}.hero p{color:var(--muted);font-size:13px;line-height:1.8;margin:0;max-width:690px}.hero-index{font-family:var(--serif);font-size:57px;color:#d5dcd1;line-height:1;flex-shrink:0;margin-bottom:7px;font-style:italic}.diagram-panel{border:1px solid #d7ded3;border-radius:10px;background:#fafbf7;overflow:hidden;position:relative}.diagram-top{height:53px;padding:0 23px;display:flex;align-items:center;justify-content:space-between;gap:15px;border-bottom:1px solid #e8ebe2}.diagram-top .mono{color:#778375;font-size:9px}.live-label{display:flex;align-items:center;gap:8px}.live-dot{height:5px;width:5px;background:var(--green);border-radius:100%;box-shadow:0 0 0 3px #e6eee1}.legend{display:flex;gap:17px;font-size:10px;color:var(--muted)}.legend span{display:flex;align-items:center;gap:6px}.legend i{width:15px;height:2px;background:var(--green)}.legend .dashed{background:repeating-linear-gradient(90deg,#a2ada0 0 3px,transparent 3px 5px)}.legend .orange{background:var(--orange)}.visual{position:relative;background-image:radial-gradient(#dfe5d9 .75px,transparent .75px);background-size:18px 18px;min-height:330px}.visual svg{display:block;width:100%;height:auto;min-height:330px;overflow:visible}.scene-note{position:absolute;top:18px;left:23px;max-width:350px;color:#7b8678;font-size:10px;display:flex;gap:7px}.scene-note:before{content:"↳";color:var(--green)}.diagram-bottom{border-top:1px solid #e8ebe2;padding:13px 23px;display:flex;justify-content:space-between;align-items:center;gap:12px;background:#f7f9f3}.diagram-bottom span{color:var(--muted);font-size:10px}.diagram-bottom strong{font-size:10px;font-weight:500;color:var(--green)}.scene-controls{min-height:80px;padding:18px 0 0;display:flex;gap:20px;align-items:center;justify-content:space-between}.control-caption{font-size:11px;color:var(--muted);line-height:1.6;max-width:370px}.control-caption strong{font-weight:500;color:var(--ink)}.control-area{display:flex;align-items:center;gap:10px;flex-shrink:0}.pill{background:#fff;border:1px solid var(--line);border-radius:5px;padding:8px 13px;font-size:11px;transition:.2s}.pill.active{color:var(--green);border-color:#8aab8e;background:var(--green-pale)}.pill:disabled{opacity:1}.range-wrap{width:260px;display:grid;grid-template-columns:1fr auto;gap:7px 12px;font-size:11px}.range-wrap label{color:var(--muted)}.range-wrap output{color:var(--orange);font-family:var(--mono)}input[type=range]{grid-column:1/-1;accent-color:var(--orange);width:100%;height:15px;cursor:pointer;margin:0}.insight{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:30px;margin-top:22px;border-top:1px solid var(--line);padding-top:25px;min-height:133px}.insight-main{display:flex;gap:15px;align-items:flex-start}.insight-symbol{font:23px var(--serif);color:var(--green);width:22px;flex-shrink:0;margin-top:0}.insight h2{font-size:14px;font-weight:600;margin:1px 0 9px}.insight p{font-size:12px;color:var(--muted);line-height:1.9;margin:0}.note-box{border-left:1px solid var(--line);padding:0 0 0 27px}.note-box h3{font-size:9px;font-weight:500;color:var(--green);letter-spacing:.13em;margin:2px 0 9px}.note-box p{font-size:11px;line-height:1.9}.footer{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-top:23px;padding-top:19px;border-top:1px solid var(--line)}.footer-left{display:flex;gap:18px;align-items:center}.play-button{display:flex;align-items:center;gap:8px;background:none;font-size:11px;padding:7px 0;min-width:74px}.play-icon{font-size:12px;width:13px}.play-button.playing{color:var(--green)}.progress-track{height:3px;background:#dfe4d9;width:100px;border-radius:3px;overflow:hidden}.progress-fill{height:100%;background:var(--green);width:16.66%;transition:width .4s}.footer-position{font-size:10px;color:var(--muted);font-family:var(--mono)}.footer-right{display:flex;align-items:center;gap:20px}.keyboard-hint{font-size:10px;color:#90978c}.key{border:1px solid #d5dcd0;border-radius:3px;padding:1px 5px;font-family:var(--mono);font-size:9px}.arrow-button{width:32px;height:30px;border:1px solid #d5dcd0;background:transparent;border-radius:5px;font-size:16px}.next-button{font-size:11px;display:flex;gap:16px;align-items:center;padding:8px 13px;border:1px solid #ccd6c7;background:var(--green);color:white;border-radius:5px}.control-step{padding:8px 10px}.scenario-info{color:var(--muted);font-size:11px}.training-run{background:var(--purple);color:white;border-color:var(--purple)}.fade-in{animation:arrive .5s ease both}@keyframes arrive{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}.input-line{stroke:#a6b4a0;stroke-width:1.5;fill:none}.expected{stroke:#acb8a5;stroke-width:1;stroke-dasharray:4 5;fill:none}.ray{fill:none;stroke-width:1.3}.particle{pointer-events:none}.core-shell{fill:#fff;stroke:#2f654f;stroke-width:1.4}.core-shadow{fill:#e8ede4}.model-label{font:italic 36px var(--serif);fill:#2e604b}.model-sub{font:9px var(--mono);letter-spacing:.1em;fill:#82917c}.micro-label{font-size:9px;fill:#8a9584;letter-spacing:.08em}.svg-label{font-size:12px;fill:#51654f}.svg-small{font-size:10px;fill:#87917f}.input-title{font-size:12px;fill:#4b5e48}.input-detail{font-size:10px;fill:#87917f}.output-title{font-size:12px;fill:#41683d}.rail{stroke:#447c5a;stroke-width:3;fill:none;stroke-linecap:round}.corridor{fill:url(#corridorFill)}.bound-label{fill:#527c4f;font-size:9px;letter-spacing:.08em}.bound-node{fill:#f2f6ed;stroke:#cad8c1;stroke-width:1}.bound-text{fill:#5f7956;font-size:9px}.group-rail,.group-loop,.group-train,.group-context,.group-ghost,.group-output-check,.group-tools,.group-drift{opacity:0;transition:opacity .5s}.drift-visible .group-drift{opacity:1}.tools-visible .group-tools{opacity:1}.harness-visible .group-rail{opacity:1}.loop-visible .group-loop{opacity:1}.training-visible .group-train{opacity:1}.context-visible .group-context{opacity:1}.ghost-visible .group-ghost{opacity:1}.check-visible .group-output-check{opacity:1}.loop-path{stroke:#8fa78a;fill:none;stroke-width:1.4;stroke-dasharray:4 4}.validation-fill{fill:#f5f8f0;stroke:#a8be9f;stroke-width:1}.reward-path{stroke:var(--purple);stroke-width:1.7;fill:none;stroke-dasharray:4 4}.weight-dot{fill:var(--purple);opacity:.45}.core-pulse{fill:none;stroke:#77946a;opacity:0}.train-pulse .core-pulse{animation:trainPulse 1s ease infinite}@keyframes trainPulse{0%{opacity:.6;transform:translate(386px,190px) scale(1) translate(-386px,-190px)}100%{opacity:0;transform:translate(386px,190px) scale(1.25) translate(-386px,-190px)}}.source-dialog{width:min(850px,calc(100vw - 32px));max-height:86vh;padding:0;border:1px solid #d3dbcd;border-radius:12px;background:var(--paper);color:var(--ink)}.source-dialog::backdrop{background:#16251c88;backdrop-filter:blur(5px)}.dialog-top{display:flex;align-items:center;justify-content:space-between;padding:22px 26px;border-bottom:1px solid var(--line)}.dialog-top h2{font-size:17px;font-weight:500;margin:0}.dialog-close{background:transparent;font-size:25px;line-height:1;padding:0 4px}.dialog-tabs{padding:18px 26px;display:flex;gap:9px}.dialog-content{padding:0 26px 26px;overflow:auto;max-height:calc(86vh - 145px)}.dialog-content img{width:100%;display:block;border-radius:5px}.source-intro{font-size:12px;line-height:1.9;color:var(--muted);margin:0 0 18px}.reference{border-top:1px solid var(--line);padding:18px 0}.reference a{font-size:13px;font-weight:550;line-height:1.6;text-decoration:none}.reference p{font-size:12px;line-height:1.9;color:var(--muted);margin:7px 0 0}.reference small{font:10px var(--mono);color:var(--muted);display:block;margin-bottom:6px}.page-toast{position:fixed;bottom:25px;left:50%;transform:translateX(-50%);padding:12px 20px;border-radius:7px;background:var(--ink);color:white;font-size:12px;z-index:20}.presentation .topbar,.presentation .sidebar{display:none}.presentation .shell{grid-template-columns:1fr;max-width:1500px;min-height:100vh}.presentation .main{padding:35px 6vw}.presentation .visual svg{max-height:50vh}.exit-presentation{display:none;position:fixed;top:16px;right:18px;background:#edf1e8;border:1px solid #ccd6c7;padding:7px 12px;border-radius:5px;font-size:11px;z-index:10}.presentation .exit-presentation{display:block}[hidden]{display:none!important}
+@media(min-width:1650px){.main{padding-top:52px}.visual svg{min-height:400px}.scene-controls{min-height:90px}.insight{margin-top:30px}.footer{margin-top:32px}}
+@media(max-width:1150px){.shell{grid-template-columns:194px minmax(0,1fr)}.sidebar{padding:30px 14px}.main{padding:31px 27px 22px}.hero-index{font-size:48px}.hero h1{font-size:31px}.legend{gap:10px}.scene-controls{gap:10px;flex-wrap:wrap}.control-area{flex-wrap:wrap;flex-shrink:1}.control-caption{max-width:none}.pill{padding:7px 10px}.insight{gap:20px}.visual svg{min-height:300px}.hero p{font-size:12px}}
+@media(max-width:800px){.topbar{height:64px;padding:0 20px}.brand{font-size:13px}.edition{display:none}.top-actions{gap:15px}.presentation-button{font-size:0;gap:0;padding:8px}.presentation-button svg{width:16px}.shell{display:block}.sidebar{padding:13px 16px 0;border-right:0}.sidebar-label,.sidebar-note,.chapter-en{display:none}.chapter-list{flex-direction:row;gap:4px;overflow:auto;padding-bottom:12px;border-bottom:1px solid var(--line)}.chapter{padding:10px 12px;gap:7px;white-space:nowrap}.chapter.active:before{display:none}.chapter-name{font-size:11px}.chapter-number{font-size:9px}.main{padding:23px 20px}.hero h1{font-size:30px;letter-spacing:-1px;max-width:550px}.hero{margin-bottom:22px}.hero-index{font-size:42px}.visual svg{min-width:700px;min-height:270px}.visual{overflow:auto;min-height:270px}.diagram-top{padding:0 15px;height:46px}.legend{font-size:9px;gap:8px}.diagram-top .mono{font-size:8px}.scene-note{left:17px}.diagram-bottom{padding:11px 15px}.diagram-bottom span,.diagram-bottom strong{font-size:9px}.scene-controls{padding-top:15px;min-height:85px;gap:12px}.control-caption{font-size:11px}.range-wrap{width:240px}.insight{grid-template-columns:1fr;gap:18px;padding-top:20px;margin-top:20px}.note-box{border-left:0;padding:13px 0 0 37px;border-top:1px solid var(--line)}.footer{margin-top:22px}.keyboard-hint{display:none}.footer-right{gap:10px}.footer-left{gap:10px}.progress-track{width:60px}.source-button{font-size:11px}.presentation .main{padding:45px 20px 20px}.presentation .visual svg{max-height:none}.hero p{max-width:600px}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+@media(min-width:801px) and (max-height:950px){.main{padding-top:26px}.hero{margin-bottom:20px}.hero h1{font-size:34px;margin:11px 0 9px}.diagram-top{height:44px}.visual{min-height:235px}.visual svg{height:clamp(235px,calc(100vh - 500px),370px);min-height:235px}.diagram-bottom{padding-top:11px;padding-bottom:11px}.scene-controls{min-height:72px}.insight{margin-top:18px;padding-top:20px;min-height:120px}.footer{margin-top:17px;padding-top:16px}}
+.presentation .main{padding:26px 5vw 18px}.presentation .hero{margin-bottom:18px}.presentation .hero h1{font-size:34px;margin:10px 0 9px}.presentation .diagram-top{height:42px}.presentation .visual{min-height:240px}.presentation .visual svg{height:clamp(240px,calc(100vh - 450px),550px);min-height:240px;max-height:none}.presentation .scene-controls{min-height:64px}.presentation .insight{margin-top:15px;padding-top:15px;min-height:100px}.presentation .footer{margin-top:14px;padding-top:14px}
+@media(max-height:800px) and (min-width:801px){.presentation .insight{display:none}.presentation .visual svg{height:calc(100vh - 320px);min-height:240px}}
+@media(max-width:800px){.visual svg{min-width:0;min-height:240px;height:auto}.svg-label,.input-title,.output-title{font-size:16px}.input-detail,.svg-small{font-size:13px}.micro-label,.bound-label,.bound-text{font-size:11px}.diagram-bottom{align-items:flex-start;flex-direction:column;gap:6px}.diagram-bottom span,.diagram-bottom strong{font-size:10px}.presentation .visual svg{min-height:240px;height:auto}.presentation .main{padding-top:45px}}
+@media(max-width:600px){.hero-index{display:none}.hero h1{font-size:28px}.diagram-top .mono{font-size:8px}.legend{font-size:8px;gap:7px}.legend i{width:10px}.hero p{font-size:12px}.scene-note{font-size:9px}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><div class="brand-mark" aria-hidden="true">h</div><span>Harness <em>Engineering</em></span></div>
+  <div class="top-actions"><span class="edition mono">AN INTERACTIVE EXPLAINER / 2026</span><button class="source-button" id="sources-open"><span aria-hidden="true">↗</span> 原图与参考</button><button class="presentation-button" id="present"><svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" aria-hidden="true"><path d="M6 2H2v4M10 2h4v4M2 10v4h4M14 10v4h-4"/></svg>演示模式</button></div>
+</header>
+<button class="exit-presentation" id="exit-present">退出演示 <span class="key">Esc</span></button>
+<div class="shell">
+<aside class="sidebar">
+  <p class="sidebar-label mono">THE EXPLORATION</p>
+  <nav class="chapter-list" aria-label="演示章节"></nav>
+  <div class="sidebar-note">
+    <svg class="sketch-icon" viewBox="0 0 56 40" fill="none" stroke="#7d9870" stroke-width="1.2" aria-hidden="true"><path d="M0 8l16 10M0 32l16-10M18 12h16v16H18zM36 18l18-12M36 22l18 12M37 14l14-5M37 26l14 5"/><path d="M38 15l13-1M38 25l13 1" stroke="#326753" stroke-width="2"/></svg>
+    <p>从一张手绘草图出发，<br>理解模型之外的工程。</p><a href="#" id="sketch-open">查看概念原图 ↗</a>
+  </div>
+</aside>
+<main class="main" id="main" data-scene="0">
+  <div class="hero">
+    <div><div class="eyebrow mono" id="eyebrow"></div><h1 id="title"></h1><p id="description"></p></div><div class="hero-index" id="hero-index" aria-hidden="true">01</div>
+  </div>
+  <section class="diagram-panel" aria-label="LLM 输入输出动画">
+    <div class="diagram-top"><span class="live-label mono"><i class="live-dot"></i> LLM · INPUT / OUTPUT</span><div class="legend"><span><i></i> 实际路径</span><span><i class="dashed"></i> 目标方向</span><span id="risk-legend" hidden><i class="orange"></i> 偏离路径</span></div></div>
+    <div class="visual" id="visual"><div class="scene-note" id="scene-note"></div>
+    <svg id="diagram" viewBox="0 0 1000 370" role="img" aria-labelledby="diagram-title diagram-description">
+      <title id="diagram-title">LLM 输入输出示意</title><desc id="diagram-description">输入进入语言模型，模型生成候选输出。切换章节可以观察输出发散、harness 约束和反馈循环。</desc>
+      <defs>
+        <linearGradient id="corridorFill"><stop stop-color="#dce9d0" stop-opacity=".1"/><stop offset="1" stop-color="#dce9d0" stop-opacity=".65"/></linearGradient>
+        <linearGradient id="modelFill" x2="0" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#f2f6ed"/></linearGradient>
+        <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M1 1l6 3-6 3" fill="none" stroke="#77916c" stroke-width="1.3"/></marker>
+        <marker id="arrow-purple" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 1l6 3-6 3" fill="none" stroke="#8570b0" stroke-width="1.3"/></marker>
+      </defs>
+      <g class="group-ghost" fill="none" stroke="#c8d0c0" stroke-dasharray="3 5" stroke-width="1"><path d="M445 185Q620 140 810 66"/><path d="M445 185Q620 230 810 306"/><text x="732" y="53" class="svg-small" stroke="none">无约束的可能路径</text></g>
+      <path class="expected" d="M446 185H825"/>
+      <g class="group-rail"><path class="corridor" d="M453 158L810 139V231L453 212Z"/><path class="rail" d="M461 152l-6 7 354-20 0 13M461 218l-6-7 354 20 0-13"/><text x="650" y="123" class="bound-label" text-anchor="middle">HARNESS · 运行时约束</text><path d="M648 129v18" stroke="#92aa85" stroke-width="1"/></g>
+      <g id="input-lines"><path class="input-line" d="M210 110C265 110 280 158 327 163"/><path class="input-line" d="M210 185H327"/><path class="input-line" d="M210 260C265 260 280 212 327 207"/></g>
+      <text x="86" y="181" class="input-title" id="input-title">用户输入</text><text x="86" y="201" class="input-detail" id="input-detail">意图 · 问题 · 指令</text><text x="268" y="91" class="micro-label">INPUT</text>
+      <g class="group-context"><rect x="236" y="57" width="95" height="23" rx="5" class="bound-node"/><text x="283" y="72" text-anchor="middle" class="bound-text" id="context-label">相关上下文</text><path d="M302 82L342 122" stroke="#a5b69a" fill="none" stroke-dasharray="3 3"/><rect x="236" y="290" width="95" height="23" rx="5" class="bound-node"/><text x="283" y="305" text-anchor="middle" class="bound-text" id="memory-label">持久状态</text><path d="M304 287L342 250" stroke="#a5b69a" fill="none" stroke-dasharray="3 3"/></g>
+      <g id="output-rays"></g><g id="flow-particles"></g>
+      <rect x="334" y="130" width="112" height="128" rx="13" class="core-shadow"/>
+      <rect x="327" y="121" width="112" height="128" rx="13" class="core-shell" style="fill:url(#modelFill)"/>
+      <rect x="327" y="121" width="112" height="128" rx="13" class="core-pulse"/>
+      <path d="M343 138h8M343 138v8M423 232h-8M423 232v-8" stroke="#b6c6ac" fill="none" stroke-width="1"/>
+      <text x="383" y="182" text-anchor="middle" class="model-label">LLM</text><text x="383" y="207" text-anchor="middle" class="model-sub" id="model-sub">GENERATE</text>
+      <g id="weight-dots" opacity="0"><circle cx="359" cy="223" r="2" class="weight-dot"/><circle cx="371" cy="223" r="2" class="weight-dot"/><circle cx="383" cy="223" r="2" class="weight-dot"/><circle cx="395" cy="223" r="2" class="weight-dot"/><circle cx="407" cy="223" r="2" class="weight-dot"/></g>
+      <text x="833" y="180" class="output-title" id="output-title">模型输出</text><text x="833" y="201" class="svg-small" id="output-detail">一次生成的回答</text>
+      <g class="group-output-check"><circle cx="813" cy="185" r="10" fill="#326753"/><path d="M808 185l3 3 6-6" fill="none" stroke="#fff" stroke-width="1.4"/></g>
+      <g class="group-loop"><path class="loop-path" id="feedback-path" d="M745 237V290Q745 315 720 315H409Q383 315 383 288V258" marker-end="url(#arrow)"/><rect x="548" y="299" width="152" height="31" rx="5" class="validation-fill"/><text x="624" y="319" text-anchor="middle" font-size="10" fill="#5d7950" id="validation-label">验证 → 反馈 → 再生成</text><circle id="loop-particle" cx="745" cy="237" r="3.5" fill="#6e9361"/><text x="477" y="346" class="svg-small" id="loop-label">工具结果与检查反馈，成为下一轮输入</text></g><g class="group-tools"><rect x="509" y="57" width="96" height="23" rx="5" class="bound-node"/><text x="557" y="72" text-anchor="middle" class="bound-text">工具 / 执行环境</text><path d="M511 80L435 130" stroke="#a5b69a" fill="none" stroke-dasharray="3 3"/></g>
+      <g class="group-train"><rect x="700" y="64" width="106" height="31" rx="5" fill="#eeebf4" stroke="#c6bad9"/><text x="753" y="84" text-anchor="middle" font-size="10" fill="#8570b0">奖励信号 r</text><path id="reward-path" class="reward-path" d="M701 79H401Q383 79 383 100V117" marker-end="url(#arrow-purple)"/><text x="495" y="64" text-anchor="middle" font-size="9" fill="#8570b0">训练：更新模型参数</text><rect x="714" y="255" width="99" height="27" rx="4" fill="#eef3e8"/><text x="763" y="272" text-anchor="middle" font-size="9" fill="#68845a">更符合目标 ＋</text><rect x="714" y="294" width="99" height="27" rx="4" fill="#f7eae1"/><text x="763" y="311" text-anchor="middle" font-size="9" fill="#bf805a">较偏离目标 −</text><path d="M813 270Q852 185 807 94" stroke="#c8b9dc" fill="none" stroke-dasharray="3 4"/><circle id="reward-particle" r="3" fill="#8570b0"/></g>
+      <g class="group-drift"><path d="M85 263V322H220" stroke="#a9b59f" fill="none" stroke-width="1"/><path d="M91 314Q153 312 212 271M91 314Q153 316 212 320" stroke="#cf9e7b" fill="none" stroke-width="1.2"/><path d="M91 314Q153 312 212 271L212 320Q153 316 91 314" fill="#eddacb" opacity=".28"/><text x="85" y="253" class="svg-small">信息空间</text><text x="160" y="339" class="svg-small">交互时间 →</text></g><text x="500" y="357" text-anchor="middle" class="micro-label" id="diagram-footnote">示意动画 · 路径代表可能的输出与行动方向</text>
+    </svg>
+    </div>
+    <div class="diagram-bottom"><span id="diagram-status"></span><strong id="diagram-result"></strong></div>
+  </section>
+  <div class="scene-controls" id="scene-controls"></div>
+  <section class="insight" aria-label="本章要点"><div class="insight-main"><span class="insight-symbol" aria-hidden="true">↳</span><div><h2 id="insight-title"></h2><p id="insight-body"></p></div></div><div class="note-box"><h3 id="note-title"></h3><p id="note-body"></p></div></section>
+  <footer class="footer"><div class="footer-left"><button class="play-button" id="play" aria-label="自动播放章节" aria-pressed="false"><span class="play-icon" aria-hidden="true">▶</span><span id="play-label">自动演示</span></button><div class="progress-track"><div class="progress-fill" id="progress"></div></div><span class="footer-position" id="position">01 / 06</span></div><div class="footer-right"><span class="keyboard-hint"><span class="key">←</span> <span class="key">→</span> 切换章节 <span class="key">空格</span> 播放</span><button class="arrow-button" id="prev" aria-label="上一章">←</button><button class="next-button" id="next"><span id="next-label">下一章</span> <span aria-hidden="true">→</span></button></div></footer>
+</main>
+</div>
+<dialog class="source-dialog" id="source-dialog" aria-labelledby="source-title"><div class="dialog-top"><h2 id="source-title">从手绘草图到工程概念</h2><button class="dialog-close" id="sources-close" aria-label="关闭">×</button></div><div class="dialog-tabs" role="tablist" aria-label="参考资料"><button class="pill active" id="tab-references" role="tab" aria-selected="true" aria-controls="reference-content">概念核对</button><button class="pill" id="tab-sketch" role="tab" aria-selected="false" aria-controls="sketch-content">手绘原图</button></div><div class="dialog-content" id="reference-content" role="tabpanel" aria-labelledby="tab-references">
+  <p class="source-intro">这份演示保留原图的核心比喻：LLM 的输出会沿不同方向展开，harness 提供运行轨道。图中的路径、收束宽度和训练变化都是教学示意，不是概率分布、性能测量或效果承诺。</p>
+  <div class="reference"><small>01 / 工程环境与可执行约束</small><a href="https://openai.com/index/harness-engineering/" target="_blank" rel="noreferrer">OpenAI · Harness engineering ↗</a><p>核对：环境、明确意图、机械化检查与反馈循环共同支持可靠工作。原图中的“夹具”在演示里扩充为输入侧与输出侧的一套工程系统。</p></div>
+  <div class="reference"><small>02 / 长任务与跨会话状态</small><a href="https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents" target="_blank" rel="noreferrer">Anthropic · Effective harnesses for long-running agents ↗</a><p>核对：长任务需要分步推进、进度记录与实际验证；仅延长对话或压缩上下文，不足以保证任务完成。</p></div>
+  <div class="reference"><small>03 / 上下文选择</small><a href="https://www.anthropic.com/engineering/effective-context-engineering-for-ai-agents" target="_blank" rel="noreferrer">Anthropic · Effective context engineering for AI agents ↗</a><p>核对：上下文是有限资源。应选取相关信息，而不是把更多文字等同于更好的输入。</p></div>
+  <div class="reference"><small>04 / 工具、环境与循环</small><a href="https://www.anthropic.com/engineering/building-effective-agents" target="_blank" rel="noreferrer">Anthropic · Building effective agents ↗</a><p>核对：工具执行结果与环境反馈进入后续推理；停止条件和明确的验收标准也是系统设计的一部分。</p></div>
+  <div class="reference"><small>05 / 训练与运行时的区别</small><a href="https://arxiv.org/abs/2203.02155" target="_blank" rel="noreferrer">Ouyang et al. · Training language models to follow instructions with human feedback ↗</a><p>核对：RLHF 用反馈构建训练信号并更新模型。演示中的运行时 harness 不更新模型参数；验证失败后再生成，也不等于强化学习。</p></div>
+  <div class="reference"><small>原图的两处表述补充</small><p>“输入更复杂 → 输出更发散”是风险的视觉比喻，不是普遍成立的定量规律。“强约束 → 生产确定性”在这里表述为可控执行、可追踪过程与可验证交付；模型生成与检查覆盖仍有局限。框架可以承载这些机制，但可靠性取决于具体设计。</p></div>
+</div><div class="dialog-content" id="sketch-content" role="tabpanel" aria-labelledby="tab-sketch" hidden><p class="source-intro">原始手绘概念图 · 本演示按「一次生成 → 发散 → Harness → 反馈 → 训练 → 生产系统」重新组织内容。</p><img src="origin.jpg" alt="用户提供的 Harness Engineering 手绘图：LLM 输入输出、输出发散、harness 夹具、强化学习与生产化 Agent。" loading="lazy"></div></dialog>
+<script>
+'use strict';
+const chapters = [
+ {name:'一次生成',en:'A single generation',eyebrow:'01 / THE STARTING POINT',title:'一切，从<em>一次生成</em>开始。',description:'我们给出意图，模型生成回答。简单任务里，这条输入到输出的直线，看起来已经足够。',sceneNote:'从最熟悉的 LLM 问答开始',status:'用户意图 → 语言模型 → 回答',result:'生成 ≠ 验证',insightTitle:'模型提供能力，但不会自动完成工程。',insight:'LLM 根据当前上下文生成输出。回答是否正确、是否满足要求，仍需要外部标准来判断。',noteTitle:'READ THE DIAGRAM / 如何读图',note:'流动的点表示信息传递，线条表示可能的回答方向。整份演示都会围绕这一个输入输出结构展开。',caption:'<strong>先观察一次生成。</strong>同样的输入，也可能得到不同的表达与行动选择。'},
+ {name:'输出发散',en:'When outputs drift',eyebrow:'02 / THE RELIABILITY GAP',title:'任务越长，<em>偏差越容易累积</em>。',description:'目标含糊、信息缺失、工具出错，都可能让后续步骤偏离目标。一次小偏差，会进入下一轮输入。',sceneNote:'拖动复杂度，观察路径如何展开',status:'信息缺口 / 目标模糊 / 多步依赖',result:'可能出现噪声、遗漏与错误',insightTitle:'“说得更多”，不等于“走得更对”。',insight:'原图用逐渐扩大的扇面表达发散风险：多轮工作中，未经检验的输出会变成下一轮的前提，让偏差继续传播。',noteTitle:'A USEFUL METAPHOR / 一个视觉比喻',note:'扇面宽度不代表实测误差或概率。复杂任务并不必然失败；关键在于能否及时取得证据、发现偏差并纠正。',caption:'<strong>让任务变复杂。</strong>观察目标方向与候选路径之间的距离。'},
+ {name:'运行时轨道',en:'The harness',eyebrow:'03 / HARNESS ENGINEERING',title:'给模型能力，装上<em>运行时轨道</em>。',description:'Harness 是围绕模型的工程系统：组织上下文、连接工具、管理状态，并用规则和检查约束行动。',sceneNote:'开关不同机制，探索轨道由什么组成',status:'模型参数保持不变 · 运行时机制介入',result:'让行动更可控，让结果可检查',insightTitle:'“夹具”不只在输出端，也在输入与执行过程中。',insight:'上下文让模型看见相关信息；工具让模型接触真实环境；边界限制可执行动作；验收暴露错误；状态记录让长任务可以继续。',noteTitle:'THE CORE IDEA / 原图的核心',note:'收束的是行动与交付过程。仅在提示词中说“不要出错”不能替代工具权限、结构校验和真实测试。',caption:'<strong>试着拆掉一段轨道。</strong>点击机制名称，查看它承担的工程职责。'},
+ {name:'验证与反馈',en:'Close the loop',eyebrow:'04 / FROM ANSWER TO ACTION',title:'可靠交付，来自<em>可验证的闭环</em>。',description:'用“修复 API 空输入崩溃”做一个模拟：生成修改、运行测试、发现问题，把结果带回模型，再验证。',sceneNote:'示例流程 · 点击步骤查看反馈如何进入下一轮',status:'生成 → 执行 → 验证 → 反馈 → 再生成',result:'检查未通过，继续修正',insightTitle:'外部证据，让模型从“我觉得完成了”继续向前。',insight:'工具返回真实执行结果，测试提供可重复的判断。失败信息进入下一轮上下文；通过事先定义的验收后，系统才交付结果。',noteTitle:'STOPPING CONDITION / 何时停止',note:'通过验收可以结束。遇到权限限制、缺失信息或达到重试预算，也应明确停止并交给人处理。这里展示的是预设教学流程。',caption:'<strong>一个修复任务的闭环。</strong>点击五个步骤，逐步查看模拟过程。'},
+ {name:'训练与 Harness',en:'Different layers',eyebrow:'05 / TRAINING VS. RUNTIME',title:'训练改变模型，<em>Harness 改变运行方式</em>。',description:'原图把“好答案 / 坏答案”送回模型。在强化学习中，奖励信号用于更新参数；在运行时，反馈进入下一轮上下文。',sceneNote:'切换两个层次，查看反馈究竟改变了什么',status:'训练阶段 · 奖励信号用于参数更新',result:'θ → θ′ · 改变模型的行为倾向',insightTitle:'一次重试，不等于模型学会了。',insight:'运行时重试通常沿用同一组模型参数。强化学习则通过训练优化参数。两者可以配合：能力更好的模型，仍需要明确环境与验收机制。',noteTitle:'KEEP THE DISTINCTION / 区分两个层次',note:'这里的“训练”只播放参数更新的概念动画，不运行真实训练。输出变窄也不表示训练后永远正确。',caption:'<strong>同一张图，两个作用层。</strong>观察反馈是回到上下文，还是进入模型参数。'},
+ {name:'走向生产',en:'A deliverable system',eyebrow:'06 / THE PRODUCTION PICTURE',title:'从一个回答，到<em>一个可交付系统</em>。',description:'把模型放进有上下文、有工具、有状态、有边界、有验证的系统，让每一步都能被执行、检查和追踪。',sceneNote:'模型 + 运行环境 + 反馈机制，共同完成任务',status:'相关上下文 → 受控执行 → 验证 → 交付',result:'规则可执行 · 过程可追踪 · 结果可验收',insightTitle:'Harness Engineering：设计模型发挥能力的条件。',insight:'从实际失败中定位缺失的机制，再用评估确认改进。框架可以承载编排与状态管理；真正的可靠性来自具体规则、工具和反馈设计。',noteTitle:'WHAT BECOMES RELIABLE / 可靠性的落点',note:'更确定的是执行边界与验收过程，而不是每个生成 token。验证能发现覆盖范围内的问题，系统仍需处理未覆盖的失败。',caption:'<strong>回到原图的最终形态。</strong>交付需要有可检查的证据。'}
+];
+const mechanisms = [
+ {name:'上下文',detail:'上下文：选择与任务相关的事实、约束和示例，减少无关信息。'},
+ {name:'工具',detail:'工具：通过明确接口读写环境，获得检索、执行和测试的真实结果。'},
+ {name:'边界',detail:'边界：在代码和权限层限制可执行动作，检查输入与输出结构。'},
+ {name:'验收',detail:'验收：用测试、规则与评估判断是否完成，让失败可见。'},
+ {name:'状态',detail:'状态：保存已完成的步骤、产物与待办，让跨轮次工作能够接续。'}
+];
+const steps = [
+ {name:'生成',sub:'生成修改',detail:'模型提出补丁：为 API 请求增加输入检查。此时还没有完成证据。',result:'候选补丁 · 待验证',label:'生成一个候选修复'},
+ {name:'执行',sub:'调用工具',detail:'工具把补丁应用到示例环境，然后运行既有测试与新增的空输入用例。',result:'运行测试 · 获取环境结果',label:'工具执行测试'},
+ {name:'验证',sub:'发现失败',detail:'模拟测试失败：空字符串已处理，但 null 仍然触发异常。失败结果返回系统。',result:'未通过：null 用例失败',label:'FAIL · null 触发异常'},
+ {name:'反馈',sub:'再生成',detail:'把失败用例与错误信息带回上下文。模型修正 null 分支，再次调用工具验证。',result:'错误信息 → 下一轮上下文',label:'失败证据进入下一轮'},
+ {name:'交付',sub:'验收通过',detail:'模拟验收通过：空字符串与 null 用例均通过。交付补丁、测试结果和变更说明。',result:'通过已定义验收 · 交付产物',label:'PASS · 空输入用例通过'}
+];
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const state = {scene:0,complexity:65,enabled:new Set([0,1,2,3,4]),step:0,layer:'training',trained:false,trainingUntil:0,playing:false,elapsed:0,flowTime:0,spread:22,targetSpread:22,paused:reducedMotion};
+const nav = document.querySelector('.chapter-list');
+nav.innerHTML = chapters.map((c,i)=>`<button class="chapter${i===0?' active':''}" data-chapter="${i}" ${i===0?'aria-current="step"':''}><span class="chapter-number">0${i+1}</span><span><span class="chapter-name">${c.name}</span><span class="chapter-en">${c.en}</span></span></button>`).join('');
+nav.addEventListener('click',e=>{const b=e.target.closest('[data-chapter]');if(b)changeScene(Number(b.dataset.chapter));});
+const NS = 'http://www.w3.org/2000/svg';
+const rays = [], dots = [], inputDots = [];
+for(let i=-6;i<=6;i++){
+ const path=document.createElementNS(NS,'path');path.setAttribute('class','ray');document.getElementById('output-rays').append(path);rays.push(path);
+ const dot=document.createElementNS(NS,'circle');dot.setAttribute('r',i===0?'3.2':'2.2');dot.setAttribute('class','particle');document.getElementById('flow-particles').append(dot);dots.push(dot);
+}
+for(let i=0;i<3;i++){
+ const dot=document.createElementNS(NS,'circle');dot.setAttribute('r','2.6');dot.setAttribute('fill','#739264');document.getElementById('flow-particles').append(dot);inputDots.push(dot);
+}
+function changeScene(index){
+ state.scene=Math.max(0,Math.min(chapters.length-1,index));state.elapsed=0;state.step=0;
+ const c=chapters[state.scene];
+ document.getElementById('main').dataset.scene=state.scene;
+ document.getElementById('eyebrow').textContent=c.eyebrow;document.getElementById('title').innerHTML=c.title;document.getElementById('description').textContent=c.description;
+ document.getElementById('hero-index').textContent=`0${state.scene+1}`;document.getElementById('scene-note').textContent=c.sceneNote;
+ document.getElementById('diagram-status').textContent=c.status;document.getElementById('diagram-result').textContent=c.result;
+ document.getElementById('insight-title').textContent=c.insightTitle;document.getElementById('insight-body').textContent=c.insight;
+ document.getElementById('note-title').textContent=c.noteTitle;document.getElementById('note-body').textContent=c.note;
+ document.getElementById('position').textContent=`0${state.scene+1} / 06`;document.getElementById('progress').style.width=`${(state.scene+1)/6*100}%`;
+ document.getElementById('prev').disabled=state.scene===0;document.getElementById('next-label').textContent=state.scene===5?'回到开始':'下一章';
+ document.querySelectorAll('.chapter').forEach((b,i)=>{b.classList.toggle('active',i===state.scene);if(i===state.scene)b.setAttribute('aria-current','step');else b.removeAttribute('aria-current');});
+ document.getElementById('title').classList.remove('fade-in');void document.getElementById('title').offsetWidth;document.getElementById('title').classList.add('fade-in');
+ renderControls();updateDiagram();
+}
+function renderControls(){
+ const c=chapters[state.scene];let controls='';
+ if(state.scene===0)controls='<button class="pill" data-action="regenerate">↻ 再生成一次</button><button class="pill" data-action="motion" aria-pressed="'+!state.paused+'">'+(state.paused?'播放流动':'暂停流动')+'</button>';
+ if(state.scene===1)controls=`<div class="range-wrap"><label for="complexity">任务复杂度（示意）</label><output id="complexity-value">${state.complexity<34?'低':state.complexity<67?'中':'高'}</output><input id="complexity" type="range" min="0" max="100" value="${state.complexity}" aria-describedby="range-description"><span id="range-description" hidden>改变示意图的路径展开宽度，不代表实测概率。</span></div>`;
+ if(state.scene===2)controls=mechanisms.map((m,i)=>`<button class="pill${state.enabled.has(i)?' active':''}" data-mechanism="${i}" aria-pressed="${state.enabled.has(i)}">${state.enabled.has(i)?'✓':'＋'} ${m.name}</button>`).join('');
+ if(state.scene===3)controls=steps.map((s,i)=>`<button class="pill control-step${state.step===i?' active':''}" data-step="${i}" aria-pressed="${state.step===i}">${i+1} ${s.name}</button>`).join('');
+ if(state.scene===4)controls=`<button class="pill${state.layer==='runtime'?' active':''}" data-layer="runtime" aria-pressed="${state.layer==='runtime'}">运行时 Harness</button><button class="pill${state.layer==='training'?' active':''}" data-layer="training" aria-pressed="${state.layer==='training'}">强化学习 / 训练</button>${state.layer==='training'?`<button class="pill training-run" data-action="train" ${state.trainingUntil?'disabled':''}>${state.trainingUntil?'参数更新中…':state.trained?'↻ 重播训练':'▶ 演示训练'}</button>`:''}`;
+ if(state.scene===5)controls='<button class="pill active" data-action="review-sketch">↗ 对照原图</button><button class="pill" data-action="references">阅读参考资料</button>';
+ document.getElementById('scene-controls').innerHTML=`<div class="control-caption" id="control-caption">${c.caption}</div><div class="control-area">${controls}</div>`;
+ if(state.scene===3){document.getElementById('control-caption').textContent=steps[state.step].detail;}
+}
+document.getElementById('scene-controls').addEventListener('input',e=>{if(e.target.id==='complexity'){state.complexity=Number(e.target.value);document.getElementById('complexity-value').textContent=state.complexity<34?'低':state.complexity<67?'中':'高';updateDiagram();}});
+document.getElementById('scene-controls').addEventListener('click',e=>{
+ const button=e.target.closest('button');if(!button)return;
+ if(button.dataset.mechanism!==undefined){const n=Number(button.dataset.mechanism);if(state.enabled.has(n))state.enabled.delete(n);else state.enabled.add(n);renderControls();document.getElementById('control-caption').textContent=(state.enabled.has(n)?'已启用 · ':'已停用 · ')+mechanisms[n].detail;updateDiagram();}
+ if(button.dataset.step!==undefined){state.step=Number(button.dataset.step);renderControls();updateDiagram();}
+ if(button.dataset.layer){state.layer=button.dataset.layer;renderControls();updateDiagram();}
+ if(button.dataset.action==='regenerate'){state.flowTime+=.83;state.targetSpread=18+Math.random()*30;document.getElementById('diagram-result').textContent='新的候选回答 · 仍需验证';}
+ if(button.dataset.action==='motion'){state.paused=!state.paused;renderControls();}
+ if(button.dataset.action==='train'){state.trained=false;state.trainingUntil=state.flowTime+3;state.paused=false;renderControls();updateDiagram();}
+ if(button.dataset.action==='review-sketch')openSources('sketch');
+ if(button.dataset.action==='references')openSources('references');
+});
+function updateDiagram(){
+ const s=state.scene;const runtime=s===4&&state.layer==='runtime';
+ const harness=s===2||s===3||s===5||runtime;
+ const enabledCount=s===2?state.enabled.size:5;
+ const bounded=harness&&(s!==2||state.enabled.has(2));
+ const loop=s===3||s===5||runtime;
+ document.getElementById('diagram').classList.toggle('harness-visible',bounded);
+ document.getElementById('diagram').classList.toggle('drift-visible',s===1);
+ document.getElementById('diagram').classList.toggle('loop-visible',loop);
+ document.getElementById('diagram').classList.toggle('tools-visible',harness&&(s!==2||state.enabled.has(1))); 
+ document.getElementById('diagram').classList.toggle('training-visible',s===4&&!runtime);
+ document.getElementById('diagram').classList.toggle('context-visible',harness&&(s!==2||state.enabled.has(0)||state.enabled.has(4)));
+ document.getElementById('diagram').classList.toggle('ghost-visible',harness);
+ document.getElementById('diagram').classList.toggle('check-visible',s===5||(s===3&&state.step===4));
+ document.getElementById('diagram').classList.toggle('train-pulse',!!state.trainingUntil&&s===4&&!runtime);
+ document.getElementById('context-label').textContent=s===2&&!state.enabled.has(0)?'上下文未筛选':'相关上下文';
+ document.getElementById('memory-label').textContent=s===2&&!state.enabled.has(4)?'状态未持久化':'持久状态';
+ document.getElementById('risk-legend').hidden=s!==1&&!(s===2&&enabledCount<5);
+ document.getElementById('weight-dots').setAttribute('opacity',s===4&&!runtime?'1':'0');
+ document.getElementById('model-sub').textContent=s===4&&!runtime?(state.trainingUntil?'UPDATING θ':state.trained?'WEIGHTS θ′':'WEIGHTS θ'):'GENERATE';
+ document.getElementById('input-title').textContent=s===3?'修复 API':'用户输入';document.getElementById('input-detail').textContent=s===3?'空输入导致崩溃':s===5?'任务 · 目标 · 验收':'意图 · 问题 · 指令';
+ document.getElementById('output-title').textContent=s===5?'可交付产物':s===3?(state.step===4?'已验证补丁':'候选补丁'):'模型输出';
+ document.getElementById('output-detail').textContent=s===5?'附验收结果':s===3?(state.step===4?'通过定义的用例':'经过执行与检查'):s===1?'多种可能方向':s===2?'受控行动与结果':s===4&&!runtime?'行为倾向改变':'一次生成的回答';
+ document.getElementById('diagram-description').textContent=chapters[s].description+' '+chapters[s].insight;
+ document.getElementById('diagram-footnote').textContent=loop?'示意流程 · 不调用真实模型或工具':'示意动画 · 路径宽度不代表实测误差或概率';
+ if(s===0)state.targetSpread=22;
+ else if(s===1)state.targetSpread=32+state.complexity*1.25;
+ else if(s===2){state.targetSpread=state.enabled.has(2)?Math.min(40,17+(5-enabledCount)*6):Math.max(65,145-enabledCount*15);document.getElementById('diagram-result').textContent=enabledCount?`已启用 ${enabledCount} / 5 项机制 · ${state.enabled.has(3)?'可检查结果':'验收缺失'}`:'所有机制已停用 · 回到无约束生成';}
+ else if(s===3){state.targetSpread=state.step===2?36:22;document.getElementById('diagram-result').textContent=steps[state.step].result;document.getElementById('validation-label').textContent=steps[state.step].label;document.getElementById('loop-label').textContent=state.step===4?'通过验收 → 交付；保留工具与测试记录':'工具结果与检查反馈，成为下一轮输入';}
+ else if(s===4){state.targetSpread=runtime?24:state.trained?48:108;document.getElementById('diagram-status').textContent=runtime?'运行阶段 · 上下文、工具与检查共同介入':'训练阶段 · 奖励信号用于参数更新';document.getElementById('diagram-result').textContent=runtime?'θ 保持不变 · 反馈进入上下文':state.trainingUntil?'奖励 → 优化 → 更新 θ':state.trained?'θ′ · 参数已更新（模拟）':'θ → θ′ · 改变模型的行为倾向';document.getElementById('validation-label').textContent='反馈进入下一轮上下文';document.getElementById('loop-label').textContent='参数 θ 不变 · 运行时用反馈修正当前任务';}
+ else state.targetSpread=20;
+ if(s===5){document.getElementById('validation-label').textContent='执行 · 验证 · 反馈';document.getElementById('loop-label').textContent='记录进度、执行证据与失败，支持持续迭代';}
+ if(reducedMotion)state.spread=state.targetSpread;
+}
+// Cubic interpolation is shared by line geometry and particles, so flow stays on the paths.
+function cubic(t,p0,p1,p2,p3){const u=1-t;return u*u*u*p0+3*u*u*t*p1+3*u*t*t*p2+t*t*t*p3;}
+let lastFrame=0;
+function animate(now){
+ const delta=lastFrame?Math.min((now-lastFrame)/1000,.1):0;lastFrame=now;
+ if(!state.paused&&!document.hidden){state.flowTime+=delta;}
+ if(state.playing&&!document.hidden&&!document.getElementById('source-dialog').open){state.elapsed+=delta;if(state.scene===3){const step=Math.min(4,Math.floor(state.elapsed/2.8));if(step!==state.step){state.step=step;renderControls();updateDiagram();}}if(state.elapsed>=(state.scene===3?15:12)){if(state.scene===5)setPlaying(false);else changeScene(state.scene+1);}}
+ state.spread+=(state.targetSpread-state.spread)*(reducedMotion?1:Math.min(1,delta*4));
+ const s=state.scene;const risk=s===1||(s===2&&state.enabled.size<5);const training=s===4&&state.layer==='training';
+ for(let j=0;j<rays.length;j++){
+  const n=(j-6)/6;const y=185+n*state.spread;const bend=185+n*state.spread*.42;
+  rays[j].setAttribute('d',`M439 ${185+n*4} C545 ${185+n*8} 647 ${bend} 810 ${y}`);
+  const orange=risk&&Math.abs(n)>.35;const color=orange?'#c88962':training?'#9b89b6':'#709166';
+  rays[j].setAttribute('stroke',color);rays[j].setAttribute('opacity',j===6?'.9':s===0?'.26':'.43');
+  const t=(state.flowTime*.22+j*.137)%1;
+  dots[j].setAttribute('cx',cubic(t,439,545,647,810));dots[j].setAttribute('cy',cubic(t,185+n*4,185+n*8,bend,y));dots[j].setAttribute('fill',color);dots[j].setAttribute('opacity',s===0&&j%3!==0?'0':'.8');
+ }
+ for(let i=0;i<3;i++){
+  const t=(state.flowTime*.3+i*.32)%1;const startY=[110,185,260][i];const endY=[163,185,207][i];
+  inputDots[i].setAttribute('cx',cubic(t,210,265,280,327));inputDots[i].setAttribute('cy',cubic(t,startY,startY,endY,endY));
+ }
+ if(state.scene===3||state.scene===5||(state.scene===4&&state.layer==='runtime')){const path=document.getElementById('feedback-path');const p=path.getPointAtLength((state.flowTime*.15%1)*path.getTotalLength());document.getElementById('loop-particle').setAttribute('cx',p.x);document.getElementById('loop-particle').setAttribute('cy',p.y);}
+ if(training){const path=document.getElementById('reward-path');const p=path.getPointAtLength((state.flowTime*.3%1)*path.getTotalLength());document.getElementById('reward-particle').setAttribute('cx',p.x);document.getElementById('reward-particle').setAttribute('cy',p.y);}
+ if(state.trainingUntil&&state.flowTime>=state.trainingUntil){state.trainingUntil=0;state.trained=true;if(state.scene===4){renderControls();updateDiagram();}}
+ requestAnimationFrame(animate);
+}
+function setPlaying(value){state.playing=value;state.elapsed=0;if(value)state.paused=false;document.getElementById('play').classList.toggle('playing',value);document.getElementById('play').setAttribute('aria-pressed',String(value));document.getElementById('play-label').textContent=value?'暂停演示':'自动演示';document.getElementById('play').querySelector('.play-icon').textContent=value?'Ⅱ':'▶';}
+document.getElementById('play').addEventListener('click',()=>setPlaying(!state.playing));
+document.getElementById('prev').addEventListener('click',()=>changeScene(state.scene-1));document.getElementById('next').addEventListener('click',()=>changeScene(state.scene===5?0:state.scene+1));
+function showSourceTab(tab){const sketch=tab==='sketch';document.getElementById('reference-content').hidden=sketch;document.getElementById('sketch-content').hidden=!sketch;for(const [id,active] of [['tab-references',!sketch],['tab-sketch',sketch]]){document.getElementById(id).classList.toggle('active',active);document.getElementById(id).setAttribute('aria-selected',String(active));document.getElementById(id).tabIndex=active?0:-1;}}
+function openSources(tab){showSourceTab(tab);if(!document.getElementById('source-dialog').open)document.getElementById('source-dialog').showModal();}
+document.getElementById('sources-open').addEventListener('click',()=>openSources('references'));document.getElementById('sketch-open').addEventListener('click',e=>{e.preventDefault();openSources('sketch');});
+document.getElementById('sources-close').addEventListener('click',()=>document.getElementById('source-dialog').close());document.getElementById('tab-references').addEventListener('click',()=>showSourceTab('references'));document.getElementById('tab-sketch').addEventListener('click',()=>showSourceTab('sketch'));
+document.querySelector('.dialog-tabs').addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();const tab=document.getElementById('sketch-content').hidden?'sketch':'references';showSourceTab(tab);document.getElementById(tab==='sketch'?'tab-sketch':'tab-references').focus();}});
+document.getElementById('source-dialog').addEventListener('click',e=>{if(e.target===document.getElementById('source-dialog')){const r=e.target.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)e.target.close();}});
+document.getElementById('present').addEventListener('click',()=>{document.body.classList.add('presentation');document.getElementById('exit-present').focus();});document.getElementById('exit-present').addEventListener('click',()=>{document.body.classList.remove('presentation');document.getElementById('present').focus();});
+document.addEventListener('keydown',e=>{
+ if(document.getElementById('source-dialog').open||e.target.matches('input,textarea,select')||e.ctrlKey||e.metaKey||e.altKey)return;
+ if(e.key==='ArrowRight'){e.preventDefault();changeScene(state.scene===5?0:state.scene+1);}
+ if(e.key==='ArrowLeft'){e.preventDefault();changeScene(state.scene-1);}
+ if(e.code==='Space'&&!e.target.matches('button,a')){e.preventDefault();setPlaying(!state.playing);}
+ if(e.key==='Escape'){document.body.classList.remove('presentation');}
+});
+changeScene(0);requestAnimationFrame(animate);
+</script>
+</body>
+</html>

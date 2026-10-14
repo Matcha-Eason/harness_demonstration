@@ -1,0 +1,15 @@
+Gemini 网页:
+每次7-8min 两次总计约周限额 2% 左右， 网页版没有时间显示
+
+qwen 3.8max 阿里云 coding plan
+11min 13min
+总计：1.26Mtoken 缓存命中 88% 总成本 0.91$
+
+Codex 
+14min. 第二次Selected model is at capacity. Please try a different model.
+第一次：1.41M token 缓存命中 95%  总成本0.54$
+第二次 1.56M   95.1 0.5$
+
+K3-workbuddy
+第一次也是 10min 左右，第二次多次询问被我打断修复复工
+第一次 70 积分 第二次约 350 积分 （自己找错误花费大量 token 不停止，手动找了下问题)

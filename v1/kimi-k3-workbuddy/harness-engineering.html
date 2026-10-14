@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Harness Engineering · 驾驭工程</title>
+<style>
+  :root {
+    --bg: #0e1014;
+    --panel: #171a21;
+    --panel2: #1e222b;
+    --line: #2b313d;
+    --text: #e8e6e1;
+    --dim: #9aa0ad;
+    --faint: #5d6472;
+    --model: #6ea8fe;
+    --harness: #e8a33d;
+    --noise: #e05d5d;
+    --good: #5fb878;
+    --ink: #d8d4c8;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", -apple-system, sans-serif;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+  .deck { width: 100vw; height: 100vh; position: relative; }
+  .slide {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 6vh 8vw;
+    opacity: 0; visibility: hidden;
+    transform: translateY(14px);
+    transition: opacity .45s ease, transform .45s ease, visibility .45s;
+  }
+  .slide.active { opacity: 1; visibility: visible; transform: translateY(0); }
+  .kicker {
+    font-size: 13px; letter-spacing: .35em; color: var(--harness);
+    text-transform: uppercase; margin-bottom: 18px; font-weight: 600;
+  }
+  h1 { font-size: clamp(34px, 4.6vw, 62px); font-weight: 700; letter-spacing: .02em; }
+  h2 { font-size: clamp(26px, 3.2vw, 42px); font-weight: 700; margin-bottom: 10px; }
+  .sub { color: var(--dim); font-size: clamp(15px, 1.4vw, 19px); margin-top: 14px; }
+  .body-wrap { max-width: 1080px; width: 100%; display: flex; flex-direction: column; align-items: center; }
+  .row { display: flex; gap: 48px; align-items: center; justify-content: center; width: 100%; max-width: 1080px; flex-wrap: wrap; }
+  .col { flex: 1; min-width: 300px; }
+  p.lead { font-size: clamp(16px, 1.6vw, 20px); line-height: 1.9; color: var(--text); }
+  .dim { color: var(--dim); }
+  .note { font-size: 14px; color: var(--faint); margin-top: 18px; line-height: 1.8; }
+  svg text { font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif; }
+  .tag {
+    display: inline-block; padding: 3px 12px; border-radius: 99px;
+    border: 1px solid var(--line); color: var(--dim); font-size: 13px; margin: 4px 4px 0 0;
+  }
+  .card {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+    padding: 22px 26px;
+  }
+  .formula {
+    font-size: clamp(22px, 2.6vw, 34px); font-weight: 700; letter-spacing: .03em;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 16px;
+    padding: 26px 44px; margin: 26px 0;
+  }
+  .formula .m { color: var(--model); }
+  .formula .h { color: var(--harness); }
+  .src { font-size: 13px; color: var(--faint); margin-top: 10px; }
+  ul.clean { list-style: none; }
+  ul.clean li {
+    padding: 10px 0 10px 26px; position: relative;
+    font-size: clamp(15px, 1.5vw, 18px); line-height: 1.8; color: var(--text);
+  }
+  ul.clean li::before {
+    content: ""; position: absolute; left: 2px; top: 22px;
+    width: 8px; height: 8px; border-radius: 2px; background: var(--harness);
+  }
+  ul.clean li b { color: var(--harness); font-weight: 600; }
+  ul.clean li .m { color: var(--model); font-weight: 600; }
+  ul.clean li .n { color: var(--noise); font-weight: 600; }
+  ul.clean li .g { color: var(--good); font-weight: 600; }
+
+  /* progress & nav */
+  .hud {
+    position: fixed; bottom: 22px; left: 0; right: 0;
+    display: flex; align-items: center; justify-content: center; gap: 18px;
+    z-index: 10; pointer-events: none;
+  }
+  .hud .dots { display: flex; gap: 8px; pointer-events: auto; }
+  .hud .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--line); cursor: pointer; transition: background .25s, transform .25s;
+  }
+  .hud .dot.on { background: var(--harness); transform: scale(1.35); }
+  .hud .page { font-size: 12px; color: var(--faint); font-variant-numeric: tabular-nums; min-width: 52px; text-align: center; }
+  .hint {
+    position: fixed; bottom: 24px; right: 28px; z-index: 10;
+    font-size: 12px; color: var(--faint);
+  }
+  .bar {
+    position: fixed; top: 0; left: 0; height: 2px; background: var(--harness);
+    z-index: 10; transition: width .4s ease; width: 0;
+  }
+  .two-cause { display: flex; gap: 14px; flex-wrap: wrap; justify-content: center; margin-top: 8px; }
+  .cause {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+    padding: 14px 18px; font-size: 15px; line-height: 1.7; color: var(--dim); max-width: 300px;
+  }
+  .cause b { color: var(--text); display: block; margin-bottom: 4px; font-size: 16px; }
+  .cause .em { color: var(--noise); }
+</style>
+</head>
+<body>
+<div class="bar" id="bar"></div>
+<div class="deck" id="deck">
+
+<!-- 1 封面 -->
+<section class="slide">
+  <div class="kicker">概念阐释</div>
+  <h1>Harness Engineering</h1>
+  <div class="sub" style="font-size: clamp(18px,2vw,26px); color: var(--harness); font-weight: 600; letter-spacing: .2em; margin-top: 10px;">驾 驭 工 程</div>
+  <p class="sub">给大模型套上挽具，让输出空间可控</p>
+  <div class="note" style="text-align:center; max-width: 640px;">
+    harness 的本义是马具、挽具。人给马套上它，马的力气才能按人的方向使出来。
+    这个概念 2026 年初由 Mitchell Hashimoto 提出，OpenAI、LangChain 跟进阐述，
+    核心公式是 Agent = Model + Harness。
+  </div>
+  <div style="margin-top: 26px;">
+    <span class="tag">Mitchell Hashimoto · 2026.02</span>
+    <span class="tag">OpenAI · 人类掌舵，智能体执行</span>
+    <span class="tag">LangChain · Agent = Model + Harness</span>
+  </div>
+</section>
+
+<!-- 2 裸模型直连 -->
+<section class="slide">
+  <div class="kicker">起点</div>
+  <h2>裸模型直连，一切顺利的前提</h2>
+  <div class="body-wrap" style="margin-top: 3vh;">
+    <svg viewBox="0 0 900 260" width="820" style="max-width:100%;">
+      <!-- input -->
+      <ellipse cx="110" cy="120" rx="72" ry="52" fill="none" stroke="#9aa0ad" stroke-width="2"/>
+      <text x="110" y="114" text-anchor="middle" fill="#e8e6e1" font-size="17">User</text>
+      <text x="110" y="136" text-anchor="middle" fill="#e8e6e1" font-size="17">Input</text>
+      <!-- arrow -->
+      <line x1="190" y1="120" x2="270" y2="120" stroke="#5d6472" stroke-width="2"/>
+      <polygon points="270,120 258,114 258,126" fill="#5d6472"/>
+      <!-- LLM -->
+      <rect x="278" y="72" width="130" height="96" rx="6" fill="#171a21" stroke="#6ea8fe" stroke-width="2.5"/>
+      <text x="343" y="126" text-anchor="middle" fill="#6ea8fe" font-size="22" font-weight="700">LLM</text>
+      <!-- arrow -->
+      <line x1="416" y1="120" x2="496" y2="120" stroke="#5d6472" stroke-width="2"/>
+      <polygon points="496,120 484,114 484,126" fill="#5d6472"/>
+      <!-- output small -->
+      <rect x="504" y="100" width="120" height="40" rx="6" fill="#171a21" stroke="#5fb878" stroke-width="2"/>
+      <text x="564" y="126" text-anchor="middle" fill="#5fb878" font-size="16">output</text>
+      <!-- conditions -->
+      <text x="343" y="216" text-anchor="middle" fill="#9aa0ad" font-size="15">指令明确 ＋ 模型强大</text>
+      <text x="564" y="216" text-anchor="middle" fill="#9aa0ad" font-size="15">输出小而准</text>
+    </svg>
+    <p class="lead" style="max-width: 780px; margin-top: 3vh; text-align:center;">
+      用户给一句话，模型直接给答案。这条路能走通，要同时满足两个条件，
+      问题本身不难，模型本身够强。两个条件缺一个，输出就开始漂。
+    </p>
+  </div>
+</section>
+
+<!-- 3 输出发散的三个来源 -->
+<section class="slide">
+  <div class="kicker">问题</div>
+  <h2>输出空间为什么会炸开</h2>
+  <div class="body-wrap" style="margin-top: 2vh;">
+    <svg viewBox="0 0 900 300" width="820" style="max-width:100%;">
+      <ellipse cx="95" cy="140" rx="60" ry="44" fill="none" stroke="#9aa0ad" stroke-width="2"/>
+      <text x="95" y="134" text-anchor="middle" fill="#e8e6e1" font-size="15">User</text>
+      <text x="95" y="152" text-anchor="middle" fill="#e8e6e1" font-size="15">Input</text>
+      <line x1="160" y1="140" x2="232" y2="140" stroke="#5d6472" stroke-width="2"/>
+      <polygon points="232,140 220,134 220,146" fill="#5d6472"/>
+      <rect x="240" y="96" width="118" height="88" rx="6" fill="#171a21" stroke="#6ea8fe" stroke-width="2.5"/>
+      <text x="299" y="146" text-anchor="middle" fill="#6ea8fe" font-size="20" font-weight="700">LLM</text>
+      <!-- noisy output arrows -->
+      <line x1="366" y1="140" x2="470" y2="70" stroke="#e05d5d" stroke-width="2" opacity=".85"/>
+      <polygon points="470,70 456,69 464,80" fill="#e05d5d"/>
+      <line x1="366" y1="140" x2="480" y2="140" stroke="#e05d5d" stroke-width="2" opacity=".85"/>
+      <polygon points="480,140 468,134 468,146" fill="#e05d5d"/>
+      <line x1="366" y1="140" x2="470" y2="212" stroke="#e05d5d" stroke-width="2" opacity=".85"/>
+      <polygon points="470,212 464,201 456,212" fill="#e05d5d"/>
+      <!-- big noisy output blob -->
+      <path d="M620,40 C740,30 810,90 800,150 C790,225 720,268 640,262 C545,255 500,210 505,148 C510,88 545,48 620,40 Z"
+            fill="rgba(224,93,93,0.07)" stroke="#e05d5d" stroke-width="2.5" stroke-dasharray="9 6"/>
+      <text x="652" y="146" text-anchor="middle" fill="#e05d5d" font-size="20" font-weight="700">Output</text>
+      <text x="652" y="172" text-anchor="middle" fill="#e05d5d" font-size="14" opacity=".8">发散 · 噪音 · 幻觉</text>
+    </svg>
+    <div class="two-cause" style="margin-top: 2.5vh;">
+      <div class="cause"><b>① 问题难</b>推导链条长，每一步都在概率上采样，误差一路累积，<span class="em">输出空间被摊大</span>。</div>
+      <div class="cause"><b>② 模型弱</b>能力兜不住任务，回答里掺进多余的槽位和废话，<span class="em">噪音变多</span>。</div>
+      <div class="cause"><b>③ 缺工具、缺信息</b>模型拿不到事实，只能用想象补位，<span class="em">幻觉和噪音一起放大</span>。</div>
+    </div>
+  </div>
+</section>
+
+<!-- 4 坐标系 -->
+<section class="slide">
+  <div class="kicker">背景规律</div>
+  <h2>交互越久，需要约束的信息空间越大</h2>
+  <div class="body-wrap" style="margin-top: 3vh;">
+    <svg viewBox="0 0 820 380" width="740" style="max-width:100%;">
+      <!-- axes -->
+      <line x1="90" y1="320" x2="90" y2="40" stroke="#9aa0ad" stroke-width="2"/>
+      <polygon points="90,34 84,50 96,50" fill="#9aa0ad"/>
+      <line x1="90" y1="320" x2="770" y2="320" stroke="#9aa0ad" stroke-width="2"/>
+      <polygon points="776,320 760,314 760,326" fill="#9aa0ad"/>
+      <text x="70" y="60" text-anchor="end" fill="#9aa0ad" font-size="15">信息空间</text>
+      <text x="730" y="348" text-anchor="middle" fill="#9aa0ad" font-size="15">交互时间</text>
+      <!-- uncontrolled curve -->
+      <path d="M100,310 C240,300 340,270 430,210 C520,150 620,80 740,52"
+            fill="none" stroke="#e05d5d" stroke-width="3"/>
+      <text x="600" y="120" fill="#e05d5d" font-size="15">不加约束，发散随轮次加速</text>
+      <!-- harness band -->
+      <path d="M100,312 C260,308 420,296 740,282" fill="none" stroke="#e8a33d" stroke-width="3" stroke-dasharray="10 7"/>
+      <path d="M100,318 C260,318 420,312 740,304" fill="none" stroke="#e8a33d" stroke-width="1.5" opacity=".4"/>
+      <text x="480" y="272" fill="#e8a33d" font-size="15">上夹具之后，输出空间被压平</text>
+    </svg>
+    <p class="lead" style="max-width: 780px; margin-top: 2.5vh; text-align:center;">
+      单轮问答的问题不大。任务一旦拉长成几十轮的工具调用和对话，
+      上下文越积越多，模型的可选输出随之膨胀。harness 要解决的就是这条往上翘的曲线。
+    </p>
+  </div>
+</section>
+
+<!-- 5 核心动作：上夹具 -->
+<section class="slide">
+  <div class="kicker">核心动作</div>
+  <h2>给 LLM 套上挽具</h2>
+  <div class="body-wrap" style="margin-top: 2vh;">
+    <svg viewBox="0 0 900 360" width="840" style="max-width:100%;">
+      <!-- input -->
+      <line x1="40" y1="180" x2="150" y2="180" stroke="#5d6472" stroke-width="2"/>
+      <polygon points="150,180 138,174 138,186" fill="#5d6472"/>
+      <text x="60" y="164" fill="#9aa0ad" font-size="15">Input</text>
+      <!-- LLM box -->
+      <rect x="158" y="120" width="150" height="120" rx="8" fill="#171a21" stroke="#6ea8fe" stroke-width="2.5"/>
+      <text x="233" y="186" text-anchor="middle" fill="#6ea8fe" font-size="24" font-weight="700">LLM</text>
+      <!-- harness clamps: top, bottom, right-top, right-bottom -->
+      <g stroke="#e8a33d" stroke-width="3.5" fill="#e8a33d">
+        <line x1="190" y1="66" x2="200" y2="112"/><polygon points="200,116 192,102 206,100"/>
+        <line x1="276" y1="66" x2="266" y2="112"/><polygon points="266,116 260,100 274,102"/>
+        <line x1="190" y1="294" x2="200" y2="248"/><polygon points="200,244 192,258 206,260"/>
+        <line x1="276" y1="294" x2="266" y2="248"/><polygon points="266,244 260,260 274,258"/>
+        <line x1="352" y1="120" x2="314" y2="138"/><polygon points="310,140 326,132 322,148"/>
+        <line x1="352" y1="240" x2="314" y2="222"/><polygon points="310,220 322,212 326,228"/>
+      </g>
+      <text x="233" y="46" text-anchor="middle" fill="#e8a33d" font-size="16" font-weight="600">Harness</text>
+      <text x="380" y="100" fill="#e8a33d" font-size="14">约束来自四面八方</text>
+      <!-- output small clamped -->
+      <line x1="316" y1="180" x2="420" y2="180" stroke="#5d6472" stroke-width="2"/>
+      <polygon points="420,180 408,174 408,186" fill="#5d6472"/>
+      <rect x="428" y="156" width="130" height="48" rx="8" fill="#171a21" stroke="#5fb878" stroke-width="2.5"/>
+      <text x="493" y="186" text-anchor="middle" fill="#5fb878" font-size="16">output</text>
+      <!-- clamp marks on output -->
+      <line x1="428" y1="140" x2="428" y2="152" stroke="#e8a33d" stroke-width="3"/>
+      <line x1="558" y1="140" x2="558" y2="152" stroke="#e8a33d" stroke-width="3"/>
+      <line x1="428" y1="208" x2="428" y2="220" stroke="#e8a33d" stroke-width="3"/>
+      <line x1="558" y1="208" x2="558" y2="220" stroke="#e8a33d" stroke-width="3"/>
+      <!-- result text -->
+      <text x="700" y="150" fill="#e8e6e1" font-size="17" font-weight="600">被 Harness 限制后</text>
+      <text x="700" y="184" fill="#9aa0ad" font-size="15">· 多余槽位变少</text>
+      <text x="700" y="210" fill="#9aa0ad" font-size="15">· 噪音变小</text>
+      <text x="700" y="236" fill="#9aa0ad" font-size="15">· 发散被按住</text>
+    </svg>
+    <div class="row" style="margin-top: 2vh; max-width: 900px;">
+      <div class="card col">
+        <p class="lead" style="font-size:16px;">
+          夹具可以由很多东西做成。系统提示、结构化输出格式、权限边界、工具白名单、
+          校验器、测试、回退逻辑。它们共同的特征是<span style="color:var(--harness); font-weight:600;">写在模型外面</span>，
+          用代码强制执行，模型自己绕不过去。
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 6 多轮放大 -->
+<section class="slide">
+  <div class="kicker">多轮场景</div>
+  <h2>噪音会随轮次滚大，夹具负责截断</h2>
+  <div class="body-wrap" style="margin-top: 2vh;">
+    <svg viewBox="0 0 960 380" width="880" style="max-width:100%;">
+      <!-- first LLM -->
+      <line x1="30" y1="150" x2="110" y2="150" stroke="#5d6472" stroke-width="2"/>
+      <polygon points="110,150 98,144 98,156" fill="#5d6472"/>
+      <rect x="118" y="102" width="120" height="96" rx="8" fill="#171a21" stroke="#6ea8fe" stroke-width="2.5"/>
+      <text x="178" y="156" text-anchor="middle" fill="#6ea8fe" font-size="20" font-weight="700">LLM</text>
+      <!-- output fan 1 (moderate) -->
+      <line x1="246" y1="150" x2="330" y2="104" stroke="#e05d5d" stroke-width="2" opacity=".7"/>
+      <line x1="246" y1="150" x2="336" y2="150" stroke="#e05d5d" stroke-width="2" opacity=".7"/>
+      <line x1="246" y1="150" x2="330" y2="196" stroke="#e05d5d" stroke-width="2" opacity=".7"/>
+      <text x="300" y="80" fill="#e05d5d" font-size="14">output</text>
+      <!-- new input -->
+      <path d="M336,150 C370,150 380,150 412,150" fill="none" stroke="#9aa0ad" stroke-width="2"/>
+      <polygon points="412,150 400,144 400,156" fill="#9aa0ad"/>
+      <text x="374" y="136" text-anchor="middle" fill="#9aa0ad" font-size="13">new input（更复杂）</text>
+      <!-- second LLM -->
+      <rect x="420" y="102" width="120" height="96" rx="8" fill="#171a21" stroke="#6ea8fe" stroke-width="2.5"/>
+      <text x="480" y="156" text-anchor="middle" fill="#6ea8fe" font-size="20" font-weight="700">LLM</text>
+      <!-- output fan 2 (bigger) -->
+      <line x1="548" y1="150" x2="660" y2="60" stroke="#e05d5d" stroke-width="2.5" opacity=".85"/>
+      <line x1="548" y1="150" x2="672" y2="112" stroke="#e05d5d" stroke-width="2.5" opacity=".85"/>
+      <line x1="548" y1="150" x2="676" y2="150" stroke="#e05d5d" stroke-width="2.5" opacity=".85"/>
+      <line x1="548" y1="150" x2="672" y2="188" stroke="#e05d5d" stroke-width="2.5" opacity=".85"/>
+      <line x1="548" y1="150" x2="660" y2="240" stroke="#e05d5d" stroke-width="2.5" opacity=".85"/>
+      <text x="640" y="42" fill="#e05d5d" font-size="14">output（更嘈杂）</text>
+      <!-- harness clamp gate -->
+      <rect x="760" y="60" width="26" height="220" rx="6" fill="rgba(232,163,61,0.12)" stroke="#e8a33d" stroke-width="3"/>
+      <text x="773" y="300" text-anchor="middle" fill="#e8a33d" font-size="14" font-weight="600">夹</text>
+      <text x="773" y="320" text-anchor="middle" fill="#e8a33d" font-size="14" font-weight="600">具</text>
+      <!-- real output -->
+      <line x1="792" y1="170" x2="850" y2="170" stroke="#5fb878" stroke-width="2.5"/>
+      <polygon points="852,170 840,164 840,176" fill="#5fb878"/>
+      <rect x="858" y="146" width="90" height="48" rx="8" fill="#171a21" stroke="#5fb878" stroke-width="2.5"/>
+      <text x="903" y="166" text-anchor="middle" fill="#5fb878" font-size="13">real</text>
+      <text x="903" y="184" text-anchor="middle" fill="#5fb878" font-size="13">output</text>
+      <text x="903" y="222" text-anchor="middle" fill="#9aa0ad" font-size="13">被夹住的那部分</text>
+    </svg>
+    <p class="lead" style="max-width: 820px; margin-top: 2.5vh; text-align:center;">
+      上一轮的输出会变成下一轮的输入。输入越复杂，输出越嘈杂，一轮一轮滚下去就失控。
+      夹具架在轮次之间，只有落在允许范围内的输出才能进入下一轮。
+    </p>
+  </div>
+</section>
+
+<!-- 7 强化学习 -->
+<section class="slide">
+  <div class="kicker">更进一步</div>
+  <h2>用强化学习让模型自己学会待在夹具里</h2>
+  <div class="body-wrap" style="margin-top: 2vh;">
+    <svg viewBox="0 0 900 330" width="820" style="max-width:100%;">
+      <rect x="60" y="110" width="140" height="110" rx="8" fill="#171a21" stroke="#6ea8fe" stroke-width="2.5"/>
+      <text x="130" y="171" text-anchor="middle" fill="#6ea8fe" font-size="22" font-weight="700">LLM</text>
+      <!-- clamp marks around llm -->
+      <g stroke="#e8a33d" stroke-width="3">
+        <line x1="80" y1="84" x2="88" y2="106"/><line x1="110" y1="80" x2="114" y2="104"/>
+        <line x1="150" y1="80" x2="146" y2="104"/><line x1="180" y1="84" x2="172" y2="106"/>
+        <line x1="80" y1="246" x2="88" y2="224"/><line x1="110" y1="250" x2="114" y2="226"/>
+        <line x1="150" y1="250" x2="146" y2="226"/><line x1="180" y1="246" x2="172" y2="224"/>
+      </g>
+      <!-- good answer -->
+      <line x1="208" y1="140" x2="330" y2="96" stroke="#5fb878" stroke-width="2.5"/>
+      <polygon points="330,96 316,95 324,106" fill="#5fb878"/>
+      <rect x="338" y="62" width="200" height="64" rx="10" fill="rgba(95,184,120,0.08)" stroke="#5fb878" stroke-width="2"/>
+      <text x="438" y="88" text-anchor="middle" fill="#5fb878" font-size="15" font-weight="600">good answer</text>
+      <text x="438" y="110" text-anchor="middle" fill="#5fb878" font-size="14">落在夹具范围内</text>
+      <!-- bad answer -->
+      <line x1="208" y1="196" x2="330" y2="252" stroke="#e05d5d" stroke-width="2.5"/>
+      <polygon points="330,252 324,241 316,252" fill="#e05d5d"/>
+      <rect x="338" y="222" width="200" height="64" rx="10" fill="rgba(224,93,93,0.08)" stroke="#e05d5d" stroke-width="2" stroke-dasharray="7 5"/>
+      <text x="438" y="248" text-anchor="middle" fill="#e05d5d" font-size="15" font-weight="600">bad answer</text>
+      <text x="438" y="270" text-anchor="middle" fill="#e05d5d" font-size="14">跑出夹具范围外</text>
+      <!-- reward loop -->
+      <path d="M560,94 C660,90 700,120 700,165 C700,215 650,250 560,254" fill="none" stroke="#9aa0ad" stroke-width="2" stroke-dasharray="6 5"/>
+      <text x="716" y="170" fill="#9aa0ad" font-size="14">奖励信号回灌</text>
+      <text x="716" y="192" fill="#9aa0ad" font-size="14">多轮训练</text>
+      <path d="M700,190 C700,250 620,300 300,310 C220,312 160,290 140,232" fill="none" stroke="#9aa0ad" stroke-width="2" stroke-dasharray="6 5"/>
+      <polygon points="140,230 134,244 150,240" fill="#9aa0ad"/>
+    </svg>
+    <p class="lead" style="max-width: 820px; margin-top: 2vh; text-align:center;">
+      夹具同时划出了奖励的边界。落在夹具内的回答给正奖励，跑出夹具的回答给负奖励，
+      多轮训练之后，模型自己就往夹具里收敛。外部约束慢慢变成模型的内部习惯。
+    </p>
+  </div>
+</section>
+
+<!-- 8 生产化 Agent -->
+<section class="slide">
+  <div class="kicker">落地形态</div>
+  <h2>生产级 Agent，用极强的夹具换确定性</h2>
+  <div class="body-wrap" style="margin-top: 2vh;">
+    <div class="row">
+      <div class="col" style="max-width: 520px;">
+        <svg viewBox="0 0 520 300" width="100%">
+          <line x1="16" y1="150" x2="92" y2="150" stroke="#5d6472" stroke-width="2"/>
+          <polygon points="92,150 80,144 80,156" fill="#5d6472"/>
+          <text x="30" y="134" fill="#9aa0ad" font-size="13">input</text>
+          <rect x="100" y="92" width="130" height="116" rx="8" fill="#171a21" stroke="#6ea8fe" stroke-width="2.5"/>
+          <text x="165" y="154" text-anchor="middle" fill="#6ea8fe" font-size="20" font-weight="700">LLM</text>
+          <!-- heavy clamp marks -->
+          <g stroke="#e8a33d" stroke-width="4">
+            <line x1="118" y1="58" x2="124" y2="86"/><line x1="146" y1="54" x2="149" y2="84"/>
+            <line x1="184" y1="54" x2="181" y2="84"/><line x1="212" y1="58" x2="206" y2="86"/>
+            <line x1="118" y1="242" x2="124" y2="214"/><line x1="146" y1="246" x2="149" y2="216"/>
+            <line x1="184" y1="246" x2="181" y2="216"/><line x1="212" y1="242" x2="206" y2="214"/>
+          </g>
+          <g stroke="#e8a33d" stroke-width="2" opacity=".55">
+            <line x1="132" y1="66" x2="136" y2="86"/><line x1="198" y1="66" x2="194" y2="86"/>
+            <line x1="132" y1="234" x2="136" y2="214"/><line x1="198" y1="234" x2="194" y2="214"/>
+          </g>
+          <!-- decision module -->
+          <line x1="238" y1="150" x2="296" y2="150" stroke="#5d6472" stroke-width="2"/>
+          <polygon points="296,150 284,144 284,156" fill="#5d6472"/>
+          <rect x="304" y="104" width="130" height="92" rx="10" fill="#171a21" stroke="#e8a33d" stroke-width="2.5"/>
+          <text x="369" y="140" text-anchor="middle" fill="#e8a33d" font-size="15" font-weight="600">决策模块</text>
+          <text x="369" y="164" text-anchor="middle" fill="#9aa0ad" font-size="12">路由 · 校验 · 回退</text>
+          <line x1="442" y1="150" x2="488" y2="150" stroke="#5fb878" stroke-width="2.5"/>
+          <polygon points="490,150 478,144 478,156" fill="#5fb878"/>
+          <text x="369" y="240" text-anchor="middle" fill="#9aa0ad" font-size="13">输出稳定、可复现</text>
+        </svg>
+      </div>
+      <div class="col">
+        <ul class="clean">
+          <li>Demo 可以容忍偶尔答非所问，<b>生产线不能</b>。支付、运维、医疗场景里，一次跑飞就是事故。</li>
+          <li>所以生产级 Agent 把夹具收到最紧，固定流程、固定 schema、固定工具集，<b>用灵活性换确定性</b>。</li>
+          <li>AgentScope、LangGraph 这类框架干的也是这件事，<span class="dim">用图结构和状态机把模型的行动路径钉死。</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 9 调研核对 -->
+<section class="slide">
+  <div class="kicker">调研核对</div>
+  <h2>这套思路在公开资料里对得上</h2>
+  <div class="body-wrap" style="margin-top: 3vh;">
+    <div class="row" style="align-items: stretch;">
+      <div class="card col">
+        <ul class="clean">
+          <li><b>2026 年 2 月</b>，Mitchell Hashimoto 提出 Engineer the Harness。<span class="dim">智能体每犯一次错，就造一个机制让它永远不再犯。</span></li>
+          <li><b>OpenAI 跟进发文</b>，围绕 Codex 阐述同一理念，口号「人类掌舵，智能体执行」。</li>
+          <li><b>LangChain 给出公式</b> <span class="m">Agent = Model + Harness</span>，<span class="dim">模型负责推理，harness 负责执行环境、工具、状态、约束和验证。</span></li>
+          <li><b>业界分层</b>，<span class="dim">前馈的叫 Guides（提示、schema、规则），反馈的叫 Sensors（测试、校验、评估），手稿里的「夹具」同时包含这两类。</span></li>
+        </ul>
+      </div>
+      <div class="card" style="flex: 0 0 320px; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+        <div style="font-size:14px; color:var(--faint); margin-bottom:12px;">Terminal Bench 2.0 · 只改 harness 不换模型</div>
+        <svg viewBox="0 0 280 170" width="260">
+          <rect x="40" y="58" width="70" height="92" rx="6" fill="#2b313d"/>
+          <text x="75" y="108" text-anchor="middle" fill="#e8e6e1" font-size="15" font-weight="700">52.8%</text>
+          <text x="75" y="164" text-anchor="middle" fill="#9aa0ad" font-size="12">裸模型</text>
+          <rect x="165" y="30" width="70" height="120" rx="6" fill="#e8a33d"/>
+          <text x="200" y="95" text-anchor="middle" fill="#141519" font-size="15" font-weight="700">66.5%</text>
+          <text x="200" y="164" text-anchor="middle" fill="#9aa0ad" font-size="12">加 harness</text>
+          <text x="140" y="16" text-anchor="middle" fill="#5fb878" font-size="13" font-weight="600">+26%</text>
+        </svg>
+        <div class="src">LangChain 实验，2026</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 10 收尾 -->
+<section class="slide">
+  <div class="kicker">要点回顾</div>
+  <h2 style="margin-bottom: 24px;">把图画成一句话</h2>
+  <div class="formula">Agent = <span class="m">Model</span> + <span class="h">Harness</span></div>
+  <div class="body-wrap">
+    <ul class="clean" style="max-width: 760px;">
+      <li>模型的输出空间天然会发散，<span class="n">难题、弱模型、缺工具缺信息</span>都会把它摊得更大。</li>
+      <li>多轮交互让噪音滚动放大，<b>夹具架在轮次之间负责截断</b>。</li>
+      <li>夹具写在模型外面，用代码强制执行，<b>提示词说服不了的事，结构能强制</b>。</li>
+      <li>强化学习把夹具变成奖励边界，<span class="g">让模型自己学会待在里面</span>。</li>
+      <li>生产环境的答案是<span class="h">极强的夹具力度</span>，换来输出的确定性。</li>
+    </ul>
+    <div class="note" style="text-align:center;">人类掌舵，智能体执行。</div>
+  </div>
+</section>
+
+</div>
+
+<div class="hud">
+  <div class="dots" id="dots"></div>
+  <div class="page" id="page"></div>
+</div>
+<div class="hint">← → 翻页 · 点击圆点跳转</div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const dotsBox = document.getElementById('dots');
+  const pageBox = document.getElementById('page');
+  const bar = document.getElementById('bar');
+  let cur = 0;
+
+  slides.forEach((_, i) => {
+    const d = document.createElement('div');
+    d.className = 'dot';
+    d.addEventListener('click', () => go(i));
+    dotsBox.appendChild(d);
+  });
+  const dots = Array.from(dotsBox.children);
+
+  function go(i) {
+    cur = Math.max(0, Math.min(slides.length - 1, i));
+    slides.forEach((s, k) => s.classList.toggle('active', k === cur));
+    dots.forEach((d, k) => d.classList.toggle('on', k === cur));
+    pageBox.textContent = (cur + 1) + ' / ' + slides.length;
+    bar.style.width = ((cur + 1) / slides.length * 100) + '%';
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') go(cur + 1);
+    if (e.key === 'ArrowLeft' || e.key === 'PageUp') go(cur - 1);
+    if (e.key === 'Home') go(0);
+    if (e.key === 'End') go(slides.length - 1);
+  });
+  let touchX = null;
+  document.addEventListener('touchstart', e => { touchX = e.touches[0].clientX; }, {passive:true});
+  document.addEventListener('touchend', e => {
+    if (touchX === null) return;
+    const dx = e.changedTouches[0].clientX - touchX;
+    if (dx < -50) go(cur + 1);
+    if (dx > 50) go(cur - 1);
+    touchX = null;
+  }, {passive:true});
+
+  go(0);
+</script>
+</body>
+</html>

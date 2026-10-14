@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Harness 工程概念阐释</title>
+<style>
+  :root{
+    --bg:#0d1017;
+    --bg2:#12161f;
+    --panel:#161b26;
+    --line:#232a3a;
+    --text:#e8ecf4;
+    --dim:#8b94a7;
+    --blue:#4f8cff;
+    --blue-glow:rgba(79,140,255,.55);
+    --red:#ff5d5d;
+    --green:#3fd68f;
+    --amber:#ffb454;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:"PingFang SC","Hiragino Sans GB","Microsoft YaHei",-apple-system,sans-serif;
+    line-height:1.85;
+    overflow-x:hidden;
+  }
+  .layout{
+    display:grid;
+    grid-template-columns:minmax(380px,44%) 1fr;
+    min-height:100vh;
+  }
+  /* 左侧文字流 */
+  .story{padding:0 8px 0 0;}
+  section{
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    padding:64px 48px 64px 64px;
+    border-left:2px solid transparent;
+    transition:opacity .5s;
+    opacity:.28;
+  }
+  section.active{opacity:1;}
+  .kicker{
+    font-size:12px;letter-spacing:.28em;color:var(--blue);
+    text-transform:uppercase;margin-bottom:14px;font-weight:600;
+  }
+  h1{font-size:40px;line-height:1.3;font-weight:700;margin-bottom:8px;}
+  h2{font-size:27px;font-weight:700;margin-bottom:18px;line-height:1.4;}
+  .sub{color:var(--dim);font-size:15px;margin-bottom:26px;}
+  p{margin-bottom:14px;font-size:15.5px;color:#c9d1e0;max-width:34em;}
+  p b{color:var(--text);}
+  .formula{
+    display:inline-block;margin:10px 0 18px;padding:12px 22px;
+    background:var(--panel);border:1px solid var(--line);border-radius:10px;
+    font-family:"SF Mono",Menlo,Consolas,monospace;font-size:17px;color:var(--amber);
+  }
+  .cards{display:flex;flex-direction:column;gap:12px;margin:8px 0 10px;max-width:34em;}
+  .card{
+    background:var(--panel);border:1px solid var(--line);border-radius:12px;
+    padding:14px 18px;font-size:14.5px;color:#c9d1e0;
+  }
+  .card b{color:var(--text);}
+  .card .tag{
+    display:inline-block;font-size:12px;color:var(--red);border:1px solid rgba(255,93,93,.4);
+    border-radius:6px;padding:1px 8px;margin-right:10px;font-family:Menlo,monospace;
+  }
+  .card .tag.blue{color:var(--blue);border-color:rgba(79,140,255,.4);}
+  .card .tag.green{color:var(--green);border-color:rgba(63,214,143,.4);}
+  .note{font-size:13px;color:var(--dim);margin-top:18px;}
+  /* 右侧动画舞台 */
+  .stage{
+    position:sticky;top:0;height:100vh;
+    display:flex;align-items:center;justify-content:center;
+    background:
+      radial-gradient(ellipse at 60% 40%,rgba(79,140,255,.06),transparent 60%),
+      var(--bg2);
+    border-left:1px solid var(--line);
+  }
+  #cv{width:100%;height:100%;display:block;}
+  .stage-caption{
+    position:absolute;left:0;right:0;bottom:26px;text-align:center;
+    font-size:13px;color:var(--dim);letter-spacing:.06em;pointer-events:none;
+    transition:opacity .4s;
+  }
+  /* 右侧场景导航点 */
+  .dots{
+    position:fixed;right:18px;top:50%;transform:translateY(-50%);
+    display:flex;flex-direction:column;gap:10px;z-index:20;
+  }
+  .dots a{
+    width:9px;height:9px;border-radius:50%;background:#2c3548;
+    display:block;transition:all .3s;
+  }
+  .dots a.on{background:var(--blue);box-shadow:0 0 10px var(--blue-glow);transform:scale(1.35);}
+  .hint{
+    position:fixed;left:64px;bottom:22px;font-size:12px;color:#3d465c;z-index:20;
+    letter-spacing:.08em;
+  }
+  @media (max-width:900px){
+    .layout{grid-template-columns:1fr;}
+    .stage{position:relative;height:60vh;order:-1;}
+    .dots,.hint{display:none;}
+    section{padding:48px 28px;min-height:auto;opacity:1;}
+  }
+</style>
+</head>
+<body>
+
+<div class="dots" id="dots"></div>
+<div class="hint">滚动 或 ← → 方向键切换场景</div>
+
+<div class="layout">
+  <div class="story" id="story">
+
+    <section data-scene="0">
+      <div class="kicker">Harness Engineering</div>
+      <h1>Harness 工程<br>给 LLM 套上夹具</h1>
+      <p class="sub">一场围绕「输入 → LLM → 输出」这张图展开的概念阐释</p>
+      <div class="formula">Agent = Model + Harness</div>
+      <p>模型负责生成，harness 负责让生成的结果落在能用的范围里。harness 原义是马具，也是机床上固定工件的夹具。放到 agent 语境里，它指模型之外的所有代码，包括驱动循环、工具调用、上下文管理、输出校验、权限护栏。</p>
+      <p>后面每张图都遵守同一个坐标约定。横轴是交互时间，纵轴是信息空间。输出的线条散得越开，回答离可用越远。</p>
+      <p class="note">本页动画，模型先空转。往下滚动，问题一个一个出现。</p>
+    </section>
+
+    <section data-scene="1">
+      <div class="kicker">场景一 · 裸调用</div>
+      <h2>需求明确、模型够强时，直接调就够了</h2>
+      <p>一次输入，一次输出，线条笔直。这种情况下套 harness 是浪费，prompt 写清楚就能拿到好结果。</p>
+      <p>聊天问答、单轮翻译、格式转换都属于这一类。任务在一来一回之内结束，信息空间不需要扩张。</p>
+    </section>
+
+    <section data-scene="2">
+      <div class="kicker">场景二 · 三种情况下输出会散</div>
+      <h2>裸调用的输出是一个分布，常见三种发散</h2>
+      <div class="cards">
+        <div class="card"><span class="tag">①</span><b>问题本身难。</b>一次输出装不下完整的解法，模型只能给出一部分，剩下的靠猜。</div>
+        <div class="card"><span class="tag">②</span><b>模型偏弱。</b>输出里混进过多的分支和槽位，有用的句子被噪音淹没。</div>
+        <div class="card"><span class="tag">③</span><b>缺工具、缺信息。</b>模型拿不到事实，靠参数里的印象硬编，幻觉和噪音一起放大。</div>
+      </div>
+      <p>右侧动画里，输出从一个点散成一个扇面。扇面越宽，落到可用区间的概率越低。</p>
+    </section>
+
+    <section data-scene="3">
+      <div class="kicker">场景三 · Harness 登场</div>
+      <h2>蓝线出现，输出被夹回通道之内</h2>
+      <p>harness 在输出端加约束。它砍掉多余分支、滤掉噪音，把发散的回答收进一条窄通道。蓝线就是夹具，回答必须落在它之内。</p>
+      <p>这条蓝线落到工程里，是输出格式校验、工具白名单、上下文裁剪、权限边界、失败重试与回退。每一件都是普通代码，不依赖模型变聪明。</p>
+      <p class="note">对比动画，同一批输出，加上蓝线前后的差别。</p>
+    </section>
+
+    <section data-scene="4">
+      <div class="kicker">场景四 · 多轮放大</div>
+      <h2>output 变成 new input，噪音逐轮滚雪球</h2>
+      <p>agent 的工作方式是把上一轮的输出当作下一轮的输入。输入越复杂，输出的噪音越多，噪音又喂回模型，发散逐轮放大。</p>
+      <p>所以 harness 不能只在最後收一次尾，它要在每一轮都夹一次。每一轮的蓝线把误差按住，雪球才滚不起来。</p>
+      <p class="note">动画里第二跳比第一跳更散，那是被放大的部分。</p>
+    </section>
+
+    <section data-scene="5">
+      <div class="kicker">场景五 · 强化学习视角</div>
+      <h2>夹具本身就是奖励的边界</h2>
+      <div class="cards">
+        <div class="card"><span class="tag green">good</span><b>落在夹具内的回答</b>，记为 good answer，给正奖励。</div>
+        <div class="card"><span class="tag">bad</span><b>落在夹具外的回答</b>，记为 bad answer，给负奖励。</div>
+      </div>
+      <p>训练的时候，harness 就是环境。它提供状态、执行动作、算出 reward，决定一个回合什么时候停。学习在多轮里发生，夹具的形状直接写进了梯度。</p>
+      <p>这也是为什么同一套 harness 最好同时服务训练与推理，两边不一致，模型学到的边界到了线上就对不上。</p>
+    </section>
+
+    <section data-scene="6">
+      <div class="kicker">场景六 · 生产化</div>
+      <h2>夹具力度拉到最强，换来生产确定性</h2>
+      <p>生产环境把夹具拉到最紧。固定流程、决策模块、强校验一起上，输出被夹成几条平行的直线，每一次调用都可预期。</p>
+      <p>代价是灵活性。模型偶尔能给出的惊喜也被夹掉了。生产系统做这个交换是划算的，因为稳定可审计比偶尔出彩值钱。</p>
+    </section>
+
+    <section data-scene="7">
+      <div class="kicker">落地 · 收个尾</div>
+      <h2>框架与产品，以及一句话</h2>
+      <p>框架层面，LangGraph 和 AgentScope 提供图结构与状态机，用来搭自己的 harness。产品层面，Claude Code、Codex 这类编码 agent 本身就是完整的 harness，模型只是其中可替换的零件。</p>
+      <p>经验上，模型变强会吸收掉一部分夹具，几年前的很多脚手架今天已经不需要了。但权限边界、运行环境、业务规则、记忆归属这些确定性要求，会一直留在 harness 里。</p>
+      <p><b>一句话说完，模型决定 agent 能做什么，harness 决定它每次做成什么样。</b></p>
+      <p class="note">概念核对来源，LangChain 的 Agent Harness 解剖、Anthropic 的 Building Effective Agents、2026 年 OpenAI 工程博客与 Thoughtworks 的相关讨论。</p>
+    </section>
+
+  </div>
+
+  <div class="stage">
+    <canvas id="cv"></canvas>
+    <div class="stage-caption" id="caption"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const cv = document.getElementById('cv');
+  const ctx = cv.getContext('2d');
+  const caption = document.getElementById('caption');
+  let W=0,H=0,DPR=1;
+
+  function resize(){
+    DPR = Math.min(window.devicePixelRatio||1, 2);
+    W = cv.clientWidth; H = cv.clientHeight;
+    cv.width = W*DPR; cv.height = H*DPR;
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+  }
+  window.addEventListener('resize', resize);
+
+  // ---------- 场景配置 ----------
+  // spread: 输出扇面半宽(0..1, 占可用高度比例)
+  // noise: 线条抖动幅度
+  // clamp: 夹具生效程度 0(不夹)..1(完全夹到中心)
+  // railGap: 蓝线通道半宽(0..1)
+  // rails: 是否画蓝线
+  // hops: LLM 跳数
+  // streams: 输出线条数
+  // mode: flow | rl | prod
+  const scenes = [
+    {streams:3, spread:.16, noise:.010, clamp:.55, railGap:.16, rails:false, hops:1, mode:'flow',
+     cap:'坐标约定，横轴交互时间，纵轴信息空间'},
+    {streams:1, spread:.06, noise:.006, clamp:.6,  railGap:.14, rails:false, hops:1, mode:'flow',
+     cap:'明确的建议 + 强大的模型，一条直线'},
+    {streams:11, spread:.42, noise:.045, clamp:0,  railGap:.14, rails:false, hops:1, mode:'flow',
+     cap:'难的问题 / 弱的模型 / 缺工具缺信息，输出散开'},
+    {streams:11, spread:.42, noise:.045, clamp:1,  railGap:.13, rails:true,  hops:1, mode:'flow',
+     cap:'Harness 这条蓝线，让回答在它之内'},
+    {streams:7,  spread:.34, noise:.040, clamp:1,  railGap:.15, rails:true,  hops:2, mode:'flow',
+     cap:'多轮，更复杂的 input 带来更噪音的 output，逐轮扩大'},
+    {streams:14, spread:.40, noise:.012, clamp:.25,railGap:.20, rails:true,  hops:1, mode:'rl',
+     cap:'夹具内 good answer，夹具外 bad answer'},
+    {streams:9,  spread:.40, noise:.004, clamp:1,  railGap:.07, rails:true,  hops:1, mode:'prod',
+     cap:'极强的夹具力度 → 生产确定性'},
+    {streams:5,  spread:.22, noise:.010, clamp:1,  railGap:.14, rails:true,  hops:1, mode:'flow',
+     cap:'Agent = Model + Harness'}
+  ];
+
+  // 当前(已插值)状态
+  const cur = Object.assign({}, scenes[0]);
+  let sceneIdx = 0;
+  const lerpKeys = ['spread','noise','clamp','railGap'];
+  let curStreams = scenes[0].streams, curHops = 1;
+
+  // ---------- 粒子 ----------
+  // 每条流线上若干粒子, t 从 0 走到 1
+  const MAXS = 16, PERS = 5;
+  let particles = [];
+  function seedParticles(){
+    particles = [];
+    for(let i=0;i<MAXS;i++){
+      const arr = [];
+      for(let j=0;j<PERS;j++) arr.push({t:(j/PERS + Math.random()*0.12)%1, sp:.0022+Math.random()*.0016});
+      particles.push(arr);
+    }
+  }
+  seedParticles();
+
+  // 确定性伪随机(按流线编号), 避免每帧抖动跳变
+  function srand(i, k){
+    const x = Math.sin(i*127.1 + k*311.7)*43758.5453;
+    return x - Math.floor(x);
+  }
+
+  // ---------- 几何 ----------
+  function geometry(){
+    const cy = H*0.46;
+    const x0 = W*0.08;                 // 输入起点
+    const hops = curHops;
+    const boxW = Math.min(110, W*0.13), boxH = 76;
+    let bx1, bx2;
+    if(hops===1){ bx1 = W*0.40; bx2 = null; }
+    else { bx1 = W*0.26; bx2 = W*0.60; }
+    const xEnd = W*0.92;               // 输出终点 x
+    return {cy, x0, boxW, boxH, bx1, bx2, xEnd, hops};
+  }
+
+  // 流线 i 的终点 y (无夹具时)
+  function endpointY(i, n, g){
+    const f = n<=1 ? 0 : (i/(n-1))*2-1;       // -1..1
+    const avail = H*0.36;
+    let y = g.cy + f * cur.spread * avail;
+    // 夹具把终点拉回通道
+    const railY = g.cy + f * cur.railGap * avail;
+    return y + (railY - y) * cur.clamp;
+  }
+
+  // 路径上取点。路径: x0 -> box1 -> [box2] -> xEnd
+  function pathPoint(i, n, t, time){
+    const g = geometry();
+    const ey = endpointY(i,n,g);
+    const wob = cur.noise * H;
+    const jig = (x)=> Math.sin(x*0.02 + time*2 + i*1.7) * wob;
+
+    // 计算各段
+    const segs = [];
+    let prev = {x:g.x0, y:g.cy + (srand(i,1)-0.5)*8};
+    if(g.hops===1){
+      segs.push({a:prev, b:{x:g.bx1, y:g.cy}, hop:0});
+      segs.push({a:{x:g.bx1+g.boxW, y:g.cy}, b:{x:g.xEnd, y:ey}, hop:1});
+    } else {
+      const y2 = endpointY(i,n,g); // 第二跳终点
+      const midY = g.cy + (y2-g.cy)*0.45; // 中间落点也有发散
+      segs.push({a:prev, b:{x:g.bx1, y:g.cy}, hop:0});
+      segs.push({a:{x:g.bx1+g.boxW, y:g.cy}, b:{x:g.bx2, y:midY}, hop:1});
+      segs.push({a:{x:g.bx2+g.boxW, y:midY}, b:{x:g.xEnd, y:y2}, hop:2});
+    }
+    // 总长
+    let total=0; segs.forEach(s=>{ s.len=Math.hypot(s.b.x-s.a.x,s.b.y-s.a.y); total+=s.len; });
+    let d = t*total;
+    for(const s of segs){
+      if(d<=s.len){
+        const u = d/s.len;
+        const ex = s.a.x+(s.b.x-s.a.x)*u;
+        let ey2 = s.a.y+(s.b.y-s.a.y)*u;
+        // 第二跳噪音放大
+        const gain = s.hop>=2 ? 2.6 : 1;
+        ey2 += Math.sin(ex*0.025 + time*2.2 + i*1.7) * wob * gain;
+        return {x:ex, y:ey2, hop:s.hop};
+      }
+      d -= s.len;
+    }
+    const last = segs[segs.length-1];
+    return {x:last.b.x, y:last.b.y, hop:last.hop};
+  }
+
+  // ---------- 绘制 ----------
+  function drawRails(g, time){
+    if(!cur.rails) return;
+    const avail = H*0.36;
+    const gap = cur.railGap*avail;
+    const xStart = g.hops===2 ? g.bx1+g.boxW+6 : g.bx1+g.boxW+6;
+    const xStop = g.xEnd+6;
+    // 不用 shadowBlur(部分渲染器会丢描边), 用双层描边模拟发光
+    const railW = cur.mode==='prod' ? 4 : 2.5;
+    [-1,1].forEach(s=>{
+      const build = ()=>{
+        ctx.beginPath();
+        if(g.hops===2){
+          const midY = g.cy + s*gap*0.45;
+          ctx.moveTo(g.bx1+g.boxW+6, g.cy + s*gap);
+          ctx.lineTo(g.bx2, midY);
+          ctx.moveTo(g.bx2+g.boxW+6, midY);
+          ctx.lineTo(xStop, g.cy + s*gap);
+        } else {
+          ctx.moveTo(xStart, g.cy + s*gap);
+          ctx.lineTo(xStop, g.cy + s*gap);
+        }
+      };
+      ctx.strokeStyle = 'rgba(79,140,255,.28)';
+      ctx.lineWidth = railW+7;
+      build(); ctx.stroke();
+      ctx.strokeStyle = 'rgba(120,175,255,.95)';
+      ctx.lineWidth = railW;
+      build(); ctx.stroke();
+    });
+    // Harness 标注
+    ctx.save();
+    ctx.fillStyle = 'rgba(79,140,255,.95)';
+    ctx.font = '600 13px Menlo, monospace';
+    ctx.textAlign = 'left';
+    const labelY = g.cy - gap - 12;
+    ctx.fillText('Harness', xStart+4, g.hops===2? g.cy - gap - 12 : labelY);
+    ctx.restore();
+  }
+
+  function drawBox(x, y, w, h, label, time){
+    ctx.save();
+    ctx.fillStyle = '#1a2130';
+    ctx.strokeStyle = '#5b6a86';
+    ctx.lineWidth = 2;
+    const r = 10;
+    ctx.beginPath();
+    ctx.roundRect(x, y-h/2, w, h, r);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle = '#e8ecf4';
+    ctx.font = '700 20px Menlo, monospace';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(label, x+w/2, y);
+    // 呼吸
+    ctx.strokeStyle = 'rgba(79,140,255,'+(0.25+0.2*Math.sin(time*2.4))+')';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.roundRect(x-5, y-h/2-5, w+10, h+10, r+5);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  function drawAxes(g){
+    ctx.save();
+    ctx.strokeStyle = 'rgba(139,148,167,.25)';
+    ctx.fillStyle = 'rgba(139,148,167,.5)';
+    ctx.lineWidth = 1;
+    ctx.font = '11px Menlo, monospace';
+    // 横轴
+    ctx.beginPath(); ctx.moveTo(W*0.04, H*0.88); ctx.lineTo(W*0.96, H*0.88); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(W*0.96, H*0.88); ctx.lineTo(W*0.96-8, H*0.88-4); ctx.lineTo(W*0.96-8, H*0.88+4); ctx.closePath(); ctx.fill();
+    ctx.textAlign='right';
+    ctx.fillText('交互时间 →', W*0.96, H*0.88+18);
+    // 纵轴
+    ctx.beginPath(); ctx.moveTo(W*0.04, H*0.88); ctx.lineTo(W*0.04, H*0.06); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(W*0.04, H*0.06); ctx.lineTo(W*0.04-4, H*0.06+8); ctx.lineTo(W*0.04+4, H*0.06+8); ctx.closePath(); ctx.fill();
+    ctx.textAlign='left';
+    ctx.fillText('信息空间', W*0.045, H*0.055);
+    ctx.restore();
+  }
+
+  function drawLabels(g){
+    ctx.save();
+    ctx.font = '12px Menlo, monospace';
+    ctx.fillStyle = 'rgba(139,148,167,.85)';
+    ctx.textAlign='center';
+    ctx.fillText('input', g.x0+14, g.cy-16);
+    ctx.fillText('output', g.xEnd-16, g.cy-16);
+    if(g.hops===2){
+      ctx.fillText('new input', (g.bx1+g.boxW+g.bx2)/2, g.cy-30);
+    }
+    ctx.restore();
+  }
+
+  function streamColor(i, n, g){
+    if(cur.mode==='rl'){
+      const ey = endpointY(i,n,g);
+      const gap = cur.railGap*H*0.36;
+      const inside = Math.abs(ey-g.cy) <= gap+1;
+      return inside ? 'rgba(63,214,143,.85)' : 'rgba(255,93,93,.8)';
+    }
+    if(cur.mode==='prod') return 'rgba(120,170,255,.9)';
+    const hot = cur.spread>0.3 && cur.clamp<0.5;
+    return hot ? 'rgba(255,120,120,.75)' : 'rgba(120,170,255,.8)';
+  }
+
+  function draw(time){
+    ctx.clearRect(0,0,W,H);
+    const g = geometry();
+    drawAxes(g);
+
+    // 插值趋近目标场景
+    const tgt = scenes[sceneIdx];
+    lerpKeys.forEach(k=>{ cur[k] += (tgt[k]-cur[k])*0.06; });
+    cur.mode = tgt.mode; cur.rails = tgt.rails;
+    curStreams += (tgt.streams-curStreams)*0.12;
+    curHops = tgt.hops;
+    const n = Math.max(1, Math.round(curStreams));
+
+    drawRails(geometry(), time);
+
+    // 流线
+    for(let i=0;i<n;i++){
+      const color = streamColor(i,n,g);
+      // 画粒子
+      for(const p of particles[i]){
+        p.t += p.sp;
+        if(p.t>=1){ p.t = 0; }
+        const pt = pathPoint(i,n,p.t,time);
+        const size = cur.mode==='rl' ? 3.4 : 2.6;
+        ctx.save();
+        ctx.fillStyle = color;
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 8;
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, size, 0, Math.PI*2);
+        ctx.fill();
+        ctx.restore();
+      }
+      // 淡轨迹
+      ctx.save();
+      ctx.strokeStyle = color.replace(/[\d.]+\)$/,'0.18)');
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      let first=true;
+      for(let t=0;t<=1.001;t+=0.02){
+        const pt = pathPoint(i,n,t,time);
+        if(first){ ctx.moveTo(pt.x,pt.y); first=false; } else ctx.lineTo(pt.x,pt.y);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // RL 模式的 reward 回授脉冲
+    if(cur.mode==='rl'){
+      const gap = cur.railGap*H*0.36;
+      const u = (time*0.35)%1;
+      const px = g.xEnd - u*(g.xEnd-g.bx1-g.boxW);
+      ctx.save();
+      ctx.strokeStyle='rgba(63,214,143,.9)';
+      ctx.fillStyle='rgba(63,214,143,.9)';
+      ctx.lineWidth=2;
+      ctx.setLineDash([4,5]);
+      ctx.beginPath(); ctx.moveTo(g.xEnd, g.cy-gap); ctx.lineTo(g.bx1+g.boxW, g.cy-6); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.font='11px Menlo, monospace'; ctx.textAlign='center';
+      ctx.fillText('reward', (g.xEnd+g.bx1)/2, g.cy-gap-14);
+      ctx.beginPath(); ctx.arc(px, g.cy-gap + (1-u)*(gap-6), 3.5, 0, Math.PI*2); ctx.fill();
+      ctx.fillText('good', g.xEnd+2, g.cy-4);
+      ctx.fillStyle='rgba(255,93,93,.9)';
+      ctx.fillText('bad', g.xEnd+2, g.cy-gap-H*0.36*0.12-8);
+      ctx.restore();
+    }
+
+    // LLM 盒子
+    drawBox(g.bx1, g.cy, g.boxW, g.boxH, 'LLM', time);
+    if(g.hops===2) drawBox(g.bx2, g.cy, g.boxW, g.boxH, 'LLM', time+1);
+
+    drawLabels(g);
+
+    // 场景二/四的发散度表
+    if(sceneIdx===2 || sceneIdx===4){
+      const dv = cur.spread * (sceneIdx===4?1.4:1);
+      ctx.save();
+      ctx.fillStyle='rgba(139,148,167,.8)';
+      ctx.font='11px Menlo, monospace'; ctx.textAlign='left';
+      ctx.fillText('发散度', W*0.06, H*0.14);
+      ctx.strokeStyle='#2c3548'; ctx.strokeRect(W*0.06, H*0.15, 120, 8);
+      ctx.fillStyle = dv>0.3?'rgba(255,93,93,.85)':'rgba(255,180,84,.85)';
+      ctx.fillRect(W*0.06, H*0.15, Math.min(120, dv*260), 8);
+      if(sceneIdx===4){
+        ctx.fillStyle='rgba(255,93,93,.8)';
+        ctx.fillText('逐轮扩大 ↑', W*0.06, H*0.15+26);
+      }
+      ctx.restore();
+    }
+  }
+
+  // ---------- 场景切换 ----------
+  const sections = Array.from(document.querySelectorAll('section'));
+  const dotsBox = document.getElementById('dots');
+  sections.forEach((s,i)=>{
+    const a=document.createElement('a');
+    a.href='javascript:void(0)';
+    a.title='场景 '+(i+1);
+    a.onclick=()=>s.scrollIntoView({behavior:'smooth'});
+    dotsBox.appendChild(a);
+  });
+  const dots = Array.from(dotsBox.children);
+
+  function setScene(i){
+    if(i===sceneIdx) return;
+    sceneIdx = i;
+    sections.forEach((s,k)=>s.classList.toggle('active',k===i));
+    dots.forEach((d,k)=>d.classList.toggle('on',k===i));
+    caption.style.opacity=0;
+    setTimeout(()=>{ caption.textContent = scenes[i].cap||''; caption.style.opacity=1; },200);
+  }
+  sections[0].classList.add('active'); dots[0].classList.add('on');
+  caption.textContent = scenes[0].cap;
+
+  const io = new IntersectionObserver((es)=>{
+    es.forEach(e=>{
+      if(e.isIntersecting){
+        const i = sections.indexOf(e.target);
+        if(i>=0) setScene(i);
+      }
+    });
+  },{threshold:0.55});
+  sections.forEach(s=>io.observe(s));
+
+  window.addEventListener('keydown',(e)=>{
+    if(e.key!=='ArrowDown'&&e.key!=='ArrowUp'&&e.key!=='ArrowRight'&&e.key!=='ArrowLeft') return;
+    e.preventDefault();
+    const d = (e.key==='ArrowDown'||e.key==='ArrowRight')?1:-1;
+    const ni = Math.min(sections.length-1, Math.max(0, sceneIdx+d));
+    sections[ni].scrollIntoView({behavior:'smooth'});
+  });
+
+  // 支持 #s=N 直达场景
+  const hm = location.hash.match(/s=(\d+)/);
+  if(hm){
+    const i = Math.min(sections.length-1, Math.max(0, parseInt(hm[1],10)));
+    Object.keys(scenes[i]).forEach(k=>{ cur[k]=scenes[i][k]; });
+    curStreams = scenes[i].streams;
+    setScene(i);
+  }
+
+  resize();
+  let t0 = performance.now();
+  (function loop(now){
+    draw((now-t0)/1000);
+    requestAnimationFrame(loop);
+  })(t0);
+})();
+</script>
+</body>
+</html>

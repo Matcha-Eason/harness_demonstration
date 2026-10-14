@@ -1,0 +1,1729 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Harness Engineering 概念阐释与交互式演示 — 从信息空间发散到生产级确定性</title>
+  <style>
+    :root {
+      --bg-primary: #0b0f19;
+      --bg-secondary: #111827;
+      --bg-card: #1a2234;
+      --bg-card-hover: #212c42;
+      --text-primary: #f3f4f6;
+      --text-secondary: #9ca3af;
+      --text-muted: #6b7280;
+      --accent-blue: #3b82f6;
+      --accent-cyan: #06b6d4;
+      --accent-red: #ef4444;
+      --accent-amber: #f59e0b;
+      --accent-emerald: #10b981;
+      --accent-purple: #8b5cf6;
+      --border-color: #2e3a52;
+      --paper-bg: #fdfbf7;
+      --paper-ink: #1e293b;
+      --paper-blue: #1d4ed8;
+      --paper-red: #dc2626;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.65;
+      overflow-x: hidden;
+    }
+
+    /* Header & Top Nav */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(11, 15, 25, 0.88);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-color);
+      padding: 0.85rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-cyan));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.1rem;
+      color: #fff;
+      box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+    }
+
+    .brand-text h1 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .brand-text p {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+
+    .nav-tab {
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid transparent;
+      padding: 0.45rem 0.85rem;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      font-weight: 500;
+    }
+
+    .nav-tab:hover {
+      color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .nav-tab.active {
+      color: #fff;
+      background: rgba(59, 130, 246, 0.18);
+      border-color: var(--accent-blue);
+    }
+
+    .mode-switch {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .btn {
+      background: var(--bg-card);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      padding: 0.45rem 0.9rem;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .btn:hover {
+      border-color: var(--accent-blue);
+      background: var(--bg-card-hover);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent-blue), #2563eb);
+      border-color: transparent;
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.92;
+      transform: translateY(-1px);
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 1360px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    /* Hero Banner */
+    .hero {
+      background: radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.16), transparent 45%),
+                  radial-gradient(circle at 20% 80%, rgba(6, 182, 212, 0.12), transparent 45%),
+                  var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 2.5rem;
+      margin-bottom: 2rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px solid rgba(59, 130, 246, 0.4);
+      color: #60a5fa;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 0.28rem 0.75rem;
+      border-radius: 999px;
+      margin-bottom: 1rem;
+    }
+
+    .hero h2 {
+      font-size: 2.1rem;
+      line-height: 1.25;
+      margin-bottom: 0.85rem;
+      background: linear-gradient(90deg, #ffffff, #93c5fd, #67e8f9);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero p {
+      color: var(--text-secondary);
+      font-size: 1.02rem;
+      max-width: 920px;
+      margin-bottom: 1.5rem;
+    }
+
+    .formula-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: center;
+      background: rgba(11, 15, 25, 0.65);
+      border: 1px solid var(--border-color);
+      padding: 1rem 1.25rem;
+      border-radius: 12px;
+    }
+
+    .formula-item {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.92rem;
+    }
+
+    .formula-tag {
+      padding: 0.25rem 0.6rem;
+      border-radius: 6px;
+      font-weight: 700;
+      font-family: "JetBrains Mono", Consolas, monospace;
+      font-size: 0.85rem;
+    }
+
+    .tag-blue { background: rgba(59, 130, 246, 0.2); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.4); }
+    .tag-red { background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); }
+    .tag-green { background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); }
+    .tag-amber { background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); }
+
+    /* Interactive Stage Explorer */
+    .stage-Direct-grid {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+
+    @media (max-width: 1024px) {
+      .stage-Direct-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .stage-selector {
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+
+    .stage-btn {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1rem 1.15rem;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.22s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stage-btn:hover {
+      background: var(--bg-card);
+      border-color: #4b5563;
+    }
+
+    .stage-btn.active {
+      background: var(--bg-card);
+      border-color: var(--accent-blue);
+      box-shadow: 0 0 20px rgba(59, 130, 246, 0.18);
+    }
+
+    .stage-btn.active::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: var(--accent-blue);
+    }
+
+    .stage-num {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--accent-cyan);
+      letter-spacing: 0.05em;
+      display: block;
+      margin-bottom: 0.2rem;
+    }
+
+    .stage-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.25rem;
+    }
+
+    .stage-desc {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    /* Stage Display Panel */
+    .stage-panel {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .panel-header h3 {
+      font-size: 1.4rem;
+      color: #fff;
+    }
+
+    .panel-header .manuscript-quote {
+      background: rgba(245, 158, 11, 0.12);
+      border-left: 3px solid var(--accent-amber);
+      padding: 0.4rem 0.8rem;
+      border-radius: 4px;
+      font-size: 0.84rem;
+      color: #fde68a;
+    }
+
+    /* Dual View: Sketch Restoration SVG + Explanation */
+    .sketch-canvas-box {
+      background: var(--paper-bg);
+      color: var(--paper-ink);
+      border-radius: 12px;
+      padding: 1.25rem;
+      border: 2px solid #cbd5e1;
+      box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.04);
+      position: relative;
+      min-height: 360px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .sketch-watermark {
+      position: absolute;
+      top: 10px;
+      right: 14px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #64748b;
+      background: #e2e8f0;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    .sketch-svg {
+      width: 100%;
+      max-width: 820px;
+      height: auto;
+      overflow: visible;
+    }
+
+    /* Details Grid inside Panel */
+    .detail-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1rem;
+    }
+
+    .detail-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 1.15rem;
+    }
+
+    .detail-card h4 {
+      font-size: 0.95rem;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      color: #93c5fd;
+    }
+
+    .detail-card p, .detail-card ul {
+      font-size: 0.86rem;
+      color: var(--text-secondary);
+    }
+
+    .detail-card ul {
+      padding-left: 1.1rem;
+    }
+
+    .detail-card li {
+      margin-bottom: 0.35rem;
+    }
+
+    /* Interactive Sandbox Simulator Section */
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .section-subtitle {
+      color: var(--text-secondary);
+      font-size: 0.92rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .simulator-wrapper {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1.75rem;
+      margin-bottom: 2.5rem;
+      display: grid;
+      grid-template-columns: 360px 1fr;
+      gap: 1.75rem;
+    }
+
+    @media (max-width: 1024px) {
+      .simulator-wrapper {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .sim-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 1.1rem;
+      background: var(--bg-card);
+      padding: 1.35rem;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .control-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .control-val {
+      color: var(--accent-cyan);
+      font-family: monospace;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent-blue);
+      cursor: pointer;
+    }
+
+    .preset-btns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin-top: 0.25rem;
+    }
+
+    .preset-btn {
+      font-size: 0.75rem;
+      padding: 0.3rem 0.6rem;
+      border-radius: 5px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .preset-btn:hover {
+      color: #fff;
+      border-color: var(--accent-blue);
+      background: rgba(59, 130, 246, 0.15);
+    }
+
+    .sim-viewport {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .sim-canvas-container {
+      background: #070a12;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1rem;
+      position: relative;
+      height: 360px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .sim-metrics {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.85rem;
+    }
+
+    @media (max-width: 680px) {
+      .sim-metrics {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    .metric-box {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      padding: 0.85rem 1rem;
+    }
+
+    .metric-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.2rem;
+    }
+
+    .metric-value {
+      font-size: 1.35rem;
+      font-weight: 800;
+      font-family: monospace;
+    }
+
+    /* Industry & Framework Expansion Section */
+    .expansion-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+      margin-bottom: 2.5rem;
+    }
+
+    @media (max-width: 960px) {
+      .expansion-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .exp-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 1.5rem;
+      transition: transform 0.2s;
+    }
+
+    .exp-card:hover {
+      transform: translateY(-3px);
+      border-color: #4b5563;
+    }
+
+    .exp-card .badge {
+      display: inline-block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 0.2rem 0.55rem;
+      border-radius: 4px;
+      margin-bottom: 0.75rem;
+    }
+
+    .exp-card h3 {
+      font-size: 1.15rem;
+      margin-bottom: 0.6rem;
+    }
+
+    .exp-card p {
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.85rem;
+    }
+
+    .framework-compare {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1.75rem;
+      margin-bottom: 2.5rem;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      font-size: 0.88rem;
+    }
+
+    th, td {
+      border: 1px solid var(--border-color);
+      padding: 0.85rem 1rem;
+      text-align: left;
+    }
+
+    th {
+      background: var(--bg-card);
+      color: #93c5fd;
+      font-weight: 700;
+    }
+
+    tr:nth-child(even) td {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    /* Full Blueprint Overview Modal / Section */
+    .blueprint-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+    }
+
+    @media (max-width: 860px) {
+      .blueprint-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .code-snippet {
+      background: #090d16;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0.9rem 1.1rem;
+      font-family: "JetBrains Mono", Consolas, monospace;
+      font-size: 0.8rem;
+      color: #e2e8f0;
+      overflow-x: auto;
+      line-height: 1.5;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 2rem;
+      border-top: 1px solid var(--border-color);
+      color: var(--text-muted);
+      font-size: 0.82rem;
+    }
+
+    /* Animations */
+    @keyframes pulseClamp {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(3px); }
+    }
+    @keyframes pulseClampUp {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-3px); }
+    }
+    .clamp-top-anim {
+      animation: pulseClamp 2s infinite ease-in-out;
+    }
+    .clamp-bot-anim {
+      animation: pulseClampUp 2s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navigation -->
+  <header>
+    <div class="brand">
+      <div class="brand-icon">H</div>
+      <div class="brand-text">
+        <h1>Harness Engineering 概念阐释与动态推演</h1>
+        <p>基于手绘架构图还原 · 信息空间夹具理论 × 2026 Agent 工程实践</p>
+      </div>
+    </div>
+    <nav class="nav-tabs">
+      <button class="nav-tab active" onclick="scrollToSection('sec-stages')">1. 手稿五步还原</button>
+      <button class="nav-tab" onclick="scrollToSection('sec-simulator')">2. 交互式夹具模拟器</button>
+      <button class="nav-tab" onclick="scrollToSection('sec-theory')">3. 理论调研与演进栈</button>
+      <button class="nav-tab" onclick="scrollToSection('sec-frameworks')">4. AgentScope & LangGraph 强夹具</button>
+    </nav>
+    <div class="mode-switch">
+      <button class="btn" onclick="prevStage()" title="快捷键: ←">◀ 上一幕</button>
+      <button class="btn btn-primary" onclick="nextStage()" title="快捷键: →">下一幕 ▶</button>
+    </div>
+  </header>
+
+  <div class="container">
+
+    <!-- Hero Overview -->
+    <section class="hero">
+      <div class="hero-badge">✦ 核心洞察：机械“夹具 (Fixture)”隐喻 × 信息熵控场</div>
+      <h2>为什么大模型需要 Harness Engineering（驾驭/夹具工程）？</h2>
+      <p>
+        业界常将智能体定义为 <strong>Agent = Model + Harness</strong>（模型提供概率智力，Harness 提供确定性运行底座）。
+        手稿从<strong>「信息空间 (Information Space) × 交互时间 (Interaction Time)」</strong>第一性原理出发，给出了一个极具穿透力的物理模型：
+        <strong>LLM 本质上是一个容易受难题、弱模型、缺工具影响而向外剧烈发散的概率生成器；而 Harness 就是安装在 LLM 输出端与多轮回路上的刚性“机械夹具 (Fixture)”，通过物理裁切冗余 Slots、压制幻觉噪音、阻断多轮级联放大，并作为强化学习 (RL) 的正负反馈边界，最终在 AgentScope、LangGraph 等生产级框架下以“极强的夹具力度”锻造出“生产确定性”。</strong>
+      </p>
+      <div class="formula-bar">
+        <div class="formula-item">
+          <span class="formula-tag tag-blue">纵轴 Y：信息空间</span>
+          <span>代表输出可能性、未决槽位 (Slots)、熵与发散度</span>
+        </div>
+        <div class="formula-item">
+          <span class="formula-tag tag-amber">横轴 X：交互时间</span>
+          <span>代表单步推理向多轮交互 (Multi-turn) 的时间演进</span>
+        </div>
+        <div class="formula-item">
+          <span class="formula-tag tag-red">无夹具：指数发散</span>
+          <span>复杂输入 → 噪音逐轮放大 → 系统失控</span>
+        </div>
+        <div class="formula-item">
+          <span class="formula-tag tag-green">强夹具：生产确定性</span>
+          <span>减少 Slots/噪音 + RL 内化 → 稳定可靠交付</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 1: 5-Stage Manuscript Interactive Restoration -->
+    <section id="sec-stages">
+      <div class="section-title">📐 第一部分：手稿核心脉络五步全还原（点击切换或按键盘 ← →）</div>
+      <div class="section-subtitle">
+        1:1 数字化还原手稿中的 5 个核心图解模块，完整保留原图笔触逻辑（黑线发散、蓝线夹具、红线收束），并附加工业级工程注解。
+      </div>
+
+      <div class="stage-Direct-grid">
+        <!-- Left Stage Switcher -->
+        <div class="stage-selector">
+          <button class="stage-btn active" onclick="selectStage(0)" id="stage-btn-0">
+            <span class="stage-num">STAGE 01 · 基础矛盾与坐标系</span>
+            <div class="stage-title">理想收敛 vs. 现实信息空间发散</div>
+            <div class="stage-desc">建立「信息空间 × 交互时间」坐标系，剖析难问题、弱模型、缺工具引发的三大发散根因。</div>
+          </button>
+          <button class="stage-btn" onclick="selectStage(1)" id="stage-btn-1">
+            <span class="stage-num">STAGE 02 · HARNESS 本质定义</span>
+            <div class="stage-title">Harness Engineering：单轮刚性夹具</div>
+            <div class="stage-desc">在 LLM 输出端加装上下 Harness 挡板，强制减少 Slots、过滤噪音、抑制发散。</div>
+          </button>
+          <button class="stage-btn" onclick="selectStage(2)" id="stage-btn-2">
+            <span class="stage-num">STAGE 03 · 多轮级联与控场</span>
+            <div class="stage-title">多轮交互：阻断噪音逐轮扩大</div>
+            <div class="stage-desc">更复杂的 Input 导致更噪音的 Output 逐轮扩大；通过 Harness 实现 real output 被夹住。</div>
+          </button>
+          <button class="stage-btn" onclick="selectStage(3)" id="stage-btn-3">
+            <span class="stage-num">STAGE 04 · 强化学习内化</span>
+            <div class="stage-title">强化学习：夹具内外定义 Good/Bad</div>
+            <div class="stage-desc">Good Answer (夹具内) vs Bad Answer (夹具外)，在多轮交互学习中将外部约束内化进模型。</div>
+          </button>
+          <button class="stage-btn" onclick="selectStage(4)" id="stage-btn-4">
+            <span class="stage-num">STAGE 05 · 生产化终局</span>
+            <div class="stage-title">极强的夹具力度 → 生产确定性</div>
+            <div class="stage-desc">面向生产化 Agent 与 Dev 决策模型（如 AgentScope、LangGraph），实现高强度确定性输出。</div>
+          </button>
+        </div>
+
+        <!-- Right Stage Visual & Details -->
+        <div class="stage-panel" id="stage-panel-content">
+          <!-- Dynamically populated by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 2: Interactive Simulator -->
+    <section id="sec-simulator">
+      <div class="section-title">🎛️ 第二部分：信息空间 × 夹具力度 交互式推演沙盘</div>
+      <div class="section-subtitle">
+        调节下方滑块或点击预设场景，实时观察「信息空间 (Y轴)」随「交互时间 (X轴)」的发散角变化，以及蓝色 Harness 夹具如何收束红色真实输出轨迹。
+      </div>
+
+      <div class="simulator-wrapper">
+        <div class="sim-controls">
+          <div style="font-weight:700; font-size:0.95rem; color:#fff; border-bottom:1px solid var(--border-color); padding-bottom:0.5rem;">
+            ⚡ 快速预设场景 (Presets)
+          </div>
+          <div class="preset-btns">
+            <button class="preset-btn" onclick="applyPreset('ideal')">① 理想状态：强模型+明确问题</button>
+            <button class="preset-btn" onclick="applyPreset('divergent')">② 失控发散：弱模型+缺工具多轮</button>
+            <button class="preset-btn" onclick="applyPreset('harness')">③ 标准 Harness：多轮被夹住</button>
+            <button class="preset-btn" onclick="applyPreset('rl')">④ 强化学习：夹具内外采样</button>
+            <button class="preset-btn" onclick="applyPreset('production')">⑤ 生产级 AgentScope/LangGraph</button>
+          </div>
+
+          <div class="control-group" style="margin-top:0.4rem;">
+            <div class="control-label">
+              <span>问题复杂度 (难的问题 → 详细上下文)</span>
+              <span class="control-val" id="val-complexity">70%</span>
+            </div>
+            <input type="range" id="sim-complexity" min="10" max="100" value="70" oninput="updateSimulator()" />
+          </div>
+
+          <div class="control-group">
+            <div class="control-label">
+              <span>模型基础能力 (弱模型 → 强模型)</span>
+              <span class="control-val" id="val-model">45%</span>
+            </div>
+            <input type="range" id="sim-model" min="10" max="100" value="45" oninput="updateSimulator()" />
+          </div>
+
+          <div class="control-group">
+            <div class="control-label">
+              <span>工具与外部信息完备度 (防幻觉)</span>
+              <span class="control-val" id="val-tools">40%</span>
+            </div>
+            <input type="range" id="sim-tools" min="0" max="100" value="40" oninput="updateSimulator()" />
+          </div>
+
+          <div class="control-group">
+            <div class="control-label">
+              <span style="color:#60a5fa;">🔧 Harness 夹具力度 (Clamping Force)</span>
+              <span class="control-val" id="val-harness">65%</span>
+            </div>
+            <input type="range" id="sim-harness" min="0" max="98" value="65" oninput="updateSimulator()" />
+          </div>
+
+          <div class="control-group">
+            <div class="control-label">
+              <span>交互轮数 (Multi-turn 步数)</span>
+              <span class="control-val" id="val-turns">3 轮</span>
+            </div>
+            <input type="range" id="sim-turns" min="1" max="4" value="3" step="1" oninput="updateSimulator()" />
+          </div>
+
+          <div class="control-group" style="flex-direction:row; align-items:center; justify-content:space-between; padding-top:0.3rem;">
+            <span style="font-size:0.85rem; font-weight:600; color:#34d399;">🎯 显示强化学习 (Good/Bad 轨迹采样)</span>
+            <input type="checkbox" id="sim-rl" onchange="updateSimulator()" style="width:18px; height:18px; accent-color:var(--accent-emerald); cursor:pointer;" />
+          </div>
+        </div>
+
+        <div class="sim-viewport">
+          <div class="sim-canvas-container" id="sim-svg-box">
+            <!-- Populated by updateSimulator() -->
+          </div>
+
+          <div class="sim-metrics">
+            <div class="metric-box">
+              <div class="metric-label">自然发散角 (无夹具熵增)</div>
+              <div class="metric-value" id="metric-raw-div" style="color:var(--accent-red);">--</div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-label">被夹住后实际包络 (Real Output)</div>
+              <div class="metric-value" id="metric-clamped" style="color:var(--accent-blue);">--</div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-label">未决 Slots 与幻觉过滤率</div>
+              <div class="metric-value" id="metric-filtered" style="color:var(--accent-amber);">--</div>
+            </div>
+            <div class="metric-box">
+              <div class="metric-label">系统生产确定性 (Determinism)</div>
+              <div class="metric-value" id="metric-determinism" style="color:var(--accent-emerald);">--</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: Research Verification & Theoretical Expansion -->
+    <section id="sec-theory">
+      <div class="section-title">📚 第三部分：概念调研核对与理论扩充（手稿思想 × 2026 业界共识）</div>
+      <div class="section-subtitle">
+        结合 OpenAI、Anthropic、LangChain、Databricks 与 Martin Fowler 关于 <strong>Harness Engineering</strong> 的最新工程定义，核对并扩充手稿中的核心洞察。
+      </div>
+
+      <div class="expansion-grid">
+        <div class="exp-card">
+          <span class="badge tag-blue">核心定义核对</span>
+          <h3>1. 马具 (Harness) 与 机械夹具 (Fixture) 的双重隐喻</h3>
+          <p>
+            在英文语境中，<strong>Harness</strong> 原指“马具/挽具”（将烈马的狂暴能量转化为可控拉力的缰绳、马鞍与护栏）以及软件中的“测试架 (Test Harness)”。
+          </p>
+          <p>
+            <strong>手稿的精妙创新：</strong>手稿进一步引入了精密制造中的<strong>“夹具 (Jig / Fixture)”</strong>视角！在机械加工中，毛坯件存在公差与自由度发散，必须用高刚性夹具定位夹紧（限制自由度 Slots）才能保证加工精度。这与 LLM 通过 Schema、状态机、沙箱测试来消除输出发散具有完全同构的数学本质（信息熵减）。
+          </p>
+        </div>
+
+        <div class="exp-card">
+          <span class="badge tag-amber">AI 工程三层演进栈</span>
+          <h3>2. Prompt → Context → Harness 三层叠加</h3>
+          <p>
+            2026 年主流 AI 工程界将大模型应用归纳为向上堆叠的三层架构，完美印证手稿右上角的“三大发散原因”：
+          </p>
+          <ul style="font-size:0.86rem; color:var(--text-secondary); padding-left:1.1rem;">
+            <li><strong>提示工程 (Prompt Engineering)：</strong>解决“怎么把要求说清楚”，提供明确的目标建议。</li>
+            <li><strong>上下文工程 (Context Engineering)：</strong>解决手稿中的 <code>① 难的问题 → 详细的上下文</code> 与 <code>③ 工具、信息的缺失 → 过大幻觉</code>，负责在正确时机注入 RAG、记忆与工具描述。</li>
+            <li><strong>驾驭/夹具工程 (Harness Engineering)：</strong>解决 <code>② 弱模型过多 slots</code> 与 <code>多轮噪音指数级放大</code>，通过执行边界、状态持久化、验证回路实现“管得动、能落地”。</li>
+          </ul>
+        </div>
+
+        <div class="exp-card">
+          <span class="badge tag-green">控制论双支柱 + RL 协同</span>
+          <h3>3. Guides (事前引导) × Sensors (事后传感) × RLVR</h3>
+          <p>
+            手稿中的上下两条蓝色夹具，在工程实现上对应两类控制机制：
+          </p>
+          <ul style="font-size:0.86rem; color:var(--text-secondary); padding-left:1.1rem;">
+            <li><strong>上夹具 — Guides (事前前馈引导)：</strong>System Rules (如 <code>AGENTS.md</code> / <code>CLAUDE.md</code>)、JSON Schema / Structured Outputs、受限解码 (Constrained Decoding)、工具权限白名单。</li>
+            <li><strong>下夹具 — Sensors (事后反馈传感)：</strong>Linter/类型检查、单元测试沙箱、自我修正循环 (Verify-and-Fix Loop)、上下文压缩钩子 (Compaction Hooks)。</li>
+            <li><strong>RL 进化闭环：</strong>手稿指出的 <code>夹具内=Good / 夹具外=Bad</code> 正是当前最前沿的 <strong>RLVR (基于可验证奖励的强化学习)</strong> 与 <strong>Model-Harness Co-evolution</strong>！</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 4: Production Agent Frameworks (AgentScope & LangGraph) -->
+    <section id="sec-frameworks">
+      <div class="section-title">🏭 第四部分：生产化 Agent 与 Dev 决策模型 — 为什么是 AgentScope 与 LangGraph？</div>
+      <div class="section-subtitle">
+        手稿最下方指出：<code>生产化 Agent、Dev 决策 model → 极强的夹具力度 → 生产确定性（如 AgentScope、LangGraph）</code>。以下深入拆解这两大框架如何提供“极强的夹具力度”。
+      </div>
+
+      <div class="framework-compare">
+        <div class="blueprint-grid">
+          <div class="detail-card" style="border-left: 4px solid var(--accent-blue);">
+            <h4>🛡️ AgentScope：面向生产级多智能体的强夹具底座</h4>
+            <p style="margin-bottom:0.6rem;">
+              AgentScope（涵盖 Python 与 AgentScope-Java 生产级生态）专为高可靠企业级 Multi-Agent 协同与 Dev 决策设计，其“强夹具”体现在：
+            </p>
+            <ul>
+              <li><strong>结构化消息夹具 (Msg & Structured Output)：</strong>所有 Agent 间通信强制封装为标准化 <code>Msg</code> 对象并绑定强类型 Schema（Pydantic / Java POJO），彻底杜绝自由文本解析带来的 Slots 漂移。</li>
+              <li><strong>工具沙箱与生命周期钩子 (Pre/Post Hooks)：</strong>在 <code>ReActAgent</code> 的推理步与行动步之间切入强制拦截钩子，对越权工具调用或格式异常原地拦截并注入错误提示令其重算。</li>
+              <li><strong>容错与重试防崩回路 (Fault Tolerance)：</strong>内置解析器自动修复与最大重试边界，将单轮发散严格锁死在组件内部，绝不向下游 Agent 扩散噪音。</li>
+            </ul>
+          </div>
+
+          <div class="detail-card" style="border-left: 4px solid var(--accent-emerald);">
+            <h4>🕸️ LangGraph：基于有向图状态机的确定性轨道夹具</h4>
+            <p style="margin-bottom:0.6rem;">
+              LangGraph 将 Agent 从“自由发散的 ReAct 死循环”拉回受控的<strong>状态机有向图 (StateGraph)</strong>，用图拓扑提供物理级夹具：
+            </p>
+            <ul>
+              <li><strong>强类型全局状态 (Typed State Schema)：</strong>每一轮交互不再盲目拼接全量噪音历史，而是通过显式定义的 <code>State</code> 与 <code>Reducer</code> 精确更新指定槽位 (Slots)。</li>
+              <li><strong>条件边硬路由 (Conditional Edges)：</strong>下一步去哪个节点不由模型随意发散决定，而是由确定性代码路由函数（夹具检具）根据状态校验结果强制分发。</li>
+              <li><strong>持久化快照与人工门禁 (Checkpointer & HITL)：</strong>支持 Time-travel 状态回滚与高危动作前的 <code>interrupt()</code> 人工审批，把生产失控风险降为零。</li>
+            </ul>
+          </div>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>手稿概念维度</th>
+              <th>裸调 LLM / 简单 Prompt (无夹具)</th>
+              <th>基础 Harness (单轮护栏)</th>
+              <th>生产级强夹具 (AgentScope / LangGraph)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>信息空间 (Slots & 自由度)</strong></td>
+              <td>完全开放，随上下文增长呈指数级发散</td>
+              <td>输出结构受 JSON Schema / 正则基本限制</td>
+              <td><strong>强类型状态契约 + 显式动作空间白名单</strong>，自由度被严格压缩至业务允许的最小集合</td>
+            </tr>
+            <tr>
+              <td><strong>多轮噪音传播 (Compounding Error)</strong></td>
+              <td>前序废话与幻觉直接拼入下一轮，逐轮雪崩扩大</td>
+              <td>单轮重试，但长对话仍易发生 Context Drift</td>
+              <td><strong>状态归约 (State Reduction) + 沙箱测试闭环</strong>，只有通过校验的干净状态才能进入下一跳</td>
+            </tr>
+            <tr>
+              <td><strong>异常处理与自愈机制</strong></td>
+              <td>直接输出错误结果或崩溃</td>
+              <td>简单 Output Parser 报错重试</td>
+              <td><strong>图级别回滚 (Checkpointer) + 确定性降级路由 + Human-in-the-loop 门禁</strong></td>
+            </tr>
+            <tr>
+              <td><strong>与强化学习 (RL) 的结合</strong></td>
+              <td>难以界定奖励边界，依赖主观打分</td>
+              <td>提供单步格式正确性奖励 (Format Reward)</td>
+              <td><strong>完整的环境轨迹验证器 (Trajectory Verifier)</strong>，天然产出“夹具内 Good / 夹具外 Bad”高质量多轮偏好数据</td>
+            </tr>
+            <tr>
+              <td><strong>最终交付形态</strong></td>
+              <td>玩具级 Demo（上限高但下限极低）</td>
+              <td>辅助工具（需人工高频盯盘核对）</td>
+              <td><strong>生产确定性系统（Dev 决策模型 / 无人值守企业级工作流）</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </div>
+
+  <footer class="footer">
+    Harness Engineering 概念阐释与交互式演示 · 忠实还原手稿架构图（信息空间 × 交互时间 × 夹具工程 × 多轮控场 × RL 内化 × 生产确定性）
+  </footer>
+
+  <script>
+    // ==========================================
+    // 1. Data & SVG Templates for the 5 Stages
+    // ==========================================
+    const stagesData = [
+      {
+        id: 0,
+        title: "01. 基础矛盾与坐标系：理想收敛 vs. 现实发散",
+        quote: "手稿原话：「明确的建议 / 强大的模型」 vs 「①难的问题→详细的上下文 or ②弱的模型→过多slots、噪音 or ③工具、信息的缺失→过大幻觉、噪音」",
+        svg: `
+          <svg class="sketch-svg" viewBox="0 0 800 370" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="arrow-ink" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#1e293b" />
+              </marker>
+              <marker id="arrow-red" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#dc2626" />
+              </marker>
+              <marker id="arrow-green" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#059669" />
+              </marker>
+            </defs>
+
+            <!-- Top Left: Ideal Convergence -->
+            <g transform="translate(30, 20)">
+              <rect x="0" y="0" width="320" height="165" rx="10" fill="#f1f5f9" stroke="#cbd5e1" stroke-dasharray="4 4"/>
+              <text x="14" y="24" font-size="13" font-weight="bold" fill="#059669">【理想态：收敛】强模型 + 明确边界</text>
+
+              <!-- User Input Circle (Large) -->
+              <circle cx="65" cy="78" r="36" fill="#fff" stroke="#1e293b" stroke-width="2.2"/>
+              <text x="65" y="74" font-size="13" font-weight="bold" text-anchor="middle" fill="#1e293b">User</text>
+              <text x="65" y="91" font-size="13" font-weight="bold" text-anchor="middle" fill="#1e293b">Input</text>
+
+              <!-- Converging lines -->
+              <line x1="98" y1="50" x2="135" y2="62" stroke="#1e293b" stroke-width="1.8" marker-end="url(#arrow-ink)"/>
+              <line x1="103" y1="78" x2="132" y2="78" stroke="#1e293b" stroke-width="1.8" marker-end="url(#arrow-ink)"/>
+              <line x1="98" y1="106" x2="135" y2="94" stroke="#1e293b" stroke-width="1.8" marker-end="url(#arrow-ink)"/>
+
+              <!-- LLM Box -->
+              <rect x="138" y="54" width="56" height="48" fill="#fff" stroke="#1e293b" stroke-width="2.2"/>
+              <text x="166" y="83" font-size="15" font-weight="bold" text-anchor="middle" fill="#1e293b">LLM</text>
+
+              <!-- Arrow to narrow output -->
+              <line x1="196" y1="78" x2="225" y2="78" stroke="#059669" stroke-width="2.2" marker-end="url(#arrow-green)"/>
+
+              <!-- Narrow deterministic output -->
+              <rect x="232" y="71" width="66" height="14" fill="#d1fae5" stroke="#059669" stroke-width="2"/>
+              <text x="265" y="102" font-size="13" font-weight="bold" text-anchor="middle" fill="#059669">output.</text>
+
+              <text x="160" y="132" font-size="13" font-weight="bold" text-anchor="middle" fill="#1e293b">明确的建议 · 强大的模型</text>
+              <text x="160" y="150" font-size="11.5" text-anchor="middle" fill="#64748b">（宽泛输入 → 经模型压缩收敛 → 窄而确定的输出）</text>
+            </g>
+
+            <!-- Bottom Left: Coordinate System -->
+            <g transform="translate(30, 205)">
+              <rect x="0" y="0" width="320" height="145" rx="10" fill="#fff" stroke="#cbd5e1"/>
+              <text x="20" y="65" font-size="14" font-weight="bold" fill="#1e293b">坐标：</text>
+
+              <!-- Y Axis: Information Space -->
+              <line x1="95" y1="125" x2="108" y2="22" stroke="#1e293b" stroke-width="2" marker-end="url(#arrow-ink)" marker-start="url(#arrow-ink)"/>
+              <text x="115" y="42" font-size="14" font-weight="bold" fill="#1d4ed8">信息空间 (纵轴)</text>
+              <text x="115" y="60" font-size="11.5" fill="#64748b">↑ 跨度越大 = 熵越高 / Slots 越多 / 越发散</text>
+
+              <!-- X Axis: Interaction Time -->
+              <line x1="101" y1="88" x2="265" y2="88" stroke="#1e293b" stroke-width="2" marker-end="url(#arrow-ink)"/>
+              <text x="180" y="110" font-size="14" font-weight="bold" text-anchor="middle" fill="#1e293b">交互时间 (横轴)</text>
+              <text x="285" y="92" font-size="12" font-weight="bold" fill="#dc2626">发散/收敛</text>
+            </g>
+
+            <!-- Right Side: Real-world Divergence -->
+            <g transform="translate(380, 20)">
+              <rect x="0" y="0" width="390" height="330" rx="10" fill="#fff5f5" stroke="#fecaca"/>
+              <text x="16" y="25" font-size="13" font-weight="bold" fill="#dc2626">【现实态：剧烈发散】信息空间失控膨胀</text>
+
+              <!-- Small User Input -->
+              <circle cx="55" cy="95" r="24" fill="#fff" stroke="#1e293b" stroke-width="2"/>
+              <text x="55" y="92" font-size="12" font-weight="bold" text-anchor="middle" fill="#1e293b">User</text>
+              <text x="55" y="106" font-size="12" font-weight="bold" text-anchor="middle" fill="#1e293b">Input</text>
+
+              <!-- Lines into LLM -->
+              <line x1="78" y1="75" x2="112" y2="85" stroke="#1e293b" stroke-width="1.6"/>
+              <line x1="79" y1="95" x2="108" y2="95" stroke="#1e293b" stroke-width="1.6" marker-end="url(#arrow-ink)"/>
+              <line x1="78" y1="115" x2="112" y2="105" stroke="#1e293b" stroke-width="1.6"/>
+
+              <!-- LLM Box -->
+              <rect x="115" y="71" width="54" height="48" fill="#fff" stroke="#1e293b" stroke-width="2.2"/>
+              <text x="142" y="100" font-size="14" font-weight="bold" text-anchor="middle" fill="#1e293b">LLM</text>
+
+              <!-- Diverging arrows out of LLM -->
+              <line x1="169" y1="73" x2="225" y2="42" stroke="#dc2626" stroke-width="2" marker-end="url(#arrow-red)"/>
+              <line x1="172" y1="95" x2="215" y2="95" stroke="#dc2626" stroke-width="2" marker-end="url(#arrow-red)"/>
+              <line x1="169" y1="117" x2="225" y2="148" stroke="#dc2626" stroke-width="2" marker-end="url(#arrow-red)"/>
+
+              <!-- Huge Output Circle -->
+              <ellipse cx="285" cy="95" rx="52" ry="62" fill="#fee2e2" stroke="#dc2626" stroke-width="2.4"/>
+              <text x="285" y="100" font-size="16" font-weight="bold" text-anchor="middle" fill="#991b1b">Output</text>
+
+              <!-- Three Root Causes from Manuscript -->
+              <g transform="translate(25, 185)">
+                <text x="0" y="0" font-size="13.5" font-weight="bold" fill="#1e293b">① 难的问题 <tspan fill="#dc2626">→ 详细的上下文</tspan>（状态分支激增）</text>
+                <text x="90" y="24" font-size="12" font-style="italic" fill="#64748b">or</text>
+                <text x="0" y="48" font-size="13.5" font-weight="bold" fill="#1e293b">② 弱的模型 <tspan fill="#dc2626">→ 过多 slots、噪音</tspan>（无法独立收敛）</text>
+                <text x="90" y="72" font-size="12" font-style="italic" fill="#64748b">or</text>
+                <text x="0" y="96" font-size="13.5" font-weight="bold" fill="#1e293b">③ 工具、信息的缺失 <tspan fill="#dc2626">→ 过大幻觉、噪音</tspan>（盲猜发散）</text>
+              </g>
+            </g>
+          </svg>
+        `,
+        cards: [
+          {
+            title: "📌 手稿核心表达还原",
+            items: [
+              "<strong>坐标系定义：</strong>纵轴为「信息空间」（可能性/不确定性宽度），横轴为「交互时间」。",
+              "<strong>理想收敛（左上）：</strong>当面对明确的任务建议且拥有强大的模型时，宽泛的 User Input 会收敛为一个极窄、确定的矩形 Output。",
+              "<strong>现实发散（右上）：</strong>哪怕输入很小，经过 LLM 后输出空间也会剧烈膨胀成一个巨大的圆。"
+            ]
+          },
+          {
+            title: "🔍 三大发散根因深度解析",
+            items: [
+              "<strong>① 难的问题 → 详细的上下文：</strong>复杂工程任务需要长链条推理与海量背景信息，推理树每多一步，潜在状态空间就呈指数级张开。",
+              "<strong>② 弱的模型 → 过多 slots、噪音：</strong>小模型或未对齐模型注意力分散，会产生大量未填充/多余的变量槽位（Slots）及废话噪音。",
+              "<strong>③ 工具、信息的缺失 → 过大幻觉、噪音：</strong>没有检索工具（RAG）或执行环境验证时，模型只能依赖参数记忆进行概率外推，导致严重幻觉。"
+            ]
+          }
+        ]
+      },
+      {
+        id: 1,
+        title: "02. Harness Engineering：为发散的 LLM 装上刚性“夹具”",
+        quote: "手稿原话：「Harness Engineering: output → 被 Harness 限制：减少 slots、噪音、发散.」",
+        svg: `
+          <svg class="sketch-svg" viewBox="0 0 800 320" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="arrow-ink2" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#1e293b" />
+              </marker>
+              <marker id="arrow-blue2" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#1d4ed8" />
+              </marker>
+            </defs>
+
+            <text x="30" y="35" font-size="18" font-weight="bold" font-family="serif" fill="#1e293b">Harness Engineering :</text>
+
+            <!-- Input converging -->
+            <text x="55" y="168" font-size="15" font-weight="bold" fill="#1e293b">Input</text>
+            <line x1="105" y1="105" x2="175" y2="140" stroke="#1e293b" stroke-width="2"/>
+            <line x1="105" y1="225" x2="175" y2="190" stroke="#1e293b" stroke-width="2"/>
+
+            <!-- LLM Box -->
+            <rect x="175" y="130" width="68" height="70" fill="#fff" stroke="#1e293b" stroke-width="2.5"/>
+            <text x="209" y="171" font-size="16" font-weight="bold" text-anchor="middle" fill="#1e293b">LLM</text>
+
+            <!-- Diverging raw arrows (blocked by Harness) -->
+            <line x1="243" y1="138" x2="310" y2="105" stroke="#94a3b8" stroke-width="2" stroke-dasharray="4 3" marker-end="url(#arrow-ink2)"/>
+            <line x1="243" y1="150" x2="328" y2="128" stroke="#1e293b" stroke-width="2" marker-end="url(#arrow-ink2)"/>
+            <line x1="243" y1="180" x2="328" y2="202" stroke="#1e293b" stroke-width="2" marker-end="url(#arrow-ink2)"/>
+            <line x1="243" y1="192" x2="310" y2="225" stroke="#94a3b8" stroke-width="2" stroke-dasharray="4 3" marker-end="url(#arrow-ink2)"/>
+
+            <!-- TOP BLUE HARNESS CLAMP -->
+            <g class="clamp-top-anim">
+              <line x1="265" y1="128" x2="335" y2="95" stroke="#1d4ed8" stroke-width="4"/>
+              <line x1="260" y1="120" x2="270" y2="136" stroke="#1d4ed8" stroke-width="4"/>
+              <line x1="330" y1="87" x2="340" y2="103" stroke="#1d4ed8" stroke-width="4"/>
+              <path d="M 300 108 Q 310 65 345 60" fill="none" stroke="#1d4ed8" stroke-width="2" marker-end="url(#arrow-blue2)"/>
+              <text x="352" y="65" font-size="15" font-weight="bold" fill="#1d4ed8">Harness (上夹具)</text>
+            </g>
+
+            <!-- BOTTOM BLUE HARNESS CLAMP -->
+            <g class="clamp-bot-anim">
+              <line x1="265" y1="202" x2="335" y2="235" stroke="#1d4ed8" stroke-width="4"/>
+              <line x1="260" y1="210" x2="270" y2="194" stroke="#1d4ed8" stroke-width="4"/>
+              <line x1="330" y1="243" x2="340" y2="227" stroke="#1d4ed8" stroke-width="4"/>
+              <path d="M 295 220 Q 290 260 285 275" fill="none" stroke="#1d4ed8" stroke-width="2" marker-end="url(#arrow-blue2)"/>
+              <text x="255" y="298" font-size="15" font-weight="bold" fill="#1d4ed8">Harness (下夹具)</text>
+            </g>
+
+            <!-- Output text & Core Annotation -->
+            <text x="290" y="170" font-size="15" font-weight="bold" fill="#1e293b">output</text>
+            <line x1="345" y1="165" x2="385" y2="165" stroke="#1e293b" stroke-width="2.2" marker-end="url(#arrow-ink2)"/>
+
+            <rect x="395" y="128" width="375" height="74" rx="10" fill="#eff6ff" stroke="#3b82f6" stroke-width="2"/>
+            <text x="415" y="160" font-size="16" font-weight="bold" fill="#1e293b">被 <tspan fill="#1d4ed8">Harness</tspan> 限制：</text>
+            <text x="415" y="186" font-size="16" font-weight="bold" fill="#dc2626">减少 slots、噪音、发散.</text>
+          </svg>
+        `,
+        cards: [
+          {
+            title: "📌 手稿核心表达还原",
+            items: [
+              "<strong>蓝色工字型挡板 (|===|)：</strong>手稿在 LLM 输出发散角的上下两侧画出了鲜明的蓝色限位挡板，标注为 <code>Harness</code>。",
+              "<strong>三大直接收益：</strong>Output 原本向外扩散的箭头被 Harness 强行拦截，直接实现<strong>「减少 slots（未决分支/参数槽位）、减少噪音、减少发散」</strong>。"
+            ]
+          },
+          {
+            title: "⚙️ 工程实现映射（Harness 是如何夹住 Output 的？）",
+            items: [
+              "<strong>消除过多 Slots：</strong>通过 Pydantic / JSON Schema / Function Calling 强类型签名，规定模型只能填写既定字段，禁止自造多余参数。",
+              "<strong>切除幻觉与噪音：</strong>通过 AST 语法树校验、编译器 Linter、正则护栏（Guardrails）直接丢弃不合规文本。",
+              "<strong>收敛发散空间：</strong>将开放域问答转化为受控域动作选择（Action Space Bounding）。"
+            ]
+          }
+        ]
+      },
+      {
+        id: 2,
+        title: "03. 多轮交互 (Multi-turn)：阻断级联噪音放大，把 Real Output 夹住",
+        quote: "手稿原话：「多轮：更复杂的 input 导致更噪音的 Output，逐轮扩大」 vs 「real output : 被夹住」",
+        svg: `
+          <svg class="sketch-svg" viewBox="0 0 800 350" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="arrow-ink3" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#1e293b" />
+              </marker>
+              <marker id="arrow-red3" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#dc2626" />
+              </marker>
+            </defs>
+
+            <text x="25" y="35" font-size="17" font-weight="bold" fill="#1e293b">多轮 (Multi-turn)：</text>
+
+            <!-- Turn 1 Input -->
+            <line x1="70" y1="95" x2="115" y2="128" stroke="#1e293b" stroke-width="2" marker-end="url(#arrow-ink3)"/>
+            <line x1="70" y1="205" x2="115" y2="172" stroke="#1e293b" stroke-width="2" marker-end="url(#arrow-ink3)"/>
+
+            <!-- LLM 1 -->
+            <rect x="118" y="118" width="60" height="64" fill="#fff" stroke="#1e293b" stroke-width="2.2"/>
+            <text x="148" y="155" font-size="15" font-weight="bold" text-anchor="middle" fill="#1e293b">LLM</text>
+
+            <!-- Turn 1 Output diverging -->
+            <line x1="178" y1="126" x2="215" y2="102" stroke="#1e293b" stroke-width="1.8" marker-end="url(#arrow-ink3)"/>
+            <line x1="178" y1="174" x2="215" y2="195" stroke="#1e293b" stroke-width="1.8"/>
+            <text x="212" y="152" font-size="14" font-weight="bold" fill="#1e293b" transform="rotate(-18 212 152)">output</text>
+
+            <!-- New Input joining Turn 2 -->
+            <text x="195" y="238" font-size="13" font-weight="bold" fill="#1e293b">new input</text>
+            <line x1="255" y1="226" x2="292" y2="176" stroke="#1e293b" stroke-width="1.8" marker-end="url(#arrow-ink3)"/>
+            <line x1="252" y1="100" x2="292" y2="130" stroke="#1e293b" stroke-width="1.8" marker-end="url(#arrow-ink3)"/>
+
+            <!-- LLM 2 -->
+            <rect x="295" y="118" width="60" height="64" fill="#fff" stroke="#1e293b" stroke-width="2.2"/>
+            <text x="325" y="155" font-size="15" font-weight="bold" text-anchor="middle" fill="#1e293b">LLM</text>
+
+            <!-- Turn 2: Wild Black Diverging Arrows (Unclamped compounding error) -->
+            <line x1="355" y1="120" x2="430" y2="42" stroke="#1e293b" stroke-width="2.2" marker-end="url(#arrow-ink3)"/>
+            <line x1="355" y1="180" x2="430" y2="258" stroke="#1e293b" stroke-width="2.2" marker-end="url(#arrow-ink3)"/>
+
+            <!-- Turn 2: Blue Clamps pushing inward -->
+            <line x1="395" y1="100" x2="470" y2="55" stroke="#1d4ed8" stroke-width="3.5"/>
+            <line x1="390" y1="93" x2="400" y2="107" stroke="#1d4ed8" stroke-width="3.5"/>
+            <line x1="465" y1="48" x2="475" y2="62" stroke="#1d4ed8" stroke-width="3.5"/>
+
+            <line x1="395" y1="198" x2="470" y2="242" stroke="#1d4ed8" stroke-width="3.5"/>
+            <line x1="390" y1="205" x2="400" y2="191" stroke="#1d4ed8" stroke-width="3.5"/>
+            <line x1="465" y1="249" x2="475" y2="235" stroke="#1d4ed8" stroke-width="3.5"/>
+
+            <!-- Red Clamped Real Output Envelope -->
+            <line x1="380" y1="122" x2="495" y2="82" stroke="#dc2626" stroke-width="2.6"/>
+            <line x1="380" y1="178" x2="495" y2="218" stroke="#dc2626" stroke-width="2.6"/>
+
+            <!-- Small Red Inward Force Arrows -->
+            <line x1="425" y1="84" x2="434" y2="100" stroke="#dc2626" stroke-width="2" marker-end="url(#arrow-red3)"/>
+            <line x1="425" y1="214" x2="434" y2="198" stroke="#dc2626" stroke-width="2" marker-end="url(#arrow-red3)"/>
+
+            <!-- Red Annotation: real output 被夹住 -->
+            <rect x="440" y="130" width="235" height="40" rx="6" fill="#fef2f2" stroke="#f87171"/>
+            <text x="452" y="156" font-size="16" font-weight="bold" fill="#dc2626">real output : 被夹住</text>
+
+            <!-- Bottom Annotation pointing from black arrow -->
+            <path d="M 412 248 L 412 305 L 440 305" fill="none" stroke="#1e293b" stroke-width="2" marker-end="url(#arrow-ink3)"/>
+            <rect x="448" y="280" width="335" height="44" rx="8" fill="#f8fafc" stroke="#94a3b8"/>
+            <text x="460" y="308" font-size="14.5" font-weight="bold" fill="#1e293b">更复杂的 input 导致更噪音的 Output，<tspan fill="#dc2626">逐轮扩大</tspan></text>
+          </svg>
+        `,
+        cards: [
+          {
+            title: "📌 手稿核心表达还原",
+            items: [
+              "<strong>无夹具的级联灾难（黑线）：</strong>第一轮发散的 <code>output</code> 加上第二轮的 <code>new input</code> 形成更复杂的输入，导致第二轮黑线发散角急剧张大——<strong>「更复杂的 input 导致更噪音的 Output，逐轮扩大」</strong>。",
+              "<strong>有夹具的真实输出（蓝夹具+红线）：</strong>蓝色夹具向内施压（红色小箭头），将原本失控的黑色轨迹强行收束在红色包络线内，实现<strong>「real output : 被夹住」</strong>。"
+            ]
+          },
+          {
+            title: "🔄 工程扩充：多轮 Agent 的上下文治理",
+            items: [
+              "<strong>上下文压缩与清洗 (Context Compaction)：</strong>Harness 不会把上一轮的所有思维链废话和报错原样塞给下一轮，而是只提取结构化中间结果写入状态文件。",
+              "<strong>验证-修复闭环 (Write-Test-Fix Loop)：</strong>每一轮结束前由 Harness 运行测试套件；若超出红线立即拦截重算，防止错误带病进入下一轮。"
+            ]
+          }
+        ]
+      },
+      {
+        id: 3,
+        title: "04. 强化学习 (RL)：用 Harness 边界定义 Good/Bad，将夹具内化进模型",
+        quote: "手稿原话：「强化学习：good Answer : 夹具内 / bad Answer : 夹具外 } 学习、多轮.」",
+        svg: `
+          <svg class="sketch-svg" viewBox="0 0 800 320" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="arrow-ink4" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#1e293b" />
+              </marker>
+              <marker id="arrow-blue4" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#1d4ed8" />
+              </marker>
+            </defs>
+
+            <text x="25" y="40" font-size="17" font-weight="bold" fill="#1e293b">强化学习 (Reinforcement Learning)：</text>
+
+            <!-- Input arrows -->
+            <line x1="95" y1="105" x2="145" y2="138" stroke="#1e293b" stroke-width="2" marker-end="url(#arrow-ink4)"/>
+            <line x1="95" y1="215" x2="145" y2="182" stroke="#1e293b" stroke-width="2" marker-end="url(#arrow-ink4)"/>
+
+            <!-- LLM Box -->
+            <rect x="148" y="128" width="60" height="64" fill="#fff" stroke="#1e293b" stroke-width="2.2"/>
+            <text x="178" y="166" font-size="15" font-weight="bold" text-anchor="middle" fill="#1e293b">LLM</text>
+
+            <!-- Outgoing trajectories (Rollouts) -->
+            <!-- Outside Top (Bad Answer) -->
+            <line x1="208" y1="130" x2="268" y2="65" stroke="#dc2626" stroke-width="2.2" marker-end="url(#arrow-ink4)"/>
+            <rect x="228" y="88" width="52" height="10" transform="rotate(-38 228 88)" fill="#fecaca" stroke="#dc2626" stroke-width="1.5"/>
+
+            <!-- Top Blue Clamp -->
+            <line x1="230" y1="125" x2="295" y2="95" stroke="#1d4ed8" stroke-width="4"/>
+            <line x1="226" y1="118" x2="234" y2="132" stroke="#1d4ed8" stroke-width="4"/>
+
+            <!-- Inside Clamps (Good Answers) -->
+            <rect x="235" y="136" width="62" height="11" transform="rotate(-12 235 136)" fill="#bbf7d0" stroke="#059669" stroke-width="1.8"/>
+            <rect x="238" y="155" width="64" height="11" fill="#bbf7d0" stroke="#059669" stroke-width="1.8"/>
+            <rect x="235" y="172" width="62" height="11" transform="rotate(12 235 172)" fill="#bbf7d0" stroke="#059669" stroke-width="1.8"/>
+
+            <!-- Bottom Blue Clamp -->
+            <line x1="230" y1="195" x2="295" y2="225" stroke="#1d4ed8" stroke-width="4"/>
+            <line x1="226" y1="202" x2="234" y2="188" stroke="#1d4ed8" stroke-width="4"/>
+
+            <!-- Outside Bottom (Bad Answer) -->
+            <line x1="208" y1="190" x2="268" y2="255" stroke="#dc2626" stroke-width="2.2" marker-end="url(#arrow-ink4)"/>
+            <rect x="235" y="218" width="52" height="10" transform="rotate(35 235 218)" fill="#fecaca" stroke="#dc2626" stroke-width="1.5"/>
+
+            <!-- Bracket and Arrow to RL labels -->
+            <path d="M 315 130 L 328 130 L 328 190 L 315 190" fill="none" stroke="#1d4ed8" stroke-width="2.2"/>
+            <line x1="332" y1="160" x2="375" y2="160" stroke="#1d4ed8" stroke-width="2.2" marker-end="url(#arrow-blue4)"/>
+
+            <!-- Good / Bad Answer Box -->
+            <rect x="390" y="105" width="225" height="110" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+            <text x="408" y="145" font-size="16" font-weight="bold" fill="#059669">good Answer : <tspan fill="#1d4ed8">夹具内</tspan> (+Reward)</text>
+            <text x="408" y="185" font-size="16" font-weight="bold" fill="#dc2626">bad Answer  : <tspan fill="#1e293b">夹具外</tspan> (-Penalty)</text>
+
+            <!-- Right Curly Brace: 学习、多轮 -->
+            <path d="M 628 115 Q 642 115 642 135 L 642 148 Q 642 160 655 160 Q 642 160 642 172 L 642 185 Q 642 205 628 205" fill="none" stroke="#1d4ed8" stroke-width="2.5"/>
+            <text x="668" y="166" font-size="18" font-weight="bold" fill="#1d4ed8">学习、多轮.</text>
+          </svg>
+        `,
+        cards: [
+          {
+            title: "📌 手稿核心表达还原",
+            items: [
+              "<strong>轨迹采样与边界判定：</strong>LLM 生成多条候选轨迹（矩形条），落在蓝色夹具内部的定义为 <code>good Answer : 夹具内</code>，刺出夹具外部的定义为 <code>bad Answer : 夹具外</code>。",
+              "<strong>学习、多轮：</strong>利用夹具内外的二元/分级信号进行多轮强化学习，让模型学会主动往夹具内部收敛。"
+            ]
+          },
+          {
+            title: "🧠 业界前沿对标：RLVR 与 Model-Harness 协同演进",
+            items: [
+              "<strong>Harness 即天然 Verifier（验证器）：</strong>在代码生成、工具调用与数学推理中，Harness（沙箱测试、编译器、状态校验）提供了零幻觉的客观奖励信号（RLVR, Reinforcement Learning with Verifiable Rewards）。",
+              "<strong>外部约束内化：</strong>正如 LangChain 与 OpenAI 2026 研究指出，顶尖团队正在用自己的 Harness 对模型做 Post-training，让模型原生适应特定 Harness 的工具与边界。"
+            ]
+          }
+        ]
+      },
+      {
+        id: 4,
+        title: "05. 生产化 Agent 与 Dev 决策模型：极强的夹具力度 → 生产确定性",
+        quote: "手稿原话：「生产化 Agent、Dev 决策 model → 极强的夹具力度 → 生产确定性（如 Agentscope、Langgraph）」",
+        svg: `
+          <svg class="sketch-svg" viewBox="0 0 800 350" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="arrow-ink5" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#1e293b" />
+              </marker>
+              <marker id="arrow-blue5" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                <path d="M 0 1 L 10 5 L 0 9 z" fill="#1d4ed8" />
+              </marker>
+            </defs>
+
+            <text x="30" y="38" font-size="18" font-weight="bold" fill="#1e293b">生产化 Agent 、 Dev 决策 model</text>
+
+            <!-- Left Long Blue Arrow down to AgentScope / LangGraph -->
+            <line x1="65" y1="55" x2="55" y2="255" stroke="#1d4ed8" stroke-width="2.5" marker-end="url(#arrow-blue5)"/>
+            <rect x="20" y="265" width="165" height="68" rx="8" fill="#eff6ff" stroke="#3b82f6" stroke-width="2"/>
+            <text x="35" y="292" font-size="16" font-weight="bold" fill="#1d4ed8">如 Agentscope</text>
+            <text x="55" y="318" font-size="16" font-weight="bold" fill="#1d4ed8">Langgraph</text>
+
+            <!-- Input -->
+            <text x="175" y="162" font-size="16" font-weight="bold" fill="#1e293b">input</text>
+            <line x1="215" y1="105" x2="258" y2="132" stroke="#1e293b" stroke-width="2" marker-end="url(#arrow-ink5)"/>
+            <line x1="215" y1="210" x2="258" y2="182" stroke="#1e293b" stroke-width="2" marker-end="url(#arrow-ink5)"/>
+
+            <!-- LLM Box -->
+            <rect x="262" y="118" width="82" height="78" fill="#fff" stroke="#1e293b" stroke-width="2.6"/>
+            <text x="303" y="164" font-size="18" font-weight="bold" text-anchor="middle" fill="#1e293b">LLM</text>
+
+            <!-- Arrow out of LLM -->
+            <line x1="344" y1="157" x2="368" y2="157" stroke="#1e293b" stroke-width="2.2" marker-end="url(#arrow-ink5)"/>
+
+            <!-- Heavy Parallel Blue Clamps + 3 Top Arrows & 3 Bottom Arrows -->
+            <g class="clamp-top-anim">
+              <!-- 3 Downward arrows -->
+              <line x1="395" y1="88" x2="395" y2="122" stroke="#1d4ed8" stroke-width="2.5" marker-end="url(#arrow-blue5)"/>
+              <line x1="430" y1="88" x2="430" y2="122" stroke="#1d4ed8" stroke-width="2.5" marker-end="url(#arrow-blue5)"/>
+              <line x1="465" y1="88" x2="465" y2="122" stroke="#1d4ed8" stroke-width="2.5" marker-end="url(#arrow-blue5)"/>
+              <!-- Top Horizontal Clamp Bar -->
+              <line x1="370" y1="132" x2="495" y2="132" stroke="#1d4ed8" stroke-width="4.5"/>
+              <line x1="370" y1="124" x2="370" y2="140" stroke="#1d4ed8" stroke-width="4"/>
+              <line x1="495" y1="124" x2="495" y2="140" stroke="#1d4ed8" stroke-width="4"/>
+            </g>
+
+            <!-- Tightly Clamped Rectangular Output Bar -->
+            <rect x="372" y="148" width="120" height="18" fill="#dbeafe" stroke="#1e293b" stroke-width="2.4"/>
+
+            <g class="clamp-bot-anim">
+              <!-- Bottom Horizontal Clamp Bar -->
+              <line x1="370" y1="182" x2="495" y2="182" stroke="#1d4ed8" stroke-width="4.5"/>
+              <line x1="370" y1="174" x2="370" y2="190" stroke="#1d4ed8" stroke-width="4"/>
+              <line x1="495" y1="174" x2="495" y2="190" stroke="#1d4ed8" stroke-width="4"/>
+              <!-- 3 Upward arrows -->
+              <line x1="395" y1="226" x2="395" y2="192" stroke="#1d4ed8" stroke-width="2.5" marker-end="url(#arrow-blue5)"/>
+              <line x1="430" y1="226" x2="430" y2="192" stroke="#1d4ed8" stroke-width="2.5" marker-end="url(#arrow-blue5)"/>
+              <line x1="465" y1="226" x2="465" y2="192" stroke="#1d4ed8" stroke-width="2.5" marker-end="url(#arrow-blue5)"/>
+            </g>
+
+            <!-- Bottom Conclusion Text -->
+            <rect x="235" y="255" width="465" height="54" rx="10" fill="#f0fdf4" stroke="#10b981" stroke-width="2"/>
+            <text x="467" y="289" font-size="19" font-weight="bold" text-anchor="middle" fill="#1d4ed8">
+              极强的夹具力度 <tspan fill="#1e293b">───►</tspan> <tspan fill="#059669">生产确定性</tspan>
+            </text>
+          </svg>
+        `,
+        cards: [
+          {
+            title: "📌 手稿核心表达还原",
+            items: [
+              "<strong>平行高压夹具（↓↓↓ / ↑↑↑）：</strong>不同于前面斜向张开的漏斗夹具，在生产化阶段，上下蓝色夹具呈完全水平平行状态，并由各 3 个法向箭头死死压住，将输出压缩成一条标准矩形窄带。",
+              "<strong>核心因果律：</strong><code>极强的夹具力度 → 生产确定性</code>，典型代表框架即为 <strong>AgentScope</strong> 与 <strong>LangGraph</strong>。"
+            ]
+          },
+          {
+            title: "🚀 工程落地启示：如何构建“极强的夹具”？",
+            items: [
+              "<strong>Dev 决策模型（Coding / DevOps Agent）：</strong>在修改代码库或执行运维决策时，通过 <code>AGENTS.md</code> 规范 + 沙箱隔离 + 静态类型检查 + CI 测试门禁，让每一次决策都在强夹具轨道内运行。",
+              "<strong>框架选型逻辑：</strong>使用 <strong>AgentScope</strong> 管控多角色结构化消息契约与容错钩子，使用 <strong>LangGraph</strong> 锁死状态机流转拓扑与持久化断点。"
+            ]
+          }
+        ]
+      }
+    ];
+
+    let currentStageIndex = 0;
+
+    function selectStage(idx) {
+      currentStageIndex = idx;
+      // Update buttons
+      for (let i = 0; i < stagesData.length; i++) {
+        const btn = document.getElementById(`stage-btn-${i}`);
+        if (i === idx) {
+          btn.classList.add("active");
+        } else {
+          btn.classList.remove("active");
+        }
+      }
+
+      // Render panel
+      const data = stagesData[idx];
+      const panel = document.getElementById("stage-panel-content");
+
+      const cardsHtml = data.cards.map(c => `
+        <div class="detail-card">
+          <h4>${c.title}</h4>
+          <ul>
+            ${c.items.map(item => `<li>${item}</li>`).join("")}
+          </ul>
+        </div>
+      `).join("");
+
+      panel.innerHTML = `
+        <div class="panel-header">
+          <div>
+            <h3>${data.title}</h3>
+          </div>
+          <div class="manuscript-quote">${data.quote}</div>
+        </div>
+        <div class="sketch-canvas-box">
+          <div class="sketch-watermark">手稿原图数字还原 · 阶段 ${idx + 1}/5</div>
+          ${data.svg}
+        </div>
+        <div class="detail-cards">
+          ${cardsHtml}
+        </div>
+      `;
+    }
+
+    function nextStage() {
+      const next = (currentStageIndex + 1) % stagesData.length;
+      selectStage(next);
+    }
+
+    function prevStage() {
+      const prev = (currentStageIndex - 1 + stagesData.length) % stagesData.length;
+      selectStage(prev);
+    }
+
+    // Keyboard navigation
+    window.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowRight") nextStage();
+      if (e.key === "ArrowLeft") prevStage();
+    });
+
+    function scrollToSection(id) {
+      document.getElementById(id).scrollIntoView({ behavior: "smooth" });
+    }
+
+    // ==========================================
+    // 2. Interactive Simulator Logic
+    // ==========================================
+    function applyPreset(type) {
+      const c = document.getElementById("sim-complexity");
+      const m = document.getElementById("sim-model");
+      const t = document.getElementById("sim-tools");
+      const h = document.getElementById("sim-harness");
+      const turns = document.getElementById("sim-turns");
+      const rl = document.getElementById("sim-rl");
+
+      if (type === "ideal") {
+        c.value = 25; m.value = 92; t.value = 90; h.value = 20; turns.value = 1; rl.checked = false;
+      } else if (type === "divergent") {
+        c.value = 85; m.value = 30; t.value = 20; h.value = 0; turns.value = 3; rl.checked = false;
+      } else if (type === "harness") {
+        c.value = 75; m.value = 50; t.value = 55; h.value = 68; turns.value = 3; rl.checked = false;
+      } else if (type === "rl") {
+        c.value = 70; m.value = 60; t.value = 65; h.value = 72; turns.value = 2; rl.checked = true;
+      } else if (type === "production") {
+        c.value = 85; m.value = 80; t.value = 90; h.value = 95; turns.value = 4; rl.checked = false;
+      }
+      updateSimulator();
+    }
+
+    function updateSimulator() {
+      const complexity = parseInt(document.getElementById("sim-complexity").value, 10);
+      const modelCap = parseInt(document.getElementById("sim-model").value, 10);
+      const toolsCap = parseInt(document.getElementById("sim-tools").value, 10);
+      const harnessForce = parseInt(document.getElementById("sim-harness").value, 10);
+      const turns = parseInt(document.getElementById("sim-turns").value, 10);
+      const showRL = document.getElementById("sim-rl").checked;
+
+      // Update labels
+      document.getElementById("val-complexity").textContent = complexity + "%";
+      document.getElementById("val-model").textContent = modelCap + "%";
+      document.getElementById("val-tools").textContent = toolsCap + "%";
+      document.getElementById("val-harness").textContent = harnessForce + "%";
+      document.getElementById("val-turns").textContent = turns + " 轮";
+
+      // Compute natural divergence factor per turn (based on manuscript's 3 causes)
+      // Cause 1: complexity, Cause 2: weak model (100 - modelCap), Cause 3: missing tools (100 - toolsCap)
+      const rawSpreadBase = (complexity * 0.42 + (100 - modelCap) * 0.33 + (100 - toolsCap) * 0.25) / 100;
+      // Multi-turn compounding amplification without harness
+      const compoundingFactor = Math.pow(1.38, turns - 1);
+      const rawHalfHeight = Math.min(145, Math.max(12, rawSpreadBase * 95 * compoundingFactor));
+
+      // Clamped half height by Harness
+      const clampRatio = 1 - (harnessForce / 105);
+      const clampedHalfHeight = Math.max(6, rawHalfHeight * clampRatio);
+
+      // Metrics calculation
+      const rawScore = Math.round(rawHalfHeight * 1.4);
+      const clampedScore = Math.round(clampedHalfHeight * 1.4);
+      const filteredPct = rawHalfHeight > 0 ? Math.round(((rawHalfHeight - clampedHalfHeight) / rawHalfHeight) * 100) : 0;
+      const determinism = Math.min(99.5, Math.max(5, 100 - (clampedHalfHeight / 145) * 100)).toFixed(1);
+
+      document.getElementById("metric-raw-div").textContent = rawScore + " slots";
+      document.getElementById("metric-clamped").textContent = clampedScore + " slots";
+      document.getElementById("metric-filtered").textContent = "-" + filteredPct + "%";
+      document.getElementById("metric-determinism").textContent = determinism + "%";
+
+      // Build Dynamic SVG across turns
+      const width = 760;
+      const height = 330;
+      const cy = height / 2;
+      const startX = 75;
+      const endX = 700;
+      const stepWidth = (endX - startX) / turns;
+
+      let svgElements = "";
+
+      // Coordinate Axes
+      svgElements += `
+        <line x1="45" y1="${height - 25}" x2="45" y2="20" stroke="#475569" stroke-width="1.5" stroke-dasharray="3 3"/>
+        <text x="52" y="32" font-size="11" fill="#94a3b8">↑ 纵轴：信息空间 (Slots / 熵 / 噪音宽度)</text>
+        <line x1="45" y1="${cy}" x2="${width - 20}" y2="${cy}" stroke="#1e293b" stroke-width="1"/>
+        <text x="${width - 145}" y="${height - 12}" font-size="11" fill="#94a3b8">→ 横轴：交互时间 (${turns} 轮)</text>
+      `;
+
+      let prevClampedH = 18;
+      let prevRawH = 18;
+
+      for (let t = 0; t < turns; t++) {
+        const x0 = startX + t * stepWidth;
+        const llmW = 46;
+        const llmH = 44;
+        const xLLM = x0 + 15;
+        const xOutEnd = x0 + stepWidth - 10;
+
+        const turnFactor = Math.pow(1.38, t);
+        const curRawH = Math.min(142, Math.max(10, rawSpreadBase * 82 * turnFactor));
+        const curClampedH = Math.max(5, curRawH * clampRatio);
+
+        // Input lines into LLM
+        svgElements += `
+          <line x1="${x0 - 8}" y1="${cy - prevClampedH}" x2="${xLLM}" y2="${cy - 12}" stroke="#64748b" stroke-width="1.5"/>
+          <line x1="${x0 - 8}" y1="${cy + prevClampedH}" x2="${xLLM}" y2="${cy + 12}" stroke="#64748b" stroke-width="1.5"/>
+        `;
+
+        // Unclamped Black/Gray Diverging Cone (What happens without Harness)
+        svgElements += `
+          <polygon points="${xLLM + llmW},${cy - 14} ${xOutEnd},${cy - curRawH} ${xOutEnd},${cy + curRawH} ${xLLM + llmW},${cy + 14}"
+                   fill="rgba(239, 68, 68, 0.08)" />
+          <line x1="${xLLM + llmW}" y1="${cy - 14}" x2="${xOutEnd}" y2="${cy - curRawH}" stroke="#64748b" stroke-width="1.6" stroke-dasharray="4 3"/>
+          <line x1="${xLLM + llmW}" y1="${cy + 14}" x2="${xOutEnd}" y2="${cy + curRawH}" stroke="#64748b" stroke-width="1.6" stroke-dasharray="4 3"/>
+        `;
+
+        // Clamped Red/Blue Envelope (Real Output)
+        svgElements += `
+          <polygon points="${xLLM + llmW},${cy - 10} ${xOutEnd},${cy - curClampedH} ${xOutEnd},${cy + curClampedH} ${xLLM + llmW},${cy + 10}"
+                   fill="rgba(59, 130, 246, 0.16)" />
+          <line x1="${xLLM + llmW}" y1="${cy - 10}" x2="${xOutEnd}" y2="${cy - curClampedH}" stroke="#ef4444" stroke-width="2.2"/>
+          <line x1="${xLLM + llmW}" y1="${cy + 10}" x2="${xOutEnd}" y2="${cy + curClampedH}" stroke="#ef4444" stroke-width="2.2"/>
+        `;
+
+        // If Harness Force > 0, draw Blue Clamp Bars (|===|)
+        if (harnessForce > 0) {
+          const clampX1 = xLLM + llmW + 12;
+          const clampX2 = xOutEnd - 4;
+          const yTop1 = cy - 12 - (curClampedH - 10) * 0.2;
+          const yTop2 = cy - curClampedH - 4;
+          const yBot1 = cy + 12 + (curClampedH - 10) * 0.2;
+          const yBot2 = cy + curClampedH + 4;
+
+          svgElements += `
+            <!-- Top Blue Clamp -->
+            <line x1="${clampX1}" y1="${yTop1}" x2="${clampX2}" y2="${yTop2}" stroke="#3b82f6" stroke-width="3.5"/>
+            <line x1="${clampX1}" y1="${yTop1 - 5}" x2="${clampX1}" y2="${yTop1 + 5}" stroke="#3b82f6" stroke-width="3"/>
+            <line x1="${clampX2}" y1="${yTop2 - 5}" x2="${clampX2}" y2="${yTop2 + 5}" stroke="#3b82f6" stroke-width="3"/>
+
+            <!-- Bottom Blue Clamp -->
+            <line x1="${clampX1}" y1="${yBot1}" x2="${clampX2}" y2="${yBot2}" stroke="#3b82f6" stroke-width="3.5"/>
+            <line x1="${clampX1}" y1="${yBot1 - 5}" x2="${clampX1}" y2="${yBot1 + 5}" stroke="#3b82f6" stroke-width="3"/>
+            <line x1="${clampX2}" y1="${yBot2 - 5}" x2="${clampX2}" y2="${yBot2 + 5}" stroke="#3b82f6" stroke-width="3"/>
+          `;
+        }
+
+        // RL Rollout Samples if checked
+        if (showRL) {
+          const midX = (xLLM + llmW + xOutEnd) / 2;
+          // Good sample inside clamp
+          svgElements += `
+            <rect x="${midX - 18}" y="${cy - 4}" width="38" height="8" rx="2" fill="#10b981" opacity="0.9"/>
+          `;
+          // Bad sample outside clamp
+          if (curRawH > curClampedH + 8) {
+            svgElements += `
+              <rect x="${midX - 18}" y="${cy - curClampedH - 16}" width="38" height="8" rx="2" fill="#ef4444" opacity="0.85"/>
+              <rect x="${midX - 18}" y="${cy + curClampedH + 8}" width="38" height="8" rx="2" fill="#ef4444" opacity="0.85"/>
+            `;
+          }
+        }
+
+        // LLM Node Box
+        svgElements += `
+          <rect x="${xLLM}" y="${cy - llmH/2}" width="${llmW}" height="${llmH}" rx="6" fill="#1e293b" stroke="#94a3b8" stroke-width="2"/>
+          <text x="${xLLM + llmW/2}" y="${cy + 4}" font-size="12" font-weight="bold" text-anchor="middle" fill="#fff">LLM ${t+1}</text>
+        `;
+
+        prevClampedH = curClampedH;
+        prevRawH = curRawH;
+      }
+
+      // Legend overlay
+      svgElements += `
+        <g transform="translate(55, ${height - 22})">
+          <rect x="0" y="-9" width="12" height="3" fill="#64748b"/>
+          <text x="18" y="-4" font-size="11" fill="#94a3b8">无夹具自然发散包络</text>
+
+          <rect x="145" y="-10" width="14" height="4" fill="#3b82f6"/>
+          <text x="165" y="-4" font-size="11" fill="#60a5fa">Harness 刚性夹具</text>
+
+          <rect x="285" y="-9" width="14" height="3" fill="#ef4444"/>
+          <text x="305" y="-4" font-size="11" fill="#f87171">real output (被夹住)</text>
+          ${showRL ? `
+            <rect x="435" y="-10" width="10" height="6" fill="#10b981"/>
+            <text x="450" y="-4" font-size="11" fill="#34d399">Good(夹具内)</text>
+            <rect x="530" y="-10" width="10" height="6" fill="#ef4444"/>
+            <text x="545" y="-4" font-size="11" fill="#f87171">Bad(夹具外)</text>
+          ` : ''}
+        </g>
+      `;
+
+      document.getElementById("sim-svg-box").innerHTML = `
+        <svg viewBox="0 0 ${width} ${height}" style="width:100%; height:100%;">
+          ${svgElements}
+        </svg>
+      `;
+    }
+
+    // Initialize on load
+    window.addEventListener("DOMContentLoaded", () => {
+      selectStage(0);
+      updateSimulator();
+    });
+  </script>
+</body>
+</html>
