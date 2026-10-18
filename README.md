@@ -1,4 +1,4 @@
-# Harness 工程演示
+# Harness 工程 概念演示
 
 本仓库收录 Gemini4 argon 网页、Qwen 3.8max 阿里云 Coding Plan + OpenCode、GPT 6.1sol xhigh + Codex、Kimi K3 + Workbuddy、DeepSeek V4.1 Flash 1017 Max + OpenCode 和 GPT-6 Astra + Codex 根据各版本参考图制作的 Harness 工程 HTML 演示，供在线体验和对比。仓库同时保留参考图、提示词及用量记录。
 
