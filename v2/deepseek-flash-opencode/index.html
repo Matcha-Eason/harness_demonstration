@@ -1,0 +1,2300 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Harness Engineering · LLM 输入输出</title>
+<style>
+:root {
+  --paper: #f3eee2;
+  --paper-2: #fbf7ec;
+  --paper-3: #ebe4d3;
+  --ink: #172137;
+  --ink-soft: #35415a;
+  --muted: #76796f;
+  --line: rgba(23, 33, 55, .12);
+  --line-strong: rgba(23, 33, 55, .22);
+  --blue: #1e5eff;
+  --blue-deep: #0b3cc9;
+  --blue-soft: #dce5ff;
+  --red: #d34a2d;
+  --amber: #bd8623;
+  --green: #0b8f6a;
+  --accent: #1e5eff;
+  --serif: "Songti SC", "STSong", "Iowan Old Style", "Times New Roman", serif;
+  --sans: "Avenir Next", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+  --mono: "SFMono-Regular", "JetBrains Mono", Menlo, Consolas, monospace;
+  --shadow: 0 24px 60px rgba(30, 35, 45, .10);
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--ink);
+  background: var(--paper);
+  font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 10% 6%, rgba(30, 94, 255, .09), transparent 27%),
+    radial-gradient(circle at 92% 16%, rgba(211, 74, 45, .065), transparent 23%),
+    radial-gradient(circle at 58% 92%, rgba(11, 143, 106, .055), transparent 28%),
+    linear-gradient(rgba(23, 33, 55, .032) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(23, 33, 55, .032) 1px, transparent 1px);
+  background-size: auto, auto, auto, 30px 30px, 30px 30px;
+  mask-image: linear-gradient(to bottom, #000 0%, rgba(0,0,0,.45) 78%, transparent 100%);
+}
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: .22;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.18'/%3E%3C/svg%3E");
+}
+button, input { font: inherit; }
+button { color: inherit; }
+a { color: inherit; }
+.page {
+  position: relative;
+  z-index: 1;
+  width: min(1540px, calc(100% - 48px));
+  margin: 0 auto;
+  padding-bottom: 34px;
+}
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  min-height: 78px;
+  padding: 15px 0 14px;
+  border-bottom: 1px solid var(--line);
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+.brand-mark {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 43px;
+  height: 43px;
+  flex: none;
+  border-radius: 11px;
+  color: #fbf7ec;
+  background: var(--ink);
+  font: 700 17px/1 var(--mono);
+  letter-spacing: -.08em;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.14), 0 7px 16px rgba(23,33,55,.18);
+}
+.brand-mark::after {
+  content: "";
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--blue);
+  box-shadow: 0 0 0 3px rgba(30, 94, 255, .16);
+}
+.brand-kicker {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--muted);
+  font: 600 9px/1.2 var(--mono);
+  letter-spacing: .17em;
+}
+.brand-name {
+  font-family: var(--serif);
+  font-size: 20px;
+  line-height: 1.05;
+  letter-spacing: .01em;
+}
+.brand-sub {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.3;
+}
+.top-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.live-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  background: rgba(255, 251, 242, .35);
+  font: 600 9px/1 var(--mono);
+  letter-spacing: .11em;
+  white-space: nowrap;
+}
+.live-pill i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 0 3px rgba(11, 143, 106, .12);
+  animation: livePulse 2.4s ease-in-out infinite;
+}
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 34px;
+  padding: 0 13px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  color: var(--ink-soft);
+  background: rgba(255, 251, 242, .46);
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: .01em;
+  cursor: pointer;
+  transition: color .2s, background .2s, border-color .2s, transform .2s;
+  white-space: nowrap;
+}
+.btn:hover {
+  color: var(--paper-2);
+  background: var(--ink);
+  border-color: var(--ink);
+  transform: translateY(-1px);
+}
+.btn:focus-visible, .scene:focus-visible, .tl-step:focus-visible, .close-btn:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 3px;
+}
+.btn.tour-btn.active {
+  color: #fbf7ec;
+  background: var(--blue);
+  border-color: var(--blue);
+}
+.btn .glyph {
+  font: 600 10px/1 var(--mono);
+}
+.layout {
+  display: grid;
+  grid-template-columns: 266px minmax(0, 1fr) 288px;
+  align-items: stretch;
+  gap: 18px;
+  padding-top: 20px;
+}
+.scenes {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 5px 0 0;
+}
+.section-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 13px;
+  color: var(--muted);
+  font: 600 9px/1.2 var(--mono);
+  letter-spacing: .16em;
+}
+.section-label .count {
+  color: var(--ink-soft);
+}
+.scene-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  position: relative;
+}
+.scene-list::before {
+  content: "";
+  position: absolute;
+  left: 16px;
+  top: 19px;
+  bottom: 19px;
+  width: 1px;
+  background: linear-gradient(var(--line-strong), rgba(23,33,55,.05));
+  pointer-events: none;
+}
+.scene {
+  position: relative;
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) 16px;
+  gap: 8px;
+  align-items: start;
+  width: 100%;
+  padding: 12px 10px 12px 11px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background .22s, border-color .22s, transform .22s;
+}
+.scene:hover {
+  background: rgba(255, 251, 242, .53);
+  border-color: rgba(23,33,55,.08);
+}
+.scene.active {
+  background: rgba(255, 251, 242, .86);
+  border-color: var(--line-strong);
+  box-shadow: 0 9px 22px rgba(23,33,55,.045);
+}
+.scene.active::after {
+  content: "";
+  position: absolute;
+  left: -1px;
+  top: 13px;
+  bottom: 13px;
+  width: 3px;
+  border-radius: 4px;
+  background: var(--scene-accent, var(--blue));
+}
+.scene-no {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin-top: 1px;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  color: var(--muted);
+  background: var(--paper);
+  font: 700 9px/1 var(--mono);
+  transition: color .2s, background .2s, border-color .2s;
+}
+.scene.active .scene-no {
+  color: #fff;
+  background: var(--scene-accent, var(--blue));
+  border-color: var(--scene-accent, var(--blue));
+}
+.scene-copy { min-width: 0; }
+.scene-en {
+  display: block;
+  color: var(--muted);
+  font: 600 8px/1.2 var(--mono);
+  letter-spacing: .13em;
+}
+.scene-cn {
+  display: block;
+  margin-top: 2px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+.scene-desc {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 10.5px;
+  line-height: 1.45;
+}
+.scene-arrow {
+  margin-top: 16px;
+  color: var(--muted);
+  font: 600 12px/1 var(--mono);
+  opacity: 0;
+  transform: translateX(-3px);
+  transition: opacity .2s, transform .2s;
+}
+.scene.active .scene-arrow {
+  opacity: 1;
+  transform: translateX(0);
+  color: var(--scene-accent, var(--blue));
+}
+.stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 704px;
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+  border-radius: 20px;
+  background: rgba(255, 251, 242, .76);
+  box-shadow: var(--shadow);
+}
+.stage::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), rgba(30,94,255,.2), transparent);
+  opacity: .82;
+}
+.stage::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.36);
+  border-radius: inherit;
+}
+.stage-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 20px 23px 0;
+}
+.stage-heading { min-width: 0; }
+.eyebrow {
+  display: block;
+  color: var(--muted);
+  font: 600 9px/1.2 var(--mono);
+  letter-spacing: .15em;
+}
+.stage-title {
+  margin: 7px 0 0;
+  font-family: var(--serif);
+  font-size: clamp(23px, 2.25vw, 32px);
+  font-weight: 600;
+  line-height: 1.13;
+  letter-spacing: -.015em;
+}
+.mode-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex: none;
+  height: 28px;
+  margin-top: 4px;
+  padding: 0 10px;
+  border: 1px solid color-mix(in srgb, var(--accent) 36%, transparent);
+  border-radius: 999px;
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
+  font: 700 8px/1 var(--mono);
+  letter-spacing: .12em;
+  white-space: nowrap;
+}
+.mode-badge i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 14%, transparent);
+}
+.stage-lead {
+  max-width: 810px;
+  min-height: 38px;
+  margin: 8px 23px 13px;
+  color: var(--ink-soft);
+  font-size: 12.5px;
+  line-height: 1.62;
+}
+.canvas-wrap {
+  position: relative;
+  flex: 1;
+  min-height: 454px;
+  margin: 0 14px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background:
+    radial-gradient(circle at 69% 43%, rgba(30, 94, 255, .055), transparent 38%),
+    radial-gradient(circle at 24% 50%, rgba(211, 74, 45, .035), transparent 32%),
+    linear-gradient(rgba(23, 33, 55, .034) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(23, 33, 55, .034) 1px, transparent 1px),
+    #fbf8ef;
+  background-size: auto, auto, 30px 30px, 30px 30px, auto;
+}
+.canvas-wrap::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  box-shadow: inset 0 0 46px rgba(23, 33, 55, .035);
+}
+#diagram {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.canvas-note {
+  position: absolute;
+  right: 14px;
+  bottom: 13px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--muted);
+  font: 600 8px/1 var(--mono);
+  letter-spacing: .11em;
+  pointer-events: none;
+}
+.canvas-note .line {
+  width: 23px;
+  height: 2px;
+  border-radius: 99px;
+  background: var(--accent);
+}
+.stage-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 62px;
+  padding: 12px 23px 13px;
+}
+.foot-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  color: var(--muted);
+  font: 600 8px/1 var(--mono);
+  letter-spacing: .07em;
+}
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+.swatch {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--blue);
+}
+.swatch.red { background: var(--red); }
+.swatch.green { background: var(--green); }
+.kbd-hint {
+  color: var(--muted);
+  font: 500 8px/1.3 var(--mono);
+  letter-spacing: .02em;
+  opacity: .82;
+}
+.kbd-hint b {
+  display: inline-block;
+  padding: 1px 4px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+.timeline {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+}
+.tl-step {
+  width: 35px;
+  height: 5px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(23, 33, 55, .12);
+  cursor: pointer;
+  transition: background .25s, width .25s;
+}
+.tl-step:hover { background: rgba(23, 33, 55, .26); }
+.tl-step.active {
+  width: 48px;
+  background: var(--accent);
+}
+.telemetry {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  min-width: 0;
+}
+.panel {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--line-strong);
+  border-radius: 16px;
+  background: rgba(255, 251, 242, .68);
+  padding: 15px;
+}
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 13px;
+  color: var(--muted);
+  font: 600 8.5px/1 var(--mono);
+  letter-spacing: .13em;
+}
+.panel-head .tag {
+  color: var(--accent);
+}
+.metric {
+  margin-bottom: 12px;
+}
+.metric:last-of-type { margin-bottom: 0; }
+.metric-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+.metric-name {
+  color: var(--ink-soft);
+  font-size: 10.5px;
+  font-weight: 600;
+}
+.metric-name em {
+  margin-left: 4px;
+  color: var(--muted);
+  font: 500 7.5px/1 var(--mono);
+  font-style: normal;
+  letter-spacing: .07em;
+}
+.metric-val {
+  font: 700 11px/1 var(--mono);
+  color: var(--ink);
+}
+.bar {
+  position: relative;
+  height: 5px;
+  overflow: hidden;
+  border-radius: 99px;
+  background: rgba(23, 33, 55, .09);
+}
+.bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(90deg, transparent 0 19px, rgba(255,251,242,.5) 19px 20px);
+  pointer-events: none;
+}
+.bar i {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--blue);
+  transition: width .55s cubic-bezier(.2, .8, .2, 1), background .35s;
+}
+.metric[data-metric="divergence"] .bar i { background: var(--red); }
+.metric[data-metric="noise"] .bar i { background: var(--amber); }
+.metric[data-metric="determinism"] .bar i { background: var(--green); }
+.clamp-block {
+  margin-top: 17px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.clamp-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 7px;
+}
+.clamp-title {
+  color: var(--ink-soft);
+  font-size: 10.5px;
+  font-weight: 650;
+}
+.clamp-title em {
+  margin-left: 4px;
+  color: var(--muted);
+  font: 500 7.5px/1 var(--mono);
+  font-style: normal;
+  letter-spacing: .06em;
+}
+.clamp-val {
+  color: var(--accent);
+  font: 700 12px/1 var(--mono);
+}
+input[type="range"] {
+  display: block;
+  width: 100%;
+  height: 20px;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+}
+input[type="range"]::-webkit-slider-runnable-track {
+  height: 4px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--red), var(--amber) 48%, var(--green));
+  opacity: .62;
+}
+input[type="range"]::-webkit-slider-thumb {
+  width: 17px;
+  height: 17px;
+  margin-top: -6.5px;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: var(--paper-2);
+  box-shadow: 0 2px 7px rgba(23,33,55,.24);
+  -webkit-appearance: none;
+  appearance: none;
+  transition: transform .15s;
+}
+input[type="range"]:hover::-webkit-slider-thumb { transform: scale(1.1); }
+input[type="range"]::-moz-range-track {
+  height: 4px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--red), var(--amber) 48%, var(--green));
+  opacity: .62;
+}
+input[type="range"]::-moz-range-thumb {
+  width: 15px;
+  height: 15px;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: var(--paper-2);
+}
+.range-scale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2px;
+  color: var(--muted);
+  font: 500 7.5px/1 var(--mono);
+  letter-spacing: .08em;
+}
+.readout-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 218px;
+}
+.readout-text {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 11.5px;
+  line-height: 1.68;
+}
+.keyline {
+  height: 1px;
+  margin: 14px 0 12px;
+  background: linear-gradient(90deg, var(--line-strong), rgba(23,33,55,.02));
+}
+.signal-list {
+  display: grid;
+  gap: 7px;
+  margin-top: auto;
+}
+.signal-row {
+  display: grid;
+  grid-template-columns: 7px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
+  font: 500 8.5px/1.2 var(--mono);
+  letter-spacing: .02em;
+}
+.signal-row i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(23,33,55,.18);
+}
+.signal-row.on i {
+  background: var(--green);
+  box-shadow: 0 0 0 3px rgba(11,143,106,.09);
+}
+.signal-row b {
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+.legend-panel {
+  padding-bottom: 14px;
+}
+.legend-list {
+  display: grid;
+  gap: 9px;
+}
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-soft);
+  font-size: 10px;
+  line-height: 1.3;
+}
+.legend-item .swatch {
+  flex: none;
+  width: 17px;
+  height: 3px;
+  border-radius: 99px;
+}
+.legend-item .swatch.red { background: var(--red); }
+.legend-item .swatch.blue { background: var(--blue); }
+.legend-item .swatch.green { background: var(--green); }
+.legend-foot {
+  margin: 13px 0 0;
+  padding-top: 11px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 9.5px;
+  line-height: 1.55;
+}
+.notes {
+  margin-top: 28px;
+  padding-top: 27px;
+  border-top: 1px solid var(--line);
+}
+.notes-intro {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(280px, .65fr);
+  align-items: end;
+  gap: 32px;
+}
+.notes-kicker {
+  display: block;
+  margin-bottom: 12px;
+  color: var(--muted);
+  font: 600 9px/1 var(--mono);
+  letter-spacing: .17em;
+}
+.notes-quote {
+  max-width: 820px;
+  margin: 0;
+  font-family: var(--serif);
+  font-size: clamp(27px, 3.05vw, 44px);
+  font-weight: 600;
+  line-height: 1.18;
+  letter-spacing: -.02em;
+}
+.notes-quote .blue { color: var(--blue); }
+.notes-aside {
+  margin: 0 0 4px;
+  color: var(--muted);
+  font-size: 11.5px;
+  line-height: 1.72;
+}
+.notes-aside strong {
+  color: var(--ink-soft);
+  font-weight: 650;
+}
+.notes-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 11px;
+  margin-top: 25px;
+}
+.note-card {
+  position: relative;
+  overflow: hidden;
+  min-height: 138px;
+  padding: 17px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 251, 242, .47);
+}
+.note-card::after {
+  content: "";
+  position: absolute;
+  right: -23px;
+  bottom: -23px;
+  width: 78px;
+  height: 78px;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  opacity: .55;
+}
+.note-no {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--blue);
+  font: 700 9px/1 var(--mono);
+  letter-spacing: .12em;
+}
+.note-card h3 {
+  margin: 12px 0 6px;
+  font-family: var(--serif);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -.01em;
+}
+.note-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 10.5px;
+  line-height: 1.64;
+}
+.layers {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  margin-top: 22px;
+}
+.layers-label {
+  margin-right: 5px;
+  color: var(--muted);
+  font: 600 8px/1 var(--mono);
+  letter-spacing: .13em;
+}
+.layer-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  color: var(--ink-soft);
+  background: rgba(255, 251, 242, .32);
+  font-size: 9.5px;
+  line-height: 1;
+}
+.layer-chip b {
+  color: var(--blue);
+  font: 700 8px/1 var(--mono);
+}
+.page-footer {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  margin-top: 26px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 9px;
+  line-height: 1.6;
+}
+.page-footer p { margin: 0; }
+.page-footer a {
+  text-decoration: none;
+  border-bottom: 1px solid rgba(23,33,55,.22);
+  transition: color .2s, border-color .2s;
+}
+.page-footer a:hover {
+  color: var(--blue);
+  border-color: var(--blue);
+}
+.footer-mark {
+  flex: none;
+  font: 600 8px/1 var(--mono);
+  letter-spacing: .12em;
+}
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 22px;
+  background: rgba(15, 20, 30, .55);
+  backdrop-filter: blur(8px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .22s, visibility .22s;
+}
+.modal.open {
+  opacity: 1;
+  visibility: visible;
+}
+.modal-card {
+  display: flex;
+  flex-direction: column;
+  width: min(1120px, 95vw);
+  max-height: 91vh;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 18px;
+  background: var(--paper);
+  box-shadow: 0 34px 100px rgba(0,0,0,.33);
+  transform: translateY(10px) scale(.985);
+  transition: transform .24s cubic-bezier(.2,.8,.2,1);
+}
+.modal.open .modal-card { transform: translateY(0) scale(1); }
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 14px 17px 13px 20px;
+  border-bottom: 1px solid var(--line);
+}
+.modal-title-wrap { min-width: 0; }
+.modal-kicker {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--muted);
+  font: 600 8px/1 var(--mono);
+  letter-spacing: .15em;
+}
+.modal-title {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.modal-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+}
+.close-btn {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  color: var(--ink-soft);
+  background: transparent;
+  font: 500 17px/1 var(--sans);
+  cursor: pointer;
+  transition: color .2s, background .2s;
+}
+.close-btn:hover {
+  color: var(--paper-2);
+  background: var(--ink);
+}
+.modal-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(270px, .55fr);
+  min-height: 0;
+  overflow: hidden;
+}
+.modal-image {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding: 18px;
+  overflow: auto;
+  background: #1c2331;
+}
+.modal-image img {
+  display: block;
+  max-width: 100%;
+  max-height: calc(91vh - 124px);
+  border-radius: 5px;
+  box-shadow: 0 16px 40px rgba(0,0,0,.35);
+  object-fit: contain;
+}
+.modal-side {
+  min-height: 0;
+  padding: 20px 19px;
+  overflow: auto;
+  border-left: 1px solid var(--line);
+  background: rgba(255,251,242,.55);
+}
+.modal-side p {
+  margin: 0 0 16px;
+  color: var(--muted);
+  font-size: 10.5px;
+  line-height: 1.7;
+}
+.origin-scenes {
+  display: grid;
+  gap: 9px;
+}
+.origin-scene {
+  display: grid;
+  grid-template-columns: 25px minmax(0, 1fr);
+  gap: 9px;
+  padding-top: 9px;
+  border-top: 1px solid var(--line);
+}
+.origin-scene:first-child { padding-top: 0; border-top: 0; }
+.origin-scene b {
+  color: var(--blue);
+  font: 700 8.5px/1.4 var(--mono);
+}
+.origin-scene span {
+  color: var(--ink-soft);
+  font-size: 10px;
+  line-height: 1.55;
+}
+.origin-scene span em {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-style: normal;
+  font-size: 9px;
+}
+@keyframes livePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .45; transform: scale(.78); }
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(9px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.stage { animation: fadeUp .55s ease both; }
+.scenes { animation: fadeUp .55s .06s ease both; }
+.telemetry { animation: fadeUp .55s .11s ease both; }
+@media (max-width: 1220px) {
+  .layout { grid-template-columns: 232px minmax(0, 1fr) 262px; gap: 13px; }
+  .stage { min-height: 680px; }
+  .stage-head, .stage-foot { padding-left: 19px; padding-right: 19px; }
+  .stage-lead { margin-left: 19px; margin-right: 19px; }
+  .scene-desc { font-size: 10px; }
+}
+@media (max-width: 1040px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr) 270px;
+  }
+  .scenes {
+    grid-column: 1 / -1;
+    order: 2;
+    padding-top: 2px;
+  }
+  .scene-list {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 7px;
+  }
+  .scene-list::before { display: none; }
+  .scene {
+    grid-template-columns: 25px minmax(0, 1fr);
+    padding: 10px;
+  }
+  .scene-arrow { display: none; }
+  .scene-desc { display: none; }
+  .stage { grid-column: 1; order: 1; }
+  .telemetry { grid-column: 2; order: 1; }
+  .notes-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 760px) {
+  .page { width: min(100% - 26px, 720px); }
+  .topbar { align-items: flex-start; }
+  .brand-sub, .live-pill { display: none; }
+  .layout { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .stage { grid-column: 1; order: 1; min-height: 620px; }
+  .telemetry {
+    grid-column: 1;
+    order: 3;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: stretch;
+  }
+  .readout-panel { grid-column: 1 / -1; min-height: 0; }
+  .legend-panel { display: none; }
+  .scenes { grid-column: 1; order: 2; }
+  .scene-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .scene { grid-template-columns: 25px minmax(0, 1fr); }
+  .stage-head { padding: 17px 17px 0; }
+  .stage-lead { margin: 7px 17px 11px; font-size: 11.5px; }
+  .canvas-wrap { margin: 0 9px; min-height: 370px; }
+  .stage-foot { padding: 11px 17px 13px; align-items: flex-end; }
+  .kbd-hint { display: none; }
+  .tl-step { width: 25px; }
+  .tl-step.active { width: 34px; }
+  .notes { margin-top: 21px; padding-top: 21px; }
+  .notes-intro { grid-template-columns: 1fr; gap: 16px; }
+  .notes-grid { grid-template-columns: 1fr; }
+  .note-card { min-height: 0; }
+  .page-footer { flex-direction: column; gap: 8px; }
+  .modal { padding: 10px; }
+  .modal-card { width: 98vw; max-height: 94vh; }
+  .modal-body { grid-template-columns: 1fr; overflow: auto; }
+  .modal-image { padding: 10px; }
+  .modal-image img { max-height: 54vh; }
+  .modal-side { border-left: 0; border-top: 1px solid var(--line); }
+  .modal-actions .btn { display: none; }
+}
+@media (max-width: 460px) {
+  .top-actions { gap: 6px; }
+  .btn { height: 31px; padding: 0 10px; font-size: 10px; }
+  .brand-name { font-size: 17px; }
+  .stage-title { font-size: 22px; }
+  .scene-list { grid-template-columns: 1fr 1fr; }
+  .scene-desc { display: none; }
+  .telemetry { grid-template-columns: 1fr; }
+  .readout-panel { grid-column: 1; }
+  .stage-foot { gap: 10px; }
+  .canvas-note { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark" aria-hidden="true">H/</div>
+      <div>
+        <span class="brand-kicker">FIELD NOTE · 04 / AGENT SYSTEMS</span>
+        <div class="brand-name">Harness Engineering</div>
+        <div class="brand-sub">以 LLM 输入输出为中心的概念动画</div>
+      </div>
+    </div>
+    <div class="top-actions">
+      <span class="live-pill"><i></i>LIVE DIAGRAM</span>
+      <button class="btn tour-btn" id="tourBtn" type="button" aria-pressed="false"><span class="glyph">▶</span><span id="tourLabel">自动巡演</span></button>
+      <button class="btn" id="originBtn" type="button">原图对照 <span class="glyph">↗</span></button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <aside class="scenes" aria-label="场景导航">
+      <div class="section-label"><span>SCENES / 四幕</span><span class="count">01—04</span></div>
+      <nav class="scene-list" id="sceneList"></nav>
+    </aside>
+
+    <section class="stage" aria-labelledby="stageTitle">
+      <div class="stage-head">
+        <div class="stage-heading">
+          <span class="eyebrow">LLM I/O / INPUT → MODEL → OUTPUT</span>
+          <h1 class="stage-title" id="stageTitle">用一条蓝线，把回答关进通道</h1>
+        </div>
+        <div class="mode-badge" id="modeBadge"><i></i><span>CLAMPED</span></div>
+      </div>
+      <p class="stage-lead" id="stageLead"></p>
+      <div class="canvas-wrap" id="canvasWrap">
+        <canvas id="diagram" role="img" aria-label="LLM 输入输出动画：输入经过模型，输出在 Harness 蓝色通道内被约束；无 Harness 时输出发散，多轮时噪声沿回路放大。"></canvas>
+        <div class="canvas-note"><span class="line"></span><span>HARNESS / CONSTRAINT FIELD</span></div>
+      </div>
+      <div class="stage-foot">
+        <div class="foot-left">
+          <div class="legend" aria-label="图例">
+            <span><i class="swatch"></i>signal</span>
+            <span><i class="swatch red"></i>noise</span>
+            <span><i class="swatch green"></i>verified</span>
+          </div>
+          <div class="kbd-hint"><b>space</b> 巡演 <b>1–4</b> 切换 <b>← →</b> 步进</div>
+        </div>
+        <div class="timeline" id="timeline" aria-label="场景进度"></div>
+      </div>
+    </section>
+
+    <aside class="telemetry" aria-label="观测面板">
+      <div class="panel">
+        <div class="panel-head"><span>OBSERVATION</span><span class="tag" id="sceneTag">HARNESS</span></div>
+        <div class="metric" data-metric="divergence">
+          <div class="metric-head"><span class="metric-name">发散度 <em>DIVERGENCE</em></span><span class="metric-val" id="valDivergence">40</span></div>
+          <div class="bar"><i id="barDivergence"></i></div>
+        </div>
+        <div class="metric" data-metric="noise">
+          <div class="metric-head"><span class="metric-name">噪音 <em>NOISE</em></span><span class="metric-val" id="valNoise">46</span></div>
+          <div class="bar"><i id="barNoise"></i></div>
+        </div>
+        <div class="metric" data-metric="determinism">
+          <div class="metric-head"><span class="metric-name">确定性 <em>DETERMINISM</em></span><span class="metric-val" id="valDeterminism">68</span></div>
+          <div class="bar"><i id="barDeterminism"></i></div>
+        </div>
+        <div class="clamp-block">
+          <div class="clamp-head"><span class="clamp-title">夹具力度 <em>CLAMP</em></span><span class="clamp-val" id="clampVal">68%</span></div>
+          <input id="clampSlider" type="range" min="0" max="100" value="68" step="1" aria-label="夹具力度">
+          <div class="range-scale"><span>松 / OPEN</span><span>紧 / LOCKED</span></div>
+        </div>
+      </div>
+
+      <div class="panel readout-panel">
+        <div class="panel-head"><span>READOUT</span><span class="tag" id="readoutTag">SYSTEM</span></div>
+        <p class="readout-text" id="readoutText">Harness 把开放的回答空间收成一条可接受的通道：格式、工具、上下文和反馈都被纳入同一条约束线。</p>
+        <div class="keyline"></div>
+        <div class="signal-list" id="signalList"></div>
+      </div>
+
+      <div class="panel legend-panel">
+        <div class="panel-head"><span>LEGEND</span><span class="tag">CTRL</span></div>
+        <div class="legend-list">
+          <div class="legend-item"><i class="swatch blue"></i>Harness / 约束与反馈</div>
+          <div class="legend-item"><i class="swatch red"></i>Noise / 发散与幻觉</div>
+          <div class="legend-item"><i class="swatch green"></i>Verified / 可复现输出</div>
+        </div>
+        <p class="legend-foot">拖动“夹具力度”可以连续观察通道收窄。场景按钮给出四个预设，也可以手动停在任意强度。</p>
+      </div>
+    </aside>
+  </main>
+
+  <section class="notes">
+    <div class="notes-intro">
+      <div>
+        <span class="notes-kicker">THE IDEA / 一句话</span>
+        <h2 class="notes-quote">Harness 不改变模型，<br>它改变模型输出<span class="blue">被允许到达</span>的空间。</h2>
+      </div>
+      <p class="notes-aside"><strong>模型能力只是起点。</strong>生产环境里的可靠性，更多来自模型外面那一层执行系统：它决定模型看到什么、能做什么、输出如何被验证，以及结果如何回到下一轮。</p>
+    </div>
+
+    <div class="notes-grid">
+      <article class="note-card">
+        <span class="note-no">01 / CONSTRAIN</span>
+        <h3>先约束，再生成</h3>
+        <p>用格式、schema、工具白名单和权限边界，把开放输出收成可执行的动作。约束不是替模型思考，而是替系统兜底。</p>
+      </article>
+      <article class="note-card">
+        <span class="note-no">02 / FEED BACK</span>
+        <h3>让输出回到输入</h3>
+        <p>上一轮的 output 会成为下一轮的 input。没有验证与回写的多轮循环，只会把偏差和噪声一起放大。</p>
+      </article>
+      <article class="note-card">
+        <span class="note-no">03 / VERIFY</span>
+        <h3>把确定性做出来</h3>
+        <p>评测、trace、回放与治理共同收紧夹具。所谓生产确定性，不是模型每次都对，而是错误可被发现、可被复现、可被修正。</p>
+      </article>
+    </div>
+
+    <div class="layers" aria-label="Harness 的七个系统层">
+      <span class="layers-label">HARNESS LAYERS / ETCLOVG</span>
+      <span class="layer-chip"><b>E</b>执行环境</span>
+      <span class="layer-chip"><b>T</b>工具协议</span>
+      <span class="layer-chip"><b>C</b>上下文与记忆</span>
+      <span class="layer-chip"><b>L</b>生命周期</span>
+      <span class="layer-chip"><b>O</b>可观测性</span>
+      <span class="layer-chip"><b>V</b>验证评测</span>
+      <span class="layer-chip"><b>G</b>治理安全</span>
+    </div>
+  </section>
+
+  <footer class="page-footer">
+    <p>概念参照：<a href="https://picrew.github.io/LLM-Harness/" target="_blank" rel="noreferrer">Agent Harness Engineering: A Survey</a>（ETCLOVG 分层）与原图手绘笔记整理。页面为概念演示，不是论文复刻。</p>
+    <span class="footer-mark">ORIGIN.JPG / INDEX.HTML</span>
+  </footer>
+</div>
+
+<div class="modal" id="originModal" role="dialog" aria-modal="true" aria-labelledby="originTitle" aria-hidden="true">
+  <div class="modal-card">
+    <div class="modal-head">
+      <div class="modal-title-wrap">
+        <span class="modal-kicker">SOURCE / 原图对照</span>
+        <h2 class="modal-title" id="originTitle">手绘笔记里的四段线索</h2>
+      </div>
+      <div class="modal-actions">
+        <a class="btn" href="origin.jpg" target="_blank" rel="noreferrer">打开原图 <span class="glyph">↗</span></a>
+        <button class="close-btn" id="closeOrigin" type="button" aria-label="关闭原图对照">×</button>
+      </div>
+    </div>
+    <div class="modal-body">
+      <div class="modal-image">
+        <img src="origin.jpg" alt="Harness Engineering 手绘原图：LLM 输入输出、蓝色约束线、多轮反馈与生产化 Agent。" loading="lazy">
+      </div>
+      <div class="modal-side">
+        <p>原图把同一个 LLM 输入输出图重复了四次。蓝色线是 Harness：它不负责生成，而是负责让生成落在可接受的范围内。</p>
+        <div class="origin-scenes">
+          <div class="origin-scene"><b>01</b><span>原始 I/O<em>User Input → LLM → Output；难题、弱模型、工具缺失会放大噪声。</em></span></div>
+          <div class="origin-scene"><b>02</b><span>Harness<em>一条蓝线让回答在它之内；没有 Harness 的回答更发散。</em></span></div>
+          <div class="origin-scene"><b>03</b><span>多轮回路<em>output 变成 new input；输入越复杂，噪声越容易沿回路扩大。</em></span></div>
+          <div class="origin-scene"><b>04</b><span>生产化<em>强化学习与生产 Agent；极强的夹具力度换来确定性。</em></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const MONO = '"SFMono-Regular", "JetBrains Mono", Menlo, Consolas, monospace';
+const SANS = '"Avenir Next", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif';
+
+const SCENES = [
+  {
+    index: '01',
+    en: 'RAW MODEL',
+    cn: '裸模型',
+    desc: '输入交给模型，输出向外发散。',
+    badge: 'UNCONSTRAINED',
+    accent: '#d34a2d',
+    clamp: 0.07,
+    loop: 0,
+    title: '先让模型自由回答',
+    lead: '把输入交给 LLM，输出会自然向外发散。问题越难，回答越长；模型越弱，噪声越多；工具与信息缺失时，幻觉被放大。',
+    readout: '输入越明确、模型越强，起点越好；但只要输出空间开放，回答仍会向外发散。发散不是异常，而是默认状态。',
+    tag: 'RAW',
+    signals: ['open', 'broad', 'idle', 'sampled']
+  },
+  {
+    index: '02',
+    en: 'HARNESS',
+    cn: '约束通道',
+    desc: '一条蓝线，把回答关进通道。',
+    badge: 'CLAMPED',
+    accent: '#1e5eff',
+    clamp: 0.68,
+    loop: 0,
+    title: '用一条蓝线，把回答关进通道',
+    lead: 'Harness 是模型外面的执行层。它约束输出格式，挑选上下文与工具，并把结果接回下一轮；回答被允许落在一条更窄的通道里。',
+    readout: 'Harness 把开放的回答空间收成一条可接受的通道：格式、工具、上下文和反馈都被纳入同一条约束线。',
+    tag: 'SYSTEM',
+    signals: ['bound', 'scoped', 'armed', 'sampled']
+  },
+  {
+    index: '03',
+    en: 'FEEDBACK LOOP',
+    cn: '多轮回路',
+    desc: 'output 变成下一轮 input。',
+    badge: 'LOOP GAIN',
+    accent: '#bd8623',
+    clamp: 0.32,
+    loop: 1,
+    title: '多轮里，噪声会自己长大',
+    lead: '这一轮的 output 成为下一轮的 input。更复杂的输入带来更复杂的输出；如果没有验证与回写，误差会沿着回路累积。',
+    readout: '回路会放大没有被验证的东西。多轮不是简单的重复，而是一次次把上一轮的偏差重新交给模型。',
+    tag: 'LOOP',
+    signals: ['loose', 'wide', 'idle', 'sampled']
+  },
+  {
+    index: '04',
+    en: 'PRODUCTION',
+    cn: '生产化 Agent',
+    desc: '强夹具，换来确定性。',
+    badge: 'DETERMINISTIC',
+    accent: '#0b8f6a',
+    clamp: 0.97,
+    loop: 0,
+    title: '极强的夹具，换来生产确定性',
+    lead: '强化学习、工具协议、评测与可观测性一起收紧 Harness：调用有 schema，结果有验证，失败可回放。生产 Agent 的可靠性来自整套夹具。',
+    readout: '强夹具把输出压到一条窄通道：工具调用可校验，结果可回放，失败可归因。确定性不是模型的天赋，而是系统设计的结果。',
+    tag: 'PROD',
+    signals: ['bound', 'scoped', 'passing', 'replay']
+  }
+];
+
+const SIGNAL_LABELS = ['tool contract', 'context scope', 'verifier', 'trace'];
+const SIGNAL_WORDS = {
+  open: 'open', broad: 'broad', idle: 'idle', sampled: 'sampled',
+  bound: 'bound', scoped: 'scoped', armed: 'armed', passing: 'passing', replay: 'replay', loose: 'loose', wide: 'wide'
+};
+
+const stageTitle = document.getElementById('stageTitle');
+const stageLead = document.getElementById('stageLead');
+const modeBadge = document.getElementById('modeBadge');
+const modeBadgeText = modeBadge.querySelector('span');
+const sceneTag = document.getElementById('sceneTag');
+const readoutTag = document.getElementById('readoutTag');
+const readoutText = document.getElementById('readoutText');
+const sceneList = document.getElementById('sceneList');
+const timeline = document.getElementById('timeline');
+const clampSlider = document.getElementById('clampSlider');
+const clampVal = document.getElementById('clampVal');
+const signalList = document.getElementById('signalList');
+const tourBtn = document.getElementById('tourBtn');
+const tourLabel = document.getElementById('tourLabel');
+const originBtn = document.getElementById('originBtn');
+const originModal = document.getElementById('originModal');
+const closeOrigin = document.getElementById('closeOrigin');
+
+let sceneIndex = 1;
+let custom = false;
+let clampTarget = SCENES[1].clamp;
+let loopTarget = SCENES[1].loop;
+let clampNow = clampTarget;
+let loopNow = loopTarget;
+let tourOn = false;
+let tourStart = 0;
+const TOUR_MS = 9000;
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function metricValues(clamp, loop) {
+  const c = Math.max(0, Math.min(1, clamp));
+  const l = Math.max(0, Math.min(1, loop));
+  return {
+    divergence: Math.round(Math.max(0, Math.min(100, 100 - c * 88 + l * 7))),
+    noise: Math.round(Math.max(0, Math.min(100, 100 - c * 79 + l * 15))),
+    determinism: Math.round(Math.max(0, Math.min(100, 5 + c * 93 - l * 6)))
+  };
+}
+
+function colorForClamp(c) {
+  if (c < 0.28) return '#d34a2d';
+  if (c < 0.62) return '#bd8623';
+  if (c < 0.9) return '#1e5eff';
+  return '#0b8f6a';
+}
+
+function setMetric(id, value, barId) {
+  const number = document.getElementById(id);
+  const bar = document.getElementById(barId);
+  if (number) number.textContent = String(value);
+  if (bar) bar.style.width = value + '%';
+}
+
+function signalState(word, index) {
+  if (index === 0) return clampTarget > 0.34;
+  if (index === 1) return clampTarget > 0.48;
+  if (index === 2) return clampTarget > 0.7;
+  return clampTarget > 0.86;
+}
+
+function renderSignals(signalWords) {
+  signalList.innerHTML = '';
+  SIGNAL_LABELS.forEach((label, i) => {
+    const row = document.createElement('div');
+    row.className = 'signal-row' + (signalState(signalWords[i], i) ? ' on' : '');
+    row.innerHTML = '<i></i><span>' + label + '</span><b>' + signalWords[i] + '</b>';
+    signalList.appendChild(row);
+  });
+}
+
+function customReadout(value) {
+  if (value < 0.22) return '夹具很松，输出仍在开放空间里。红色粒子会散开，通道几乎不存在。';
+  if (value < 0.5) return '夹具开始生效，但边界仍然宽。输出有方向，却没有被真正锁住。';
+  if (value < 0.78) return '边界清晰起来：模型被要求落在可接受区间，工具的加入也让输入更完整。';
+  return '强夹具：通道收成一条窄缝，输出被压向中心。确定性上升，换来的是更小的可接受空间。';
+}
+
+function syncUI() {
+  const scene = SCENES[sceneIndex];
+  const accent = custom ? colorForClamp(clampTarget) : scene.accent;
+  document.documentElement.style.setProperty('--accent', accent);
+  stageTitle.textContent = scene.title;
+  stageLead.textContent = scene.lead;
+  modeBadgeText.textContent = custom ? 'CLAMP ' + Math.round(clampTarget * 100) + '%' : scene.badge;
+  sceneTag.textContent = custom ? 'CUSTOM' : scene.tag;
+  readoutTag.textContent = custom ? 'CLAMP' : scene.tag;
+  readoutText.textContent = custom ? customReadout(clampTarget) : scene.readout;
+  clampSlider.value = String(Math.round(clampTarget * 100));
+  clampVal.textContent = Math.round(clampTarget * 100) + '%';
+  const metrics = metricValues(clampTarget, loopTarget);
+  setMetric('valDivergence', metrics.divergence, 'barDivergence');
+  setMetric('valNoise', metrics.noise, 'barNoise');
+  setMetric('valDeterminism', metrics.determinism, 'barDeterminism');
+  const words = custom
+    ? [
+        clampTarget > 0.34 ? 'bound' : 'open',
+        clampTarget > 0.48 ? 'scoped' : 'wide',
+        clampTarget > 0.7 ? 'armed' : 'idle',
+        clampTarget > 0.86 ? 'replay' : 'sampled'
+      ]
+    : scene.signals;
+  renderSignals(words);
+  const sceneButtons = sceneList.querySelectorAll('.scene');
+  sceneButtons.forEach((button, i) => {
+    const active = i === sceneIndex;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-current', active ? 'step' : 'false');
+  });
+  const steps = timeline.querySelectorAll('.tl-step');
+  steps.forEach((step, i) => {
+    step.classList.toggle('active', i === sceneIndex);
+    step.setAttribute('aria-current', i === sceneIndex ? 'step' : 'false');
+  });
+}
+
+function setScene(index, options = {}) {
+  const next = ((index % SCENES.length) + SCENES.length) % SCENES.length;
+  sceneIndex = next;
+  custom = false;
+  clampTarget = SCENES[next].clamp;
+  loopTarget = SCENES[next].loop;
+  if (!options.keepTour) stopTour();
+  syncUI();
+}
+
+function stopTour() {
+  if (!tourOn) return;
+  tourOn = false;
+  tourLabel.textContent = '自动巡演';
+  tourBtn.classList.remove('active');
+  tourBtn.setAttribute('aria-pressed', 'false');
+  tourBtn.querySelector('.glyph').textContent = '▶';
+  const bar = document.querySelector('.tour-progress i');
+  if (bar) bar.style.width = '0%';
+}
+
+function startTour() {
+  tourOn = true;
+  tourStart = performance.now();
+  tourLabel.textContent = '暂停巡演';
+  tourBtn.classList.add('active');
+  tourBtn.setAttribute('aria-pressed', 'true');
+  tourBtn.querySelector('.glyph').textContent = '❚❚';
+}
+
+function toggleTour() {
+  if (tourOn) stopTour();
+  else startTour();
+}
+
+SCENES.forEach((scene, i) => {
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'scene';
+  button.style.setProperty('--scene-accent', scene.accent);
+  button.dataset.index = String(i);
+  button.innerHTML =
+    '<span class="scene-no">' + scene.index + '</span>' +
+    '<span class="scene-copy"><span class="scene-en">' + scene.en + '</span><span class="scene-cn">' + scene.cn + '</span><span class="scene-desc">' + scene.desc + '</span></span>' +
+    '<span class="scene-arrow">→</span>';
+  button.addEventListener('click', () => setScene(i));
+  sceneList.appendChild(button);
+
+  const step = document.createElement('button');
+  step.type = 'button';
+  step.className = 'tl-step';
+  step.dataset.index = String(i);
+  step.setAttribute('aria-label', '切换到场景 ' + scene.index + '：' + scene.cn);
+  step.addEventListener('click', () => setScene(i));
+  timeline.appendChild(step);
+});
+
+clampSlider.addEventListener('input', () => {
+  stopTour();
+  custom = true;
+  clampTarget = Number(clampSlider.value) / 100;
+  loopTarget = 0;
+  syncUI();
+});
+
+tourBtn.addEventListener('click', toggleTour);
+
+originBtn.addEventListener('click', () => {
+  stopTour();
+  originModal.classList.add('open');
+  originModal.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => closeOrigin.focus(), 50);
+});
+
+function closeModal() {
+  originModal.classList.remove('open');
+  originModal.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+  originBtn.focus();
+}
+
+closeOrigin.addEventListener('click', closeModal);
+originModal.addEventListener('click', (event) => {
+  if (event.target === originModal) closeModal();
+});
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'Escape' && originModal.classList.contains('open')) {
+    closeModal();
+    return;
+  }
+  if (originModal.classList.contains('open')) return;
+  const tag = document.activeElement ? document.activeElement.tagName : '';
+  if (tag === 'INPUT' || tag === 'BUTTON' || tag === 'A') {
+    if (event.code === 'Space') return;
+  }
+  if (event.code === 'Space') {
+    event.preventDefault();
+    toggleTour();
+    return;
+  }
+  if (/^[1-4]$/.test(event.key)) {
+    setScene(Number(event.key) - 1);
+    return;
+  }
+  if (event.key === 'ArrowRight') {
+    setScene(sceneIndex + 1);
+    return;
+  }
+  if (event.key === 'ArrowLeft') {
+    setScene(sceneIndex - 1);
+  }
+});
+
+const canvas = document.getElementById('diagram');
+const ctx = canvas.getContext('2d');
+const canvasWrap = document.getElementById('canvasWrap');
+let W = 0;
+let H = 0;
+let DPR = 1;
+let GEO = null;
+let outputParticles = [];
+let inputParticles = [];
+let feedbackParticles = [];
+let clock = 0;
+let lastFrame = performance.now();
+
+function clampValue(v, min, max) {
+  return Math.max(min, Math.min(max, v));
+}
+
+function lerp(a, b, t) {
+  return a + (b - a) * t;
+}
+
+function smoothstep(edge0, edge1, x) {
+  const t = clampValue((x - edge0) / (edge1 - edge0), 0, 1);
+  return t * t * (3 - 2 * t);
+}
+
+function cubicPoint(p0, p1, p2, p3, t) {
+  const u = 1 - t;
+  return {
+    x: u * u * u * p0.x + 3 * u * u * t * p1.x + 3 * u * t * t * p2.x + t * t * t * p3.x,
+    y: u * u * u * p0.y + 3 * u * u * t * p1.y + 3 * u * t * t * p2.y + t * t * t * p3.y
+  };
+}
+
+function roundedRect(x, y, w, h, r) {
+  const radius = Math.min(r, Math.abs(w) / 2, Math.abs(h) / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.arcTo(x + w, y, x + w, y + h, radius);
+  ctx.arcTo(x + w, y + h, x, y + h, radius);
+  ctx.arcTo(x, y + h, x, y, radius);
+  ctx.arcTo(x, y, x + w, y, radius);
+  ctx.closePath();
+}
+
+function initParticles() {
+  outputParticles = Array.from({ length: 36 }, (_, i) => ({
+    p: Math.random(),
+    speed: 0.72 + Math.random() * 1.5,
+    seed: Math.random() * 100,
+    noisy: Math.random() < 0.36,
+    lane: Math.random() * 2 - 1,
+    size: 2.2 + Math.random() * 2.8,
+    index: i
+  }));
+  inputParticles = Array.from({ length: 18 }, (_, i) => ({
+    p: Math.random(),
+    speed: 0.6 + Math.random() * 1.1,
+    lane: Math.floor(Math.random() * 3) - 1,
+    size: 1.8 + Math.random() * 2.2,
+    index: i
+  }));
+  feedbackParticles = Array.from({ length: 10 }, (_, i) => ({
+    p: i / 10,
+    speed: 0.7 + Math.random() * 0.5,
+    size: 1.8 + Math.random() * 2.2,
+    index: i
+  }));
+}
+
+function resize() {
+  const rect = canvasWrap.getBoundingClientRect();
+  const width = Math.max(1, rect.width);
+  const height = Math.max(1, rect.height);
+  DPR = Math.min(2, window.devicePixelRatio || 1);
+  canvas.width = Math.round(width * DPR);
+  canvas.height = Math.round(height * DPR);
+  canvas.style.width = width + 'px';
+  canvas.style.height = height + 'px';
+  W = width;
+  H = height;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  GEO = null;
+  initParticles();
+  draw(clock);
+}
+
+function geometry() {
+  const pad = Math.max(18, Math.min(40, W * 0.035));
+  const cy = H * 0.51;
+  const box = Math.max(72, Math.min(126, W * 0.12, H * 0.245));
+  const llmX = W * (W < 640 ? 0.42 : 0.445);
+  const outStart = llmX + box * 0.5 + Math.max(22, W * 0.032);
+  const outEnd = W - pad;
+  const chipW = Math.max(66, Math.min(122, W * 0.17));
+  const chipH = Math.max(23, Math.min(30, H * 0.055));
+  const gap = chipH * 0.54;
+  const startHalf = box * 0.34;
+  return { pad, cy, box, llmX, outStart, outEnd, chipW, chipH, gap, startHalf, len: outEnd - outStart };
+}
+
+function corridorHalf(p) {
+  const g = GEO;
+  const endHalf = lerp(H * 0.195, Math.max(6, H * 0.012), smoothstep(0, 1, clampNow));
+  return lerp(g.startHalf, endHalf, smoothstep(0, 1, p));
+}
+
+function draw(t) {
+  if (!W || !H) return;
+  if (!GEO) GEO = geometry();
+  const g = GEO;
+  ctx.clearRect(0, 0, W, H);
+  drawReference(t, g);
+  drawRawFan(t, g);
+  drawCorridor(t, g);
+  drawFeedback(t, g);
+  drawInputs(t, g);
+  drawLLM(t, g);
+  drawOutputParticles(t, g);
+  drawGate(t, g);
+  drawLabels(t, g);
+  drawAxis(t, g);
+  drawStamp(t, g);
+}
+
+function drawReference(t, g) {
+  ctx.save();
+  ctx.strokeStyle = 'rgba(23, 33, 55, .10)';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([2, 8]);
+  ctx.beginPath();
+  ctx.moveTo(g.pad, g.cy);
+  ctx.lineTo(g.outEnd, g.cy);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = 'rgba(23, 33, 55, .22)';
+  for (let x = g.pad; x < g.outEnd; x += 44) {
+    ctx.fillRect(x, g.cy - 2, 1, 4);
+  }
+  ctx.restore();
+}
+
+function drawRawFan(t, g) {
+  const alpha = clampValue((0.44 - clampNow) / 0.44, 0, 1);
+  if (alpha < 0.02) return;
+  const spread = H * 0.21;
+  const topStart = g.cy - g.startHalf;
+  const bottomStart = g.cy + g.startHalf;
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(g.outStart, topStart);
+  ctx.bezierCurveTo(g.outStart + g.len * 0.35, topStart, g.outStart + g.len * 0.7, g.cy - spread, g.outEnd, g.cy - spread);
+  ctx.lineTo(g.outEnd, g.cy + spread);
+  ctx.bezierCurveTo(g.outStart + g.len * 0.7, g.cy + spread, g.outStart + g.len * 0.35, bottomStart, g.outStart, bottomStart);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(211, 74, 45, ' + (0.032 * alpha) + ')';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(211, 74, 45, ' + (0.35 * alpha) + ')';
+  ctx.lineWidth = 1;
+  ctx.setLineDash([6, 7]);
+  ctx.lineDashOffset = -t * 9;
+  ctx.beginPath();
+  ctx.moveTo(g.outStart, topStart);
+  ctx.bezierCurveTo(g.outStart + g.len * 0.35, topStart, g.outStart + g.len * 0.7, g.cy - spread, g.outEnd, g.cy - spread);
+  ctx.moveTo(g.outStart, bottomStart);
+  ctx.bezierCurveTo(g.outStart + g.len * 0.35, bottomStart, g.outStart + g.len * 0.7, g.cy + spread, g.outEnd, g.cy + spread);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+}
+
+function drawCorridor(t, g) {
+  if (clampNow < 0.11) return;
+  const endHalf = lerp(H * 0.195, Math.max(6, H * 0.012), smoothstep(0, 1, clampNow));
+  const topStart = g.cy - g.startHalf;
+  const topEnd = g.cy - endHalf;
+  const bottomStart = g.cy + g.startHalf;
+  const bottomEnd = g.cy + endHalf;
+  const cp1x = g.outStart + g.len * 0.38;
+  const cp2x = g.outStart + g.len * 0.72;
+  const fade = smoothstep(0.11, 0.7, clampNow);
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(g.outStart, topStart);
+  ctx.bezierCurveTo(cp1x, topStart, cp2x, topEnd, g.outEnd, topEnd);
+  ctx.lineTo(g.outEnd, bottomEnd);
+  ctx.bezierCurveTo(cp2x, bottomEnd, cp1x, bottomStart, g.outStart, bottomStart);
+  ctx.closePath();
+  const fill = ctx.createLinearGradient(g.outStart, g.cy, g.outEnd, g.cy);
+  fill.addColorStop(0, 'rgba(30, 94, 255, ' + (0.018 + 0.02 * fade) + ')');
+  fill.addColorStop(0.72, 'rgba(30, 94, 255, ' + (0.045 + 0.04 * fade) + ')');
+  fill.addColorStop(1, 'rgba(30, 94, 255, ' + (0.02 + 0.025 * fade) + ')');
+  ctx.fillStyle = fill;
+  ctx.fill();
+
+  ctx.strokeStyle = 'rgba(30, 94, 255, ' + (0.34 + 0.4 * fade) + ')';
+  ctx.lineWidth = 1.55 + fade * 0.7;
+  ctx.setLineDash([10, 9]);
+  ctx.lineDashOffset = -t * (7 + clampNow * 12);
+  ctx.shadowColor = 'rgba(30, 94, 255, ' + (0.2 + 0.2 * fade) + ')';
+  ctx.shadowBlur = 9 + fade * 7;
+  ctx.beginPath();
+  ctx.moveTo(g.outStart, topStart);
+  ctx.bezierCurveTo(cp1x, topStart, cp2x, topEnd, g.outEnd, topEnd);
+  ctx.moveTo(g.outStart, bottomStart);
+  ctx.bezierCurveTo(cp1x, bottomStart, cp2x, bottomEnd, g.outEnd, bottomEnd);
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+  ctx.setLineDash([]);
+
+  const topPoint = cubicPoint(
+    { x: g.outStart, y: topStart },
+    { x: cp1x, y: topStart },
+    { x: cp2x, y: topEnd },
+    { x: g.outEnd, y: topEnd },
+    0.7
+  );
+  const bottomPoint = cubicPoint(
+    { x: g.outStart, y: bottomStart },
+    { x: cp1x, y: bottomStart },
+    { x: cp2x, y: bottomEnd },
+    { x: g.outEnd, y: bottomEnd },
+    0.7
+  );
+
+  const dotT = (t * 0.25) % 1;
+  const dotTop = cubicPoint(
+    { x: g.outStart, y: topStart },
+    { x: cp1x, y: topStart },
+    { x: cp2x, y: topEnd },
+    { x: g.outEnd, y: topEnd },
+    dotT
+  );
+  const dotBottom = cubicPoint(
+    { x: g.outStart, y: bottomStart },
+    { x: cp1x, y: bottomStart },
+    { x: cp2x, y: bottomEnd },
+    { x: g.outEnd, y: bottomEnd },
+    dotT
+  );
+  ctx.fillStyle = 'rgba(30, 94, 255, ' + (0.5 * fade) + ')';
+  ctx.beginPath();
+  ctx.arc(dotTop.x, dotTop.y, 2.2, 0, Math.PI * 2);
+  ctx.arc(dotBottom.x, dotBottom.y, 2.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = 'rgba(30, 94, 255, ' + (0.78 * fade) + ')';
+  ctx.font = '700 8px ' + MONO;
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillText('HARNESS', g.outEnd - 2, topPoint.y - 10);
+  ctx.restore();
+}
+
+function drawFeedback(t, g) {
+  if (loopNow < 0.02) return;
+  const endHalf = lerp(H * 0.195, Math.max(6, H * 0.012), smoothstep(0, 1, clampNow));
+  const p0 = { x: g.outEnd - 36, y: g.cy + endHalf + 20 };
+  const p1 = { x: g.outEnd - 135, y: H * 0.87 };
+  const p2 = { x: g.pad + 52, y: H * 0.87 };
+  const p3 = { x: g.pad + g.chipW * 0.56, y: g.cy + g.chipH * 1.6 };
+  ctx.save();
+  ctx.globalAlpha = loopNow;
+  ctx.strokeStyle = 'rgba(211, 74, 45, .5)';
+  ctx.lineWidth = 1.3;
+  ctx.setLineDash([7, 7]);
+  ctx.lineDashOffset = -t * 13;
+  ctx.shadowColor = 'rgba(211, 74, 45, .28)';
+  ctx.shadowBlur = 8;
+  ctx.beginPath();
+  ctx.moveTo(p0.x, p0.y);
+  ctx.bezierCurveTo(p1.x, p1.y, p2.x, p2.y, p3.x, p3.y);
+  ctx.stroke();
+  ctx.shadowBlur = 0;
+  ctx.setLineDash([]);
+
+  feedbackParticles.forEach((particle) => {
+    const q = cubicPoint(p0, p1, p2, p3, particle.p);
+    ctx.fillStyle = 'rgba(211, 74, 45, .82)';
+    ctx.beginPath();
+    ctx.arc(q.x, q.y, particle.size, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  const arrow = cubicPoint(p0, p1, p2, p3, 0.97);
+  const before = cubicPoint(p0, p1, p2, p3, 0.925);
+  const angle = Math.atan2(arrow.y - before.y, arrow.x - before.x);
+  ctx.save();
+  ctx.translate(arrow.x, arrow.y);
+  ctx.rotate(angle);
+  ctx.fillStyle = 'rgba(211, 74, 45, .75)';
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(-8, -4);
+  ctx.lineTo(-8, 4);
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+
+  const mid = cubicPoint(p0, p1, p2, p3, 0.52);
+  ctx.fillStyle = 'rgba(211, 74, 45, .88)';
+  ctx.font = '600 7px ' + MONO;
+  ctx.textAlign = 'center';
+  ctx.fillText('NEW INPUT / LOOP GAIN ×1.8', mid.x, mid.y + 15);
+  ctx.textAlign = 'left';
+  ctx.fillStyle = 'rgba(211, 74, 45, .62)';
+  ctx.fillText('TURN 0' + (Math.floor(t / 3.4) % 4 + 1), p0.x - 64, p0.y + 13);
+  ctx.restore();
+}
+
+function drawInputs(t, g) {
+  const x = g.pad + 2;
+  const top = g.cy - g.chipH - g.gap;
+  const mid = g.cy;
+  const bottom = g.cy + g.chipH + g.gap;
+  const contextAlpha = 0.12 + 0.88 * smoothstep(0.12, 0.5, clampNow);
+  const toolsAlpha = 0.08 + 0.92 * smoothstep(0.28, 0.72, clampNow);
+
+  drawPill(x, top, g.chipW, g.chipH, 'USER', '#172137', 1);
+  drawPill(x, mid, g.chipW, g.chipH, 'CONTEXT', '#0b8f6a', contextAlpha);
+  drawPill(x, bottom, g.chipW, g.chipH, 'TOOLS', '#1e5eff', toolsAlpha);
+
+  ctx.save();
+  ctx.strokeStyle = 'rgba(23, 33, 55, .16)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(x + g.chipW + 8, top + g.chipH / 2);
+  ctx.lineTo(x + g.chipW + 8, bottom + g.chipH / 2);
+  ctx.moveTo(x + g.chipW + 8, g.cy);
+  ctx.lineTo(g.llmX - g.box * 0.5 - 15, g.cy);
+  ctx.stroke();
+
+  ctx.strokeStyle = 'rgba(23, 33, 55, .3)';
+  ctx.setLineDash([4, 6]);
+  ctx.lineDashOffset = -t * 8;
+  ctx.beginPath();
+  ctx.moveTo(x + g.chipW + 8, g.cy);
+  ctx.lineTo(g.llmX - g.box * 0.5 - 15, g.cy);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = 'rgba(23, 33, 55, .5)';
+  ctx.beginPath();
+  ctx.moveTo(g.llmX - g.box * 0.5 - 14, g.cy);
+  ctx.lineTo(g.llmX - g.box * 0.5 - 22, g.cy - 4);
+  ctx.lineTo(g.llmX - g.box * 0.5 - 22, g.cy + 4);
+  ctx.closePath();
+  ctx.fill();
+
+  inputParticles.forEach((particle) => {
+    const startX = x + g.chipW + 14;
+    const endX = g.llmX - g.box * 0.5 - 17;
+    const px = lerp(startX, endX, particle.p);
+    const lane = particle.lane === 0 ? 0.5 : particle.lane;
+    const py = g.cy + lane * (g.chipH + g.gap) * 0.56 + Math.sin(particle.p * 10 + particle.index) * 1.6;
+    const alpha = 0.28 + 0.55 * Math.sin(Math.PI * clampValue(particle.p, 0, 1));
+    ctx.fillStyle = particle.lane === 0
+      ? 'rgba(23, 33, 55, ' + alpha + ')'
+      : particle.lane < 0
+        ? 'rgba(11, 143, 106, ' + alpha + ')'
+        : 'rgba(30, 94, 255, ' + alpha + ')';
+    ctx.beginPath();
+    ctx.arc(px, py, particle.size, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.restore();
+}
+
+function drawPill(x, y, w, h, label, color, alpha) {
+  if (alpha <= 0.02) return;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  roundedRect(x, y, w, h, h * 0.38);
+  ctx.fillStyle = 'rgba(255, 251, 242, .78)';
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(23, 33, 55, .19)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x + 12, y + h / 2, 3.1, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(23, 33, 55, .78)';
+  ctx.font = '600 ' + Math.max(7.5, h * 0.32) + 'px ' + MONO;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(label, x + 22, y + h / 2 + 0.4);
+  ctx.restore();
+}
+
+function drawLLM(t, g) {
+  const half = g.box / 2;
+  const pulse = (t * 0.55) % 1;
+  const glow = ctx.createRadialGradient(g.llmX, g.cy, 0, g.llmX, g.cy, g.box * 1.35);
+  glow.addColorStop(0, 'rgba(30, 94, 255, ' + (0.12 + clampNow * 0.15) + ')');
+  glow.addColorStop(0.5, 'rgba(30, 94, 255, ' + (0.045 + clampNow * 0.045) + ')');
+  glow.addColorStop(1, 'rgba(30, 94, 255, 0)');
+  ctx.save();
+  ctx.fillStyle = glow;
+  ctx.fillRect(g.llmX - g.box * 1.4, g.cy - g.box * 1.4, g.box * 2.8, g.box * 2.8);
+
+  ctx.strokeStyle = 'rgba(30, 94, 255, ' + (0.14 + clampNow * 0.2) + ')';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(g.llmX, g.cy, half + 14 + pulse * g.box * 0.62, 0, Math.PI * 2);
+  ctx.stroke();
+
+  ctx.save();
+  ctx.translate(g.llmX, g.cy);
+  ctx.rotate(t * 0.16);
+  ctx.strokeStyle = 'rgba(30, 94, 255, ' + (0.26 + clampNow * 0.34) + ')';
+  ctx.lineWidth = 1.1;
+  ctx.setLineDash([3, 7]);
+  ctx.beginPath();
+  ctx.arc(0, 0, half + 7, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+
+  const fill = ctx.createLinearGradient(g.llmX - half, g.cy - half, g.llmX + half, g.cy + half);
+  fill.addColorStop(0, '#263653');
+  fill.addColorStop(0.52, '#14203a');
+  fill.addColorStop(1, '#0b1222');
+  ctx.shadowColor = 'rgba(30, 94, 255, ' + (0.1 + clampNow * 0.22) + ')';
+  ctx.shadowBlur = 22 * (0.55 + clampNow * 0.45);
+  roundedRect(g.llmX - half, g.cy - half, g.box, g.box, g.box * 0.22);
+  ctx.fillStyle = fill;
+  ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.strokeStyle = 'rgba(255, 255, 255, .16)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  ctx.strokeStyle = 'rgba(30, 94, 255, .82)';
+  ctx.lineWidth = 1.4;
+  const c = Math.max(8, g.box * 0.11);
+  const corner = g.box * 0.11;
+  ctx.beginPath();
+  ctx.moveTo(g.llmX - half + 1, g.cy - half + corner + c);
+  ctx.lineTo(g.llmX - half + 1, g.cy - half + corner);
+  ctx.lineTo(g.llmX - half + corner + c, g.cy - half + 1);
+  ctx.moveTo(g.llmX + half - corner - c, g.cy - half + 1);
+  ctx.lineTo(g.llmX + half - 1, g.cy - half + corner);
+  ctx.lineTo(g.llmX + half - 1, g.cy - half + corner + c);
+  ctx.moveTo(g.llmX - half + 1, g.cy + half - corner - c);
+  ctx.lineTo(g.llmX - half + 1, g.cy + half - corner);
+  ctx.lineTo(g.llmX - half + corner + c, g.cy + half - 1);
+  ctx.moveTo(g.llmX + half - corner - c, g.cy + half - 1);
+  ctx.lineTo(g.llmX + half - 1, g.cy + half - corner);
+  ctx.lineTo(g.llmX + half - 1, g.cy + half - corner - c);
+  ctx.stroke();
+
+  ctx.fillStyle = '#fbf7ec';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = '700 ' + Math.max(15, g.box * 0.165) + 'px ' + MONO;
+  ctx.fillText('LLM', g.llmX, g.cy + 1);
+  ctx.fillStyle = 'rgba(251, 247, 236, .48)';
+  ctx.font = '500 ' + Math.max(6.5, g.box * 0.058) + 'px ' + MONO;
+  ctx.fillText('MODEL CORE', g.llmX, g.cy + g.box * 0.255);
+  ctx.restore();
+}
+
+function drawOutputParticles(t, g) {
+  const lock = smoothstep(0.9, 1, clampNow);
+  outputParticles.forEach((particle, i) => {
+    const p = particle.p;
+    if (p < -0.03 || p > 1.03) return;
+    const half = corridorHalf(p);
+    const x = g.outStart + p * g.len;
+    let offset = Math.sin(particle.seed + p * 5.6) * half * 0.78 * (particle.noisy ? 1.18 : 0.8);
+    offset += particle.lane * half * 0.17;
+    offset = lerp(offset, particle.lane * 3.7, lock);
+    const y = g.cy + offset;
+    const fadeIn = smoothstep(-0.02, 0.08, p);
+    const fadeOut = 1 - smoothstep(0.96, 1.03, p);
+    const alpha = fadeIn * fadeOut;
+    if (alpha <= 0.01) return;
+    let color;
+    if (clampNow > 0.88) {
+      color = i % 5 === 0 ? 'rgba(11, 143, 106, .92)' : 'rgba(30, 94, 255, .9)';
+    } else if (particle.noisy && clampNow < 0.62) {
+      color = 'rgba(211, 74, 45, .86)';
+    } else if (i % 4 === 0) {
+      color = 'rgba(11, 143, 106, .8)';
+    } else if (i % 3 === 0) {
+      color = 'rgba(23, 33, 55, .7)';
+    } else {
+      color = 'rgba(30, 94, 255, .84)';
+    }
+    const angle = Math.sin(particle.seed + p * 3.1) * 0.32 * (1 - lock);
+    const width = 6 + particle.size * 1.6;
+    const height = Math.max(2.6, particle.size * 0.68);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    if (clampNow > 0.5) {
+      ctx.strokeStyle = color.replace(/[\d.]+\)$/, '0.14)');
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(x - width * 1.7, y);
+      ctx.lineTo(x - width * 0.5, y);
+      ctx.stroke();
+    }
+    ctx.translate(x, y);
+    ctx.rotate(angle);
+    roundedRect(-width / 2, -height / 2, width, height, height / 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.restore();
+  });
+}
+
+function drawGate(t, g) {
+  const endHalf = corridorHalf(1);
+  const alpha = 0.22 + 0.5 * smoothstep(0.12, 0.8, clampNow);
+  ctx.save();
+  ctx.strokeStyle = 'rgba(23, 33, 55, ' + alpha + ')';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(g.outEnd, g.cy - endHalf * 1.8);
+  ctx.lineTo(g.outEnd, g.cy + endHalf * 1.8);
+  ctx.stroke();
+  ctx.strokeStyle = 'rgba(30, 94, 255, ' + (0.35 + 0.4 * smoothstep(0.15, 0.9, clampNow)) + ')';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(g.outEnd - 5, g.cy - endHalf);
+  ctx.lineTo(g.outEnd + 1, g.cy - endHalf);
+  ctx.moveTo(g.outEnd - 5, g.cy + endHalf);
+  ctx.lineTo(g.outEnd + 1, g.cy + endHalf);
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(23, 33, 55, ' + (0.4 + 0.18 * smoothstep(0.3, 0.9, clampNow)) + ')';
+  ctx.font = '600 7px ' + MONO;
+  ctx.textAlign = 'right';
+  ctx.fillText(loopNow > 0.4 ? 'REAL OUT' : (clampNow > 0.5 ? 'ACCEPT' : 'OPEN'), g.outEnd - 9, g.cy - endHalf - 10);
+  ctx.restore();
+}
+
+function drawLabels(t, g) {
+  const top = g.cy - H * 0.305;
+  ctx.save();
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  ctx.fillStyle = 'rgba(23, 33, 55, .7)';
+  ctx.font = '700 9px ' + MONO;
+  ctx.fillText('INPUT', g.pad + 2, top);
+  ctx.fillStyle = 'rgba(23, 33, 55, .42)';
+  ctx.font = '500 7.5px ' + MONO;
+  ctx.fillText('USER + CONTEXT + TOOLS', g.pad + 2, top + 13);
+
+  ctx.textAlign = 'right';
+  ctx.fillStyle = 'rgba(23, 33, 55, .7)';
+  ctx.font = '700 9px ' + MONO;
+  ctx.fillText('OUTPUT', g.outEnd, top);
+  ctx.fillStyle = 'rgba(23, 33, 55, .42)';
+  ctx.font = '500 7.5px ' + MONO;
+  ctx.fillText('TOKENS + ACTIONS', g.outEnd, top + 13);
+
+  ctx.textAlign = 'center';
+  ctx.fillStyle = 'rgba(23, 33, 55, .38)';
+  ctx.font = '600 7px ' + MONO;
+  ctx.fillText('HARNESS BOUNDARY', g.llmX, g.cy - g.box * 0.5 - 22);
+  ctx.restore();
+}
+
+function drawAxis(t, g) {
+  const y = H - 22;
+  ctx.save();
+  ctx.strokeStyle = 'rgba(23, 33, 55, .16)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(g.pad, y);
+  ctx.lineTo(g.outEnd, y);
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(23, 33, 55, .3)';
+  for (let x = g.pad; x < g.outEnd; x += 52) {
+    ctx.fillRect(x, y, 1, 4);
+  }
+  ctx.fillStyle = 'rgba(23, 33, 55, .38)';
+  ctx.font = '600 7px ' + MONO;
+  ctx.textAlign = 'left';
+  ctx.fillText('INTERACTION TIME', g.pad, y - 8);
+  ctx.textAlign = 'right';
+  ctx.fillText('t →', g.outEnd, y - 8);
+  ctx.restore();
+}
+
+function drawStamp(t, g) {
+  const alpha = smoothstep(0.86, 0.97, clampNow) * (1 - loopNow * 0.72);
+  if (alpha < 0.02) return;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.translate(g.outEnd - 84, g.cy - H * 0.215);
+  ctx.rotate(-0.08);
+  ctx.strokeStyle = 'rgba(11, 143, 106, .7)';
+  ctx.lineWidth = 1;
+  roundedRect(-40, -11, 80, 22, 4);
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(11, 143, 106, .82)';
+  ctx.font = '700 7.5px ' + MONO;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('VERIFIED', 0, 1);
+  ctx.restore();
+}
+
+function updateParticles(dt) {
+  outputParticles.forEach((particle) => {
+    particle.p += dt * (0.11 + particle.speed * 0.075);
+    if (particle.p > 1.05) {
+      particle.p = -Math.random() * 0.06;
+      particle.seed = Math.random() * 100;
+      particle.noisy = Math.random() < 0.36;
+      particle.lane = Math.random() * 2 - 1;
+      particle.size = 2.2 + Math.random() * 2.8;
+    }
+  });
+  inputParticles.forEach((particle) => {
+    particle.p += dt * (0.24 + particle.speed * 0.2);
+    if (particle.p > 1.04) {
+      particle.p = -Math.random() * 0.2;
+      particle.lane = Math.floor(Math.random() * 3) - 1;
+      particle.size = 1.8 + Math.random() * 2.2;
+    }
+  });
+  feedbackParticles.forEach((particle) => {
+    particle.p += dt * (0.1 + particle.speed * 0.08);
+    if (particle.p > 1) particle.p -= 1;
+  });
+}
+
+function animate(now) {
+  const dt = Math.min(0.033, (now - lastFrame) / 1000);
+  lastFrame = now;
+  if (!reduceMotion) {
+    clock += dt;
+    updateParticles(dt);
+  }
+  const ease = 1 - Math.pow(1 - Math.min(1, dt * 5.5), 2);
+  clampNow += (clampTarget - clampNow) * ease;
+  loopNow += (loopTarget - loopNow) * ease;
+  draw(clock);
+
+  if (tourOn) {
+    const progress = clampValue((now - tourStart) / TOUR_MS, 0, 1);
+    const bar = document.querySelector('.tour-progress i');
+    if (bar) bar.style.width = (progress * 100) + '%';
+    if (progress >= 1) {
+      tourStart = now;
+      setScene(sceneIndex + 1, { keepTour: true });
+    }
+  }
+  requestAnimationFrame(animate);
+}
+
+const tourProgress = document.createElement('div');
+tourProgress.className = 'tour-progress';
+tourProgress.innerHTML = '<i></i>';
+tourProgress.style.cssText = 'position:absolute;left:14px;right:14px;bottom:0;height:2px;background:rgba(23,33,55,.06);pointer-events:none;z-index:3;overflow:hidden;';
+tourProgress.firstElementChild.style.cssText = 'display:block;width:0%;height:100%;background:var(--accent);transition:width .1s linear;';
+document.querySelector('.stage').appendChild(tourProgress);
+
+document.addEventListener('visibilitychange', () => {
+  lastFrame = performance.now();
+});
+
+const resizeObserver = new ResizeObserver(resize);
+resizeObserver.observe(canvasWrap);
+
+syncUI();
+resize();
+requestAnimationFrame((now) => {
+  lastFrame = now;
+  animate(now);
+});
+</script>
+</body>
+</html>
