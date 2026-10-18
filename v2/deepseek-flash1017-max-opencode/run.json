@@ -1,0 +1,52 @@
+{
+  "tool": "OpenCode",
+  "tool_version_recorded": "1.19.1",
+  "session_id": "ses_eb1fefe26ffeFPS7tloS3FBvL4",
+  "model": {
+    "id": "deepseek-flash",
+    "providerID": "deepseek-official",
+    "variant": "max"
+  },
+  "timezone": "America/Los_Angeles",
+  "started_at": "2026-10-18T00:54:42.898000-07:00",
+  "finished_at": "2026-10-18T01:24:49.987000-07:00",
+  "elapsed_seconds": 1807.089,
+  "elapsed_definition": "First recorded user message through last assistant completion in the artifact-producing session.",
+  "tokens_raw": {
+    "input": 290848,
+    "output": 56842,
+    "reasoning": 140476,
+    "cache_read": 13294336,
+    "cache_write": 0
+  },
+  "tokens": {
+    "input_including_cache": 13585184,
+    "cached_input": 13294336,
+    "output_including_reasoning": 197318,
+    "reasoning_output": 140476,
+    "total": 13782502
+  },
+  "input_cache_hit_percent": 97.85907942063943,
+  "cost_usd": null,
+  "cost_note": "Actual billing unavailable; unconfigured OpenCode cost=0 is not treated as a free run.",
+  "assistant_messages": 102,
+  "tool_calls": {
+    "bash": 41,
+    "read": 56,
+    "webfetch": 4,
+    "todowrite": 1,
+    "write": 1,
+    "edit": 3,
+    "grep": 5
+  },
+  "source": "Read-only local OpenCode SQLite message and part records.",
+  "scope": "Artifact-producing session only; includes research, generation, tool calls, checks and compaction. Earlier failed CLI attempts and repository publishing are excluded.",
+  "prompt": "prompt.txt",
+  "reference_image": "origin.jpg",
+  "original_prompt_matches_v2": true,
+  "original_image_matches_v2": true,
+  "input_summary": "One substantive user task prompt; the session also contains automatic compaction/recovery messages.",
+  "notes": [
+    "The final image in the page uses assets/origin.jpg; origin.jpg retains the original v2 reference."
+  ]
+}

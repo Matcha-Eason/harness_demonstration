@@ -1,0 +1,47 @@
+{
+  "tool": "Codex",
+  "tool_version_recorded": "0.163.0-alpha.10.2",
+  "session_id": "01a14e03-157f-7a83-91b3-b541165327ea",
+  "model": "gpt-6-astra",
+  "reasoning_effort_recorded": "xhigh",
+  "directory_label": "gpt6-astra-ultra-codex",
+  "timezone": "America/Los_Angeles",
+  "started_at": "2026-10-18T00:56:45.133000-07:00",
+  "finished_at": "2026-10-18T01:25:27.039000-07:00",
+  "elapsed_seconds": 1721.906,
+  "elapsed_definition": "Original task prompt through recorded turn interruption; includes research, implementation and browser checks.",
+  "final_event": "turn_aborted",
+  "usage_last_reported_at": "2026-10-18T01:25:16.480000-07:00",
+  "tokens_raw": {
+    "input_tokens": 4056287,
+    "cached_input_tokens": 3949824,
+    "cache_write_input_tokens": 0,
+    "output_tokens": 36948,
+    "reasoning_output_tokens": 7826,
+    "total_tokens": 4093235
+  },
+  "tokens": {
+    "input_including_cache": 4056287,
+    "cached_input": 3949824,
+    "output_including_reasoning": 36948,
+    "reasoning_output": 7826,
+    "total": 4093235
+  },
+  "input_cache_hit_percent": 97.37535830181642,
+  "cost_usd": null,
+  "cost_note": "Actual billing unavailable.",
+  "tool_calls": {
+    "js": 25
+  },
+  "source": "Last cumulative token_count in the artifact-producing local Codex session; repeated cumulative reports are not added together.",
+  "scope": "Artifact-producing session only; earlier CLI trials, separate approval-review sessions and repository publishing are excluded.",
+  "prompt": "prompt.txt",
+  "reference_image": "origin.jpg",
+  "original_prompt_matches_v2": true,
+  "original_image_matches_v2": true,
+  "notes": [
+    "The directory label includes ultra, but the recorded effective reasoning effort is xhigh.",
+    "The page existed before the user interrupted the turn. Usage is the final available cumulative report, 10.559 seconds before interruption.",
+    "This is a single user task with tool calls, not a single API response."
+  ]
+}
