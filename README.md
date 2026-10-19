@@ -28,7 +28,7 @@ v2、v1 使用不同的提示图，分别见文末的 [v2 提示图](#v2-提示�
 | --- | --- |
 | Gemini4 argon 网页 | [打开 Gemini v2](https://matcha-eason.github.io/harness_demonstration/v2/gemini4argon-web-chat/harness_engineering.html) |
 | Qwen 3.8max 阿里云 Coding Plan + OpenCode | [打开 Qwen v2](https://matcha-eason.github.io/harness_demonstration/v2/qwen38max-opencode/index.html) |
-| GPT 6.1sol xhigh + Codex | [打开 Codex v2](https://matcha-eason.github.io/harness_demonstration/v2/gpt6.1sol-codex/harness-demo/dist/) |
+| GPT 6.1sol xhigh + Codex | [打开 GPT 6.1 SOL v2](https://matcha-eason.github.io/harness_demonstration/v2/gpt6.1sol-codex/harness-demo/dist/) |
 | Kimi K3 + Workbuddy | [打开 Kimi v2](https://matcha-eason.github.io/harness_demonstration/v2/kimi-k3-workbuddy/harness-engineering.html) |
 | DeepSeek V4.1 Flash 1017 Max + OpenCode | [打开 DeepSeek Flash 1017 Max v2](https://matcha-eason.github.io/harness_demonstration/v2/deepseek-flash1017-max-opencode/index.html) |
 | GPT-6 Astra + Codex（日志记录 xhigh） | [打开 GPT-6 Astra v2](https://matcha-eason.github.io/harness_demonstration/v2/gpt6-astra-ultra-codex/index.html) |
