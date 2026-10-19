@@ -1,0 +1,849 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Harness Engineering — 给概率套上夹具</title>
+<meta name="description" content="以 LLM 输入输出图为中心的 Harness Engineering 概念演示。" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230a101a'/%3E%3Cpath d='M8 9h16M8 23h16M16 12v8' stroke='%238fb6ff' stroke-width='2'/%3E%3C/svg%3E" />
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div class="grid-field" aria-hidden="true"></div>
+<div class="ambient a" aria-hidden="true"></div>
+<div class="ambient b" aria-hidden="true"></div>
+
+<div class="page">
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <path class="mark-rail" d="M4 5h16M4 19h16"/>
+          <path class="mark-core" d="M12 7.4v9.2M9.2 9.8h5.6M9.2 14.2h5.6"/>
+        </svg>
+      </span>
+      <div class="brand-text">
+        <span class="brand-name">HARNESS</span>
+        <span class="brand-sub">驾驭工程 · 从概率到交付</span>
+      </div>
+    </div>
+    <div class="topbar-meta" aria-hidden="true">
+      <span>LLM I/O</span><span class="slash">/</span><span>CONCEPT FILM</span><span class="slash">/</span><span>MMXXVI</span>
+    </div>
+    <div class="topbar-actions">
+      <button class="pill-btn" id="notesBtn" type="button" aria-haspopup="dialog">
+        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 2.5h7.5L13 5v8.5H3z" stroke="currentColor"/><path d="M5.2 6.4h5.4M5.2 9h4.2" stroke="currentColor" stroke-linecap="round"/></svg>
+        草图 / 注释
+      </button>
+      <button class="pill-btn icon-btn" id="fullBtn" type="button" aria-label="全屏演示" title="全屏演示">
+        <svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 2.5H2.5V6M10 2.5h3.5V6M6 13.5H2.5V10M10 13.5h3.5V10" stroke="currentColor" stroke-linecap="round"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <main class="layout">
+    <aside class="story" aria-live="polite">
+      <div class="story-panels">
+        <!-- 01 -->
+        <section class="story-panel active" data-scene="0" data-num="01" aria-hidden="false">
+          <div class="story-eyebrow"><span class="num">01</span><span>裸模型</span><span class="sep"></span><span class="en">THE BARE LOOP</span></div>
+          <h2 class="story-title">一个输入，<br><span class="accent">一片输出。</span></h2>
+          <p class="story-lead">LLM 给出的不是一个确定的答案，而是一片<strong>可能的输出</strong>。我们看到的回答，只是从概率分布里采出的一条样本。</p>
+          <ul class="story-points">
+            <li><span class="key">A</span><span><b>同一个 prompt，不保证同一个答案</b>重跑一次、换个温度，就可能走出完全不同的轨迹。</span></li>
+            <li><span class="key">B</span><span><b>一条真实路径，背后是无数岔路</b>模型只把其中一条，交到了你手里。</span></li>
+          </ul>
+          <div class="story-note">只靠“更明确的指令 + 更强的模型”，并不足以换来可交付的确定性。</div>
+        </section>
+        <!-- 02 -->
+        <section class="story-panel" data-scene="1" data-num="02" aria-hidden="true">
+          <div class="story-eyebrow"><span class="num">02</span><span>为什么会发散</span><span class="sep"></span><span class="en">ENTROPY SOURCES</span></div>
+          <h2 class="story-title">发散，<br><span class="blue">是默认状态。</span></h2>
+          <p class="story-lead">难任务拉长推理链，弱模型留下更多自由决策点，缺失的工具与信息让模型用猜测填补空白。每一步，都在复制分叉。</p>
+          <ul class="story-points">
+            <li><span class="key">01</span><span><b>复杂任务 <span class="arrow">→</span> 解空间膨胀</b>目标越远，中间步骤越多，可能的路径就越多。</span></li>
+            <li><span class="key">02</span><span><b>弱模型 <span class="arrow">→</span> 过多 slots、噪音</b>每个可自由选择的决策点，都会成为误差入口。</span></li>
+            <li><span class="key">03</span><span><b>缺工具 / 信息 <span class="arrow">→</span> 幻觉与噪音</b>模型不知道，就会用一个“听起来合理”的答案补上。</span></li>
+          </ul>
+          <div class="story-note">分支不是相加，而是相乘：复杂 × 多轮 × 无验证 ≈ 不可复现。</div>
+        </section>
+        <!-- 03 -->
+        <section class="story-panel" data-scene="2" data-num="03" aria-hidden="true">
+          <div class="story-eyebrow"><span class="num">03</span><span>Harness</span><span class="sep"></span><span class="en">THE FIXTURE</span></div>
+          <h2 class="story-title">给概率，<br><span class="accent">套上夹具。</span></h2>
+          <p class="story-lead">Harness 是模型之外的<strong>约束与反馈系统</strong>。它不替模型思考，而是决定哪些输出可以留下、哪些必须重来。</p>
+          <ul class="story-points">
+            <li><span class="key">↓</span><span><b>减少 slots</b>把本可确定的步骤交给代码、工具和流程，而不是每次都让模型自由选择。</span></li>
+            <li><span class="key">↓</span><span><b>降低噪音</b>补上可靠的上下文，用工具获取事实，用验证器发现错误。</span></li>
+            <li><span class="key">↓</span><span><b>收束发散</b>把“可能的回答”夹进一个可验收的输出空间。</span></li>
+          </ul>
+          <div class="story-note quote">“这条蓝线，让回答在它之内。”</div>
+        </section>
+        <!-- 04 -->
+        <section class="story-panel" data-scene="3" data-num="04" aria-hidden="true">
+          <div class="story-eyebrow"><span class="num">04</span><span>多轮</span><span class="sep"></span><span class="en">RECURSIVE DRIFT</span></div>
+          <h2 class="story-title">上一轮的错，<br><span class="blue">进入下一轮。</span></h2>
+          <p class="story-lead">多轮不会自动纠偏。错误假设、模糊措辞、无效的工具结果，都会成为下一轮的上下文。</p>
+          <ul class="story-points">
+            <li><span class="key">01</span><span><b>output <span class="arrow">→</span> new input</b>上一轮答案，成为下一轮前提。</span></li>
+            <li><span class="key">02</span><span><b>更复杂的 input，更嘈杂的 output</b>问题、历史与噪音一起进入上下文。</span></li>
+            <li><span class="key">03</span><span><b>每个交接点，都是约束点</b>不在交接处重新夹紧，误差就会递归扩大。</span></li>
+          </ul>
+          <div class="story-note">发散的轨迹 + 多轮传递 = 指数级失控。</div>
+        </section>
+        <!-- 05 -->
+        <section class="story-panel" data-scene="4" data-num="05" aria-hidden="true">
+          <div class="story-eyebrow"><span class="num">05</span><span>学习信号</span><span class="sep"></span><span class="en">REWARD BOUNDARY</span></div>
+          <h2 class="story-title">边界，<br><span class="accent">也是奖励。</span></h2>
+          <p class="story-lead">在训练与评测中，harness 是一道<strong>可验证的接受边界</strong>：好答案落在界内，坏答案落在界外。保留、修正，再学习。</p>
+          <ul class="story-points">
+            <li><span class="key">+1</span><span><b>夹具内 → Good answer</b>被接受，进入下一轮，也可以被强化。</span></li>
+            <li><span class="key">−1</span><span><b>夹具外 → Bad answer</b>被拒绝或修复，重新采样。</span></li>
+            <li><span class="key">↻</span><span><b>学习 / 多轮</b>规则、测试、人类偏好、Verifier 都可以提供信号。</span></li>
+          </ul>
+          <div class="story-note">“Good answer 在夹具内；bad answer 在夹具外。”</div>
+          <p class="microcopy">约束可以只用于推理时的校验；在 RL / 偏好学习中，它也会成为训练信号。</p>
+        </section>
+        <!-- 06 -->
+        <section class="story-panel" data-scene="5" data-num="06" aria-hidden="true">
+          <div class="story-eyebrow"><span class="num">06</span><span>生产化 Agent</span><span class="sep"></span><span class="en">PRODUCTION DETERMINISM</span></div>
+          <h2 class="story-title">夹得越稳，<br><span class="blue">越敢放手。</span></h2>
+          <p class="story-lead">生产级 Agent 把“自由生成”改造成“受控执行”：看见什么、能做什么、怎样算通过、何时交还给人，都有明确边界。</p>
+          <ul class="story-points">
+            <li><span class="key">01</span><span><b>上下文</b>它看见哪些可靠事实。</span></li>
+            <li><span class="key">02</span><span><b>工具 / 权限</b>它能执行哪些动作，最坏能坏到哪里。</span></li>
+            <li><span class="key">03</span><span><b>状态 / 反馈</b>它何时继续、何时停止、何时让人接管。</span></li>
+          </ul>
+          <div class="story-note">极强的夹具力度 <em>→</em> 生产确定性。</div>
+          <p class="microcopy">AgentScope / LangGraph 提供状态、工具与流程的抓手；完整的 harness 还需要测试、权限与治理。</p>
+        </section>
+        <!-- 07 -->
+        <section class="story-panel" data-scene="6" data-num="07" aria-hidden="true">
+          <div class="story-eyebrow"><span class="num">07</span><span>收束</span><span class="sep"></span><span class="en">SYNTHESIS</span></div>
+          <h2 class="story-title">模型定上限，<br><span class="accent">约束定下限。</span></h2>
+          <p class="story-lead">把 LLM 的概率能力，装进一个可观察、可验证、可回退的系统。不是训练更会思考的模型，而是设计让模型持续做对的工程。</p>
+          <ul class="story-points points-grid">
+            <li><span class="key">C</span><span><b>Context</b>让它看见。</span></li>
+            <li><span class="key">T</span><span><b>Tools &amp; Policy</b>让它行动。</span></li>
+            <li><span class="key">V</span><span><b>Verifier</b>让它知道错了。</span></li>
+            <li><span class="key">S</span><span><b>State &amp; Governance</b>让流程可控。</span></li>
+          </ul>
+          <div class="story-note">人类掌舵，智能体执行。</div>
+          <div class="story-refs">
+            <a href="https://github.com/deusyu/harness-engineering" target="_blank" rel="noopener">HARNESS STUDY GUIDE ↗</a>
+            <a href="https://agentscope.io/" target="_blank" rel="noopener">AGENTSCOPE ↗</a>
+            <a href="https://www.langchain.com/langgraph" target="_blank" rel="noopener">LANGGRAPH ↗</a>
+          </div>
+        </section>
+      </div>
+    </aside>
+
+    <section class="stage-area" aria-label="LLM 输入输出概念动画">
+      <div class="stage-chrome">
+        <div class="figline">
+          <span class="fig-no" id="figNo">FIG. 01</span>
+          <span class="divider"></span>
+          <span class="fig-title" id="figTitle">THE BARE LOOP</span>
+        </div>
+        <div class="status-pill" id="stageStatus" data-tone="amber"><i></i><span id="statusText">UNCONSTRAINED</span></div>
+      </div>
+
+      <div class="stage" id="stage">
+        <span class="corner tl"></span><span class="corner tr"></span><span class="corner bl"></span><span class="corner br"></span>
+        <svg id="stageSvg" class="stage-svg" viewBox="0 0 1200 720" role="img" aria-labelledby="svgTitle svgDesc" data-stage="0">
+          <title id="svgTitle">LLM 输入输出与 Harness 约束的概念动画</title>
+          <desc id="svgDesc">输入进入 LLM，产生扩散的输出；Harness 在输出侧加入边界，将可能回答收束为可验收结果。</desc>
+          <defs>
+            <radialGradient id="gCore" cx="50%" cy="46%" r="62%">
+              <stop offset="0%" stop-color="#b6dcff" stop-opacity=".96"/>
+              <stop offset="36%" stop-color="#5e8dff" stop-opacity=".52"/>
+              <stop offset="100%" stop-color="#19365f" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="gSpace" cx="48%" cy="45%" r="62%">
+              <stop offset="0%" stop-color="#3867a5" stop-opacity=".2"/>
+              <stop offset="72%" stop-color="#18263c" stop-opacity=".035"/>
+              <stop offset="100%" stop-color="#18263c" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="gOutput" cx="55%" cy="50%" r="65%">
+              <stop offset="0%" stop-color="#ffc778" stop-opacity=".15"/>
+              <stop offset="100%" stop-color="#ffc778" stop-opacity="0"/>
+            </radialGradient>
+            <linearGradient id="gHarness" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#4f7fff" stop-opacity=".4"/>
+              <stop offset="42%" stop-color="#8db6ff"/>
+              <stop offset="100%" stop-color="#5e8dff" stop-opacity=".72"/>
+            </linearGradient>
+            <linearGradient id="gAmber" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#ffc778" stop-opacity=".35"/>
+              <stop offset="42%" stop-color="#ffcf8b"/>
+              <stop offset="100%" stop-color="#ffc778" stop-opacity=".9"/>
+            </linearGradient>
+            <linearGradient id="gScan" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#7ce5ff" stop-opacity="0"/>
+              <stop offset="48%" stop-color="#7ce5ff" stop-opacity=".22"/>
+              <stop offset="100%" stop-color="#7ce5ff" stop-opacity="0"/>
+            </linearGradient>
+            <linearGradient id="gCard" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#182337" stop-opacity=".94"/>
+              <stop offset="100%" stop-color="#0c1421" stop-opacity=".94"/>
+            </linearGradient>
+            <linearGradient id="gCardWarm" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#2b241b" stop-opacity=".96"/>
+              <stop offset="100%" stop-color="#12141a" stop-opacity=".96"/>
+            </linearGradient>
+            <linearGradient id="gMint" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#7fe2b0" stop-opacity=".1"/>
+              <stop offset="100%" stop-color="#7fe2b0" stop-opacity=".55"/>
+            </linearGradient>
+            <linearGradient id="gCoral" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stop-color="#ff7772" stop-opacity=".08"/>
+              <stop offset="100%" stop-color="#ff7772" stop-opacity=".48"/>
+            </linearGradient>
+            <pattern id="hatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+              <line x1="0" y1="0" x2="0" y2="8" stroke="#88a9da" stroke-width=".7" opacity=".16"/>
+            </pattern>
+            <filter id="fGlow" x="-120%" y="-120%" width="340%" height="340%">
+              <feGaussianBlur stdDeviation="9"/>
+            </filter>
+            <filter id="fSoft" x="-40%" y="-40%" width="180%" height="180%">
+              <feGaussianBlur stdDeviation="2.5"/>
+            </filter>
+            <marker id="mDim" viewBox="0 0 9 9" refX="8" refY="4.5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 9 4.5 0 9z" fill="#647188"/>
+            </marker>
+            <marker id="mBlue" viewBox="0 0 9 9" refX="8" refY="4.5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 9 4.5 0 9z" fill="#8fb6ff"/>
+            </marker>
+            <marker id="mAmber" viewBox="0 0 9 9" refX="8" refY="4.5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 9 4.5 0 9z" fill="#ffc778"/>
+            </marker>
+            <marker id="mMint" viewBox="0 0 9 9" refX="8" refY="4.5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 9 4.5 0 9z" fill="#7fe2b0"/>
+            </marker>
+            <marker id="mCoral" viewBox="0 0 9 9" refX="8" refY="4.5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0 0 9 4.5 0 9z" fill="#ff7772"/>
+            </marker>
+          </defs>
+
+          <!-- global coordinate system -->
+          <g class="coordinates" aria-hidden="true">
+            <line class="axis-line" x1="38" y1="102" x2="38" y2="646"/>
+            <line class="axis-line" x1="38" y1="678" x2="1162" y2="678"/>
+            <g class="axis-ticks">
+              <line x1="33" y1="160" x2="38" y2="160"/><line x1="33" y1="260" x2="38" y2="260"/><line x1="33" y1="360" x2="38" y2="360"/><line x1="33" y1="460" x2="38" y2="460"/><line x1="33" y1="560" x2="38" y2="560"/>
+              <line x1="200" y1="678" x2="200" y2="683"/><line x1="400" y1="678" x2="400" y2="683"/><line x1="600" y1="678" x2="600" y2="683"/><line x1="800" y1="678" x2="800" y2="683"/><line x1="1000" y1="678" x2="1000" y2="683"/>
+            </g>
+            <text class="axis-label" transform="translate(20 542) rotate(-90)">RESPONSE SPACE / 响应空间</text>
+            <text class="axis-label" x="46" y="697">INTERACTION TIME / TURNS →</text>
+            <text class="axis-index" x="1118" y="697">SCALE 1:1</text>
+          </g>
+
+          <!-- =====================================================
+               SCENES 01–03 : shared LLM I/O base
+               ===================================================== -->
+          <g class="scene scene-base active" id="sceneBase">
+            <g class="base-meta">
+              <text class="svg-kicker" x="68" y="78">OUTPUT = SAMPLE( P(y | x) )</text>
+              <text class="svg-sub" x="68" y="98">一次生成，不等于一次确定</text>
+            </g>
+            <text class="output-space-label" x="950" y="84" text-anchor="middle">OUTPUT SPACE <tspan>可能的回答</tspan></text>
+
+            <!-- input node -->
+            <g class="svg-node input-node">
+              <rect class="node-card" x="68" y="300" width="232" height="110" rx="16"/>
+              <rect class="node-inner" x="78" y="310" width="212" height="90" rx="11"/>
+              <circle class="input-pip" cx="99" cy="333" r="4"/>
+              <text class="svg-micro" x="113" y="337">USER INPUT</text>
+              <text class="svg-main" x="93" y="370">帮我把这个功能做完</text>
+              <text class="svg-sub" x="93" y="392">goal + a little context</text>
+              <text class="svg-noted" x="279" y="337" text-anchor="end">x</text>
+            </g>
+
+            <!-- connector -->
+            <g class="connector connector-in">
+              <path d="M300 355 H414" marker-end="url(#mDim)"/>
+              <circle class="flow-dot" r="2.4"><animateMotion dur="2.8s" repeatCount="indefinite" path="M300 355 H414"/></circle>
+              <text class="svg-micro" x="349" y="340" text-anchor="middle">x</text>
+            </g>
+
+            <!-- llm core -->
+            <g class="svg-node llm-node">
+              <rect class="llm-outer" x="426" y="252" width="228" height="206" rx="24"/>
+              <rect class="llm-inner" x="443" y="269" width="194" height="172" rx="17"/>
+              <circle class="llm-glow" cx="540" cy="355" r="96"/>
+              <circle class="llm-orbit" cx="540" cy="355" r="76"/>
+              <circle class="llm-orbit dashed" cx="540" cy="355" r="58"/>
+              <circle class="llm-core" cx="540" cy="355" r="38"/>
+              <circle class="llm-dot" cx="540" cy="279" r="3"/>
+              <text class="llm-word" x="540" y="349" text-anchor="middle">LLM</text>
+              <text class="llm-eq" x="540" y="371" text-anchor="middle">P(y | x)</text>
+              <text class="svg-micro llm-caption" x="540" y="440" text-anchor="middle">PROBABILISTIC CORE</text>
+              <path class="tick" d="M436 330v-8h8M644 330v-8h-8M436 380v8h8M644 380v8h-8"/>
+            </g>
+
+            <!-- output space and cloud -->
+            <g class="output-space">
+              <circle class="space-circle" cx="950" cy="355" r="250"/>
+              <circle class="space-circle inner" cx="950" cy="355" r="218"/>
+              <g id="baseCloudDots" class="cloud-dots"></g>
+              <text class="space-side-label" x="726" y="350">SAMPLE</text>
+              <text class="space-side-label" x="726" y="364">SPACE</text>
+            </g>
+
+            <!-- fan paths, generated -->
+            <g id="baseGhostPaths" class="ghost-paths"></g>
+            <g id="baseGhostLabels" class="ghost-labels"></g>
+
+            <!-- the narrow band of accepted variants -->
+            <g class="harnessed-traces">
+              <path d="M654 355 C758 355 772 306 884 306 H1134" pathLength="1" style="--i:0"/>
+              <path d="M654 355 C758 355 776 334 884 334 H1134" pathLength="1" style="--i:1"/>
+              <path d="M654 355 C758 355 780 382 884 382 H1134" pathLength="1" style="--i:2"/>
+              <path d="M654 355 C758 355 776 407 884 407 H1134" pathLength="1" style="--i:3"/>
+              <text class="band-caption" x="1120" y="432" text-anchor="end">valid variants / 可行解仍不止一个</text>
+            </g>
+
+            <!-- real sampled path -->
+            <g class="real-output">
+              <path class="real-trail" d="M654 355 C748 355 780 355 888 355"/>
+              <circle class="real-node" cx="889" cy="355" r="4"/>
+              <g class="output-card warm" transform="translate(906 327)">
+                <rect width="232" height="56" rx="12"/>
+                <text class="card-kicker" x="15" y="19">REAL OUTPUT</text>
+                <text class="card-main" x="15" y="40">这一条，被真实采出</text>
+                <text class="card-meta" x="216" y="20" text-anchor="end">y</text>
+                <circle class="card-live" cx="217" cy="39" r="2.4"/>
+              </g>
+            </g>
+
+            <!-- harness fixture -->
+            <g class="harness-fixture">
+              <rect class="harness-zone" x="818" y="250" width="316" height="210" rx="4"/>
+              <rect class="harness-hatch" x="818" y="250" width="316" height="210"/>
+              <g class="harness-bar top">
+                <line x1="818" y1="250" x2="1134" y2="250"/>
+                <path d="M828 250v-12M950 250v-12M1124 250v-12"/>
+              </g>
+              <g class="harness-bar bottom">
+                <line x1="818" y1="460" x2="1134" y2="460"/>
+                <path d="M828 460v12M950 460v12M1124 460v12"/>
+              </g>
+              <g class="harness-press">
+                <path d="M880 220v18M878 234l2 5 2-5M1020 220v18M1018 234l2 5 2-5"/>
+                <path d="M880 490v-18M878 476l2-5 2 5M1020 490v-18M1018 476l2-5 2 5"/>
+              </g>
+              <g class="pressure-guides">
+                <path d="M882 158v74M1022 158v74"/>
+                <path d="M878 168l4-10 4 10M1018 168l4-10 4 10"/>
+                <text x="882" y="146" text-anchor="middle">FORCE</text>
+                <text x="1022" y="146" text-anchor="middle">FORCE</text>
+              </g>
+              <circle class="harness-bolt" cx="826" cy="250" r="3"/>
+              <circle class="harness-bolt" cx="1126" cy="250" r="3"/>
+              <circle class="harness-bolt" cx="826" cy="460" r="3"/>
+              <circle class="harness-bolt" cx="1126" cy="460" r="3"/>
+              <text class="harness-label" x="818" y="228">HARNESS</text>
+              <text class="harness-sub" x="1134" y="228" text-anchor="end">输出夹具</text>
+              <text class="harness-inside" x="950" y="292" text-anchor="middle">ACCEPTED REGION / 可验收输出空间</text>
+              <text class="harness-note-line" x="818" y="488">the answer must fit inside</text>
+              <g class="harness-grip">
+                <path d="M790 272h28M790 438h28"/>
+                <path d="M782 268h8v12h-8zM782 430h8v12h-8z"/>
+              </g>
+            </g>
+
+            <!-- scene 02 causes strip -->
+            <g class="cause-strip">
+              <line x1="68" y1="586" x2="760" y2="586"/>
+              <g transform="translate(68 606)">
+                <text class="cause-no">01</text><text class="cause-title" x="28" y="0">难任务</text>
+                <text class="cause-meta" x="28" y="18">解空间膨胀</text>
+              </g>
+              <g transform="translate(294 606)">
+                <text class="cause-no">02</text><text class="cause-title" x="28" y="0">弱模型</text>
+                <text class="cause-meta" x="28" y="18">过多 slots / 噪音</text>
+              </g>
+              <g transform="translate(532 606)">
+                <text class="cause-no">03</text><text class="cause-title" x="28" y="0">工具、信息缺失</text>
+                <text class="cause-meta" x="28" y="18">过大幻觉 / 噪音</text>
+              </g>
+              <text class="cause-equation" x="760" y="624" text-anchor="end">possible paths ≈ bⁿ</text>
+            </g>
+
+            <!-- scene 03 annotation -->
+            <g class="harness-copy">
+              <g class="harness-copy-row">
+                <text x="68" y="602">SLOTS <tspan>↓</tspan></text>
+                <text x="200" y="602">NOISE <tspan>↓</tspan></text>
+                <text x="322" y="602">DIVERGENCE <tspan>↓</tspan></text>
+              </g>
+              <text class="harness-quote" x="68" y="642">这条蓝线，让回答在它之内。</text>
+              <path class="quote-line" d="M68 652h305"/>
+              <g transform="translate(72 502)">
+                <text class="formula-small">P(y | x, H)</text>
+                <text class="formula-arrow" x="0" y="18">↓</text>
+                <text class="formula-note" x="18" y="18">更窄，也更可用</text>
+              </g>
+            </g>
+          </g>
+
+          <!-- =====================================================
+               SCENE 04 : multi-turn recursion
+               ===================================================== -->
+          <g class="scene scene-turn" id="sceneTurn">
+            <g class="turn-meta">
+              <text class="svg-kicker" x="68" y="70">OUTPUT BECOMES INPUT</text>
+              <text class="svg-sub" x="68" y="90">多轮不是纠偏，是错误的复利</text>
+            </g>
+
+            <text class="turn-label" x="68" y="116">TURN 01</text>
+            <g class="compact-card input-one">
+              <rect x="68" y="128" width="224" height="84" rx="12"/>
+              <text class="card-kicker" x="84" y="150">USER INPUT</text>
+              <text class="card-main sm" x="84" y="174">修复登录接口的并发问题</text>
+              <text class="card-meta" x="84" y="195">只有目标，没有验收标准</text>
+            </g>
+            <path class="flow-line" d="M292 170h58" marker-end="url(#mDim)"/>
+
+            <g class="mini-llm one">
+              <rect x="354" y="112" width="194" height="116" rx="14"/>
+              <circle cx="451" cy="170" r="34"/>
+              <circle cx="451" cy="170" r="23"/>
+              <text x="451" y="175" text-anchor="middle">LLM</text>
+              <text class="mini-eq" x="451" y="208" text-anchor="middle">P(y | x₁)</text>
+              <path class="mini-tick" d="M362 146v-8h8M540 146v-8h-8M362 194v8h8M540 194v8h-8"/>
+            </g>
+            <path class="flow-line blue" d="M548 170h26" marker-end="url(#mBlue)"/>
+
+            <g class="turn-output-card">
+              <rect x="576" y="132" width="242" height="76" rx="12"/>
+              <rect class="mini-harness" x="576" y="122" width="242" height="6" rx="3"/>
+              <text class="card-kicker" x="592" y="154">OUTPUT 01</text>
+              <text class="card-main sm" x="592" y="176">重试 3 次 + 校验 token</text>
+              <text class="card-meta" x="592" y="195">被夹具收窄后的一版答案</text>
+              <path class="mini-clamp" d="M586 122v-8h10M800 122v-8h10"/>
+              <path class="mini-clamp" d="M586 206v8h10M800 206v8h10"/>
+            </g>
+            <text class="tiny-annotation blue" x="824" y="152">被夹住 ✓</text>
+            <path class="ghost-turn-line" d="M548 142 C660 93 760 84 850 91" marker-end="url(#mDim)"/>
+            <text class="tiny-annotation dim" x="854" y="91">如果第一轮就没夹住…</text>
+
+            <!-- feedback loop -->
+            <path class="feedback-loop" d="M692 208V262Q692 274 680 274H194Q182 274 182 286V404" marker-end="url(#mBlue)"/>
+            <g class="loop-label" transform="translate(392 262)">
+              <rect x="0" y="-14" width="106" height="24" rx="12"/>
+              <text x="53" y="2" text-anchor="middle">NEW INPUT</text>
+            </g>
+            <circle class="loop-dot" r="2.6"><animateMotion dur="3.8s" repeatCount="indefinite" path="M692 208V262Q692 274 680 274H194Q182 274 182 286V404"/></circle>
+
+            <text class="turn-label" x="68" y="372">TURN 02</text>
+            <g class="compact-card input-two">
+              <rect x="68" y="404" width="280" height="96" rx="12"/>
+              <text class="card-kicker" x="84" y="427">NEW INPUT = 上一轮输出 + 新信息</text>
+              <text class="card-main sm" x="84" y="452">“按刚才的方案继续，顺便处理 token”</text>
+              <text class="card-meta warn" x="84" y="474">+ 上一轮的假设 · 模糊措辞 · 工具噪音</text>
+              <circle class="noise-pip" cx="322" cy="428" r="3"/>
+            </g>
+            <path class="flow-line" d="M348 452h62" marker-end="url(#mDim)"/>
+
+            <g class="mini-llm two">
+              <rect x="422" y="388" width="204" height="128" rx="14"/>
+              <circle cx="524" cy="452" r="38"/>
+              <circle cx="524" cy="452" r="25"/>
+              <text x="524" y="457" text-anchor="middle">LLM</text>
+              <text class="mini-eq" x="524" y="499" text-anchor="middle">P(y | x₂ · 更复杂)</text>
+              <path class="mini-tick" d="M430 424v-8h8M618 424v-8h-8M430 480v8h8M618 480v8h-8"/>
+            </g>
+            <path class="flow-line blue" d="M626 452h28" marker-end="url(#mBlue)"/>
+
+            <g id="turnGhostPaths" class="turn-ghost-paths"></g>
+            <g class="final-harness">
+              <rect class="final-zone" x="756" y="360" width="390" height="184" rx="4"/>
+              <line class="final-bar" x1="756" y1="360" x2="1146" y2="360"/>
+              <line class="final-bar" x1="756" y1="544" x2="1146" y2="544"/>
+              <path class="final-ticks" d="M766 360v-10M950 360v-10M1136 360v-10M766 544v10M950 544v10M1136 544v10"/>
+              <text class="harness-label" x="756" y="344">HARNESS / RE-CLAMP</text>
+              <text class="harness-sub" x="1146" y="344" text-anchor="end">每一轮都重新夹紧</text>
+              <text class="final-accepted" x="950" y="476" text-anchor="middle">ACCEPTED</text>
+              <g class="final-press">
+                <path d="M860 322v20M858 337l2 5 2-5M1040 322v20M1038 337l2 5 2-5"/>
+                <path d="M860 585v-20M858 570l2-5 2 5M1040 585v-20M1038 570l2-5 2 5"/>
+              </g>
+            </g>
+            <path class="real-trail two" d="M654 452C700 452 740 452 822 452" marker-end="url(#mAmber)"/>
+            <g class="output-card warm final-output" transform="translate(836 426)">
+              <rect width="226" height="52" rx="12"/>
+              <text class="card-kicker" x="14" y="18">REAL OUTPUT</text>
+              <text class="card-main" x="14" y="38">被夹具夹住</text>
+              <text class="card-meta" x="210" y="19" text-anchor="end">y₂</text>
+              <path class="check-amber" d="M203 33l3 3 5-7"/>
+            </g>
+            <text class="tiny-annotation amber" x="836" y="406">real output：被夹住</text>
+
+            <g class="recursion-note">
+              <path d="M68 584h680"/>
+              <text class="recursion-title" x="68" y="612">复杂的 input → 更噪音的 output</text>
+              <text class="recursion-meta" x="68" y="632">误差沿轮次递归扩大 · complexity compounds</text>
+              <g transform="translate(1000 588)">
+                <text class="noise-title" x="0" y="0">NOISE / COMPLEXITY</text>
+                <g class="noise-bars">
+                  <rect x="0" y="14" width="26" height="5" rx="2"/>
+                  <rect x="36" y="8" width="46" height="5" rx="2"/>
+                  <rect x="92" y="2" width="68" height="5" rx="2"/>
+                  <rect x="170" y="-5" width="94" height="5" rx="2"/>
+                </g>
+              </g>
+            </g>
+          </g>
+
+          <!-- =====================================================
+               SCENE 05 : reward boundary
+               ===================================================== -->
+          <g class="scene scene-learn" id="sceneLearn">
+            <g class="learn-meta">
+              <text class="svg-kicker" x="68" y="70">LEARNING SIGNAL / VERIFIER</text>
+              <text class="svg-sub" x="68" y="90">夹具不只是限制，也是可学习的边界</text>
+            </g>
+            <text class="learn-label" x="84" y="258">SAMPLED ANSWERS</text>
+            <g class="svg-node learn-llm">
+              <rect class="llm-outer" x="84" y="280" width="220" height="200" rx="24"/>
+              <rect class="llm-inner" x="101" y="297" width="186" height="166" rx="17"/>
+              <circle class="llm-glow" cx="194" cy="380" r="86"/>
+              <circle class="llm-orbit" cx="194" cy="380" r="66"/>
+              <circle class="llm-orbit dashed" cx="194" cy="380" r="48"/>
+              <circle class="llm-core" cx="194" cy="380" r="31"/>
+              <text class="llm-word sm" x="194" y="375" text-anchor="middle">LLM</text>
+              <text class="llm-eq" x="194" y="394" text-anchor="middle">sample</text>
+              <text class="svg-micro llm-caption" x="194" y="458" text-anchor="middle">policy / πθ</text>
+              <path class="tick" d="M94 352v-8h8M294 352v-8h-8M94 408v8h8M294 408v8h-8"/>
+            </g>
+            <path class="flow-line blue" d="M304 380h40" marker-end="url(#mBlue)"/>
+
+            <g id="learnPaths" class="learn-paths"></g>
+            <g id="learnEndpoints" class="learn-endpoints"></g>
+
+            <g class="learn-gate">
+              <rect x="548" y="300" width="224" height="164" rx="3"/>
+              <line class="gate-line" x1="548" y1="300" x2="772" y2="300"/>
+              <line class="gate-line" x1="548" y1="464" x2="772" y2="464"/>
+              <path class="gate-ticks" d="M556 300v-8M660 300v-8M764 300v-8M556 464v8M660 464v8M764 464v8"/>
+              <text class="gate-title" x="548" y="282">VERIFIER / 接受边界</text>
+              <text class="gate-title right" x="772" y="282" text-anchor="end">H</text>
+              <text class="gate-inside" x="660" y="378" text-anchor="middle">夹具内</text>
+              <text class="gate-inside small" x="660" y="394" text-anchor="middle">inside the fixture</text>
+              <text class="gate-outside" x="660" y="522" text-anchor="middle">夹具外</text>
+              <text class="gate-outside outside-top" x="660" y="250" text-anchor="middle">夹具外</text>
+              <g class="gate-press">
+                <path d="M656 278v16M654 290l2 5 2-5M656 494v-16M654 482l2-5 2 5"/>
+              </g>
+            </g>
+
+            <g class="reward-card good">
+              <rect x="824" y="206" width="306" height="156" rx="15"/>
+              <rect class="reward-edge" x="824" y="206" width="4" height="156" rx="2"/>
+              <text class="reward-kicker" x="848" y="234">GOOD ANSWER</text>
+              <text class="reward-title" x="848" y="268">落在夹具内</text>
+              <text class="reward-body" x="848" y="294">保留 · 强化 · 进入下一轮</text>
+              <g class="reward-score" transform="translate(1070 220)">
+                <rect width="40" height="26" rx="13"/>
+                <text x="20" y="18" text-anchor="middle">+1</text>
+              </g>
+              <path class="check-mint" d="M846 320l4 4 8-10"/>
+              <text class="reward-meta" x="870" y="324">accepted</text>
+            </g>
+
+            <g class="reward-card bad">
+              <rect x="824" y="442" width="306" height="156" rx="15"/>
+              <rect class="reward-edge" x="824" y="442" width="4" height="156" rx="2"/>
+              <text class="reward-kicker" x="848" y="470">BAD ANSWER</text>
+              <text class="reward-title" x="848" y="504">落在夹具外</text>
+              <text class="reward-body" x="848" y="530">拒绝 · 修正 · 重新采样</text>
+              <g class="reward-score" transform="translate(1070 456)">
+                <rect width="40" height="26" rx="13"/>
+                <text x="20" y="18" text-anchor="middle">−1</text>
+              </g>
+              <path class="cross-coral" d="M846 556l10 10M856 556l-10 10"/>
+              <text class="reward-meta" x="870" y="560">rejected</text>
+            </g>
+
+            <path class="reward-flow good-flow" d="M770 372C794 372 804 304 824 292" marker-end="url(#mMint)"/>
+            <path class="reward-flow bad-flow" d="M770 536C794 536 804 520 824 520" marker-end="url(#mCoral)"/>
+            <g class="legend-inline">
+              <text x="84" y="564">good = inside  /  bad = outside</text>
+            </g>
+
+            <path class="learning-loop" d="M978 598v42H194v-60" marker-end="url(#mBlue)"/>
+            <g class="learning-label" transform="translate(500 625)">
+              <rect x="0" y="-15" width="236" height="26" rx="13"/>
+              <text x="118" y="2" text-anchor="middle">LEARNING / 再采样 · 再约束</text>
+            </g>
+            <circle class="loop-dot learn" r="2.5"><animateMotion dur="4.2s" repeatCount="indefinite" path="M978 598v42H194v-60"/></circle>
+          </g>
+
+          <!-- =====================================================
+               SCENE 06 : production fixture
+               ===================================================== -->
+          <g class="scene scene-prod" id="sceneProd">
+            <g class="prod-meta">
+              <text class="svg-kicker" x="68" y="70">PRODUCTION AGENT / CONTROLLED EXECUTION</text>
+              <text class="svg-sub" x="68" y="90">让每一步都可观察、可验证、可回退</text>
+            </g>
+
+            <g class="compact-card prod-input">
+              <rect x="68" y="302" width="210" height="96" rx="13"/>
+              <text class="card-kicker" x="84" y="326">INPUT / TASK</text>
+              <text class="card-main sm" x="84" y="351">在沙盒里完成改动</text>
+              <text class="card-meta" x="84" y="373">带验收标准 + 可回滚边界</text>
+            </g>
+            <path class="flow-line" d="M278 350h36" marker-end="url(#mDim)"/>
+
+            <g class="mini-llm prod-llm">
+              <rect x="314" y="264" width="222" height="172" rx="18"/>
+              <circle cx="425" cy="350" r="52"/>
+              <circle cx="425" cy="350" r="36"/>
+              <circle class="core-pulse" cx="425" cy="350" r="20"/>
+              <text x="425" y="356" text-anchor="middle">LLM</text>
+              <text class="mini-eq" x="425" y="417" text-anchor="middle">act · observe · repair</text>
+              <path class="mini-tick" d="M324 304v-8h8M526 304v-8h-8M324 396v8h8M526 396v8h-8"/>
+            </g>
+            <path class="flow-line blue" d="M536 350h54" marker-end="url(#mBlue)"/>
+
+            <g class="fixture-frame">
+              <rect class="fixture-zone" x="592" y="250" width="390" height="248" rx="4"/>
+              <rect class="fixture-hatch" x="592" y="250" width="390" height="248"/>
+              <line class="fixture-bar" x1="592" y1="250" x2="982" y2="250"/>
+              <line class="fixture-bar" x1="592" y1="498" x2="982" y2="498"/>
+              <line class="fixture-side" x1="592" y1="250" x2="592" y2="498"/>
+              <line class="fixture-side" x1="982" y1="250" x2="982" y2="498"/>
+              <g class="fixture-ticks">
+                <path d="M602 250v-10M786 250v-10M972 250v-10M602 498v10M786 498v10M972 498v10"/>
+                <path d="M592 260h10M592 370h10M592 488h10M982 260h-10M982 370h-10M982 488h-10"/>
+              </g>
+              <text class="fixture-label" x="592" y="231">HARNESS FIXTURE</text>
+              <text class="fixture-sub" x="982" y="231" text-anchor="end">极强的夹具力度</text>
+              <g class="fixture-pressure">
+                <path d="M690 222v24M688 241l2 5 2-5M840 222v24M838 241l2 5 2-5M932 222v24M930 241l2 5 2-5"/>
+                <path d="M690 526v-24M688 507l2-5 2 5M840 526v-24M838 507l2-5 2 5M932 526v-24M930 507l2-5 2 5"/>
+              </g>
+
+              <g class="output-rack">
+                <g class="rack-row r1"><rect x="650" y="298" width="262" height="28" rx="5"/><text x="664" y="317">CONTEXT / 事实齐全</text><text class="rack-state" x="895" y="317" text-anchor="end">✓</text></g>
+                <g class="rack-row r2"><rect x="650" y="336" width="262" height="28" rx="5"/><text x="664" y="355">TOOL / 权限内执行</text><text class="rack-state" x="895" y="355" text-anchor="end">✓</text></g>
+                <g class="rack-row r3"><rect x="650" y="374" width="262" height="28" rx="5"/><text x="664" y="393">TEST / 自动验证</text><text class="rack-state" x="895" y="393" text-anchor="end">✓</text></g>
+                <g class="rack-row r4"><rect x="650" y="412" width="262" height="28" rx="5"/><text x="664" y="431">HUMAN GATE / 可回退</text><text class="rack-state" x="895" y="431" text-anchor="end">✓</text></g>
+              </g>
+              <path class="rack-clamp top" d="M638 286h288v8H638z"/>
+              <path class="rack-clamp bottom" d="M638 446h288v8H638z"/>
+            </g>
+
+            <g class="force-label top">
+              <text x="786" y="206" text-anchor="middle">CONTEXT</text>
+              <text class="force-cn" x="786" y="220" text-anchor="middle">它看见什么</text>
+            </g>
+            <g class="force-label bottom">
+              <text x="786" y="560" text-anchor="middle">VERIFIER</text>
+              <text class="force-cn" x="786" y="574" text-anchor="middle">什么算通过</text>
+            </g>
+            <g class="force-label side-left" transform="translate(568 374) rotate(-90)">
+              <text text-anchor="middle">TOOLS + PERMISSIONS / 它能做什么</text>
+            </g>
+
+            <g class="delivery-result" transform="translate(1000 318)">
+              <rect width="146" height="90" rx="12" class="delivery-card"/>
+              <text class="delivery-kicker" x="16" y="24">DELIVERABLE</text>
+              <text class="delivery-title" x="16" y="50">可交付结果</text>
+              <g class="delivery-check"><circle cx="26" cy="69" r="8"/><path d="M22 69l3 3 5-6"/></g>
+              <text class="delivery-meta" x="42" y="73">checks passed</text>
+            </g>
+            <g class="state-caption">
+              <text x="1146" y="440" text-anchor="end">STATE GRAPH / 状态与流程</text>
+            </g>
+
+            <g class="determinism">
+              <text class="det-kicker" x="68" y="567">DETERMINISM / 确定性</text>
+              <g class="det-bars" transform="translate(68 584)">
+                <rect x="0" y="0" width="30" height="10" rx="2"/><rect x="36" y="0" width="30" height="10" rx="2"/><rect x="72" y="0" width="30" height="10" rx="2"/><rect x="108" y="0" width="30" height="10" rx="2"/><rect x="144" y="0" width="30" height="10" rx="2"/><rect x="180" y="0" width="30" height="10" rx="2"/><rect x="216" y="0" width="30" height="10" rx="2"/><rect x="252" y="0" width="30" height="10" rx="2"/><rect x="288" y="0" width="30" height="10" rx="2"/><rect x="324" y="0" width="30" height="10" rx="2"/>
+              </g>
+              <text class="det-note" x="410" y="593">↑ with constraint strength</text>
+            </g>
+            <g class="stack-note">
+              <text class="stack-kicker" x="68" y="629">EXAMPLE STACKS</text>
+              <text class="stack-link" x="178" y="629">AgentScope</text>
+              <text class="stack-sep" x="262" y="629">/</text>
+              <text class="stack-link" x="276" y="629">LangGraph</text>
+              <text class="stack-meta" x="362" y="629">— 状态、工具、流程的抓手</text>
+            </g>
+            <g class="prod-warning">
+              <text x="952" y="602" text-anchor="end">夹具不是越紧越好：</text>
+              <text x="952" y="618" text-anchor="end">过紧牺牲探索，过松失去交付。</text>
+            </g>
+          </g>
+
+          <!-- =====================================================
+               SCENE 07 : synthesis
+               ===================================================== -->
+          <g class="scene scene-final" id="sceneFinal">
+            <g class="final-meta">
+              <text class="svg-kicker" x="68" y="70">HUMAN STEER / AGENT EXECUTE</text>
+              <text class="svg-sub" x="68" y="90">约束不是扼杀，而是把探索变成可交付</text>
+            </g>
+
+            <g class="compact-card final-input">
+              <rect x="68" y="290" width="214" height="100" rx="14"/>
+              <text class="card-kicker" x="84" y="315">USER / WORLD</text>
+              <text class="card-main sm" x="84" y="340">意图 · 上下文 · 工具</text>
+              <text class="card-meta" x="84" y="363">输入永远不完整</text>
+            </g>
+            <path class="flow-line" d="M282 340h42" marker-end="url(#mDim)"/>
+
+            <g class="svg-node final-llm">
+              <rect class="llm-outer" x="324" y="242" width="238" height="196" rx="24"/>
+              <rect class="llm-inner" x="342" y="260" width="202" height="160" rx="17"/>
+              <circle class="llm-glow" cx="443" cy="340" r="98"/>
+              <circle class="llm-orbit" cx="443" cy="340" r="78"/>
+              <circle class="llm-orbit dashed" cx="443" cy="340" r="58"/>
+              <circle class="llm-core" cx="443" cy="340" r="38"/>
+              <text class="llm-word" x="443" y="335" text-anchor="middle">LLM</text>
+              <text class="llm-eq" x="443" y="357" text-anchor="middle">P(y | x, H)</text>
+              <text class="svg-micro llm-caption" x="443" y="426" text-anchor="middle">MODEL</text>
+            </g>
+            <path class="flow-line blue" d="M562 340h44" marker-end="url(#mBlue)"/>
+
+            <g id="finalGhostPaths" class="final-ghost-paths"></g>
+            <g class="final-fixture">
+              <rect class="final-zone" x="642" y="256" width="512" height="168" rx="4"/>
+              <line class="final-bar" x1="642" y1="256" x2="1154" y2="256"/>
+              <line class="final-bar" x1="642" y1="424" x2="1154" y2="424"/>
+              <path class="final-ticks" d="M652 256v-10M898 256v-10M1144 256v-10M652 424v10M898 424v10M1144 424v10"/>
+              <text class="harness-label" x="642" y="238">HARNESS</text>
+              <text class="harness-sub" x="1154" y="238" text-anchor="end">让概率成为可交付</text>
+              <g class="final-press">
+                <path d="M750 220v24M748 239l2 5 2-5M966 220v24M964 239l2 5 2-5"/>
+                <path d="M750 460v-24M748 441l2-5 2 5M966 460v-24M964 441l2-5 2 5"/>
+              </g>
+              <text class="final-inside" x="898" y="390" text-anchor="middle">ACCEPTED / 可验收</text>
+            </g>
+            <path class="final-real-trail" d="M606 340C660 340 696 340 764 340" marker-end="url(#mAmber)"/>
+            <g class="accepted-card" transform="translate(782 306)">
+              <rect width="326" height="68" rx="14"/>
+              <circle class="accepted-dot" cx="28" cy="34" r="11"/>
+              <path class="accepted-check" d="M23 34l3.5 3.5 6-7"/>
+              <text class="accepted-kicker" x="50" y="27">ACCEPTED OUTPUT</text>
+              <text class="accepted-main" x="50" y="49">一条可验证、可回退的结果</text>
+              <text class="accepted-meta" x="306" y="28" text-anchor="end">y*</text>
+            </g>
+
+            <g class="layer-orbit">
+              <path class="orbit-ring" d="M306 176C432 102 816 102 984 176C1078 220 1078 492 984 536C816 610 432 610 306 536C212 492 212 220 306 176Z"/>
+              <g class="orbit-chip c1" transform="translate(556 132)"><rect x="-50" y="-14" width="100" height="28" rx="14"/><text y="4" text-anchor="middle">CONTEXT</text></g>
+              <g class="orbit-chip c2" transform="translate(1058 456)"><rect x="-84" y="-14" width="168" height="28" rx="14"/><text y="4" text-anchor="middle">TOOLS + POLICY</text></g>
+              <g class="orbit-chip c3" transform="translate(544 654)"><rect x="-68" y="-14" width="136" height="28" rx="14"/><text y="4" text-anchor="middle">FEEDBACK</text></g>
+              <g class="orbit-chip c4" transform="translate(138 456)"><rect x="-78" y="-14" width="156" height="28" rx="14"/><text y="4" text-anchor="middle">STATE + GOVERNANCE</text></g>
+            </g>
+
+            <g class="equation-lockup">
+              <text class="eq-kicker" x="600" y="522" text-anchor="middle">THE SYSTEM VIEW</text>
+              <text class="eq-main" x="600" y="574" text-anchor="middle"><tspan class="eq-agent">Agent</tspan><tspan class="eq-op"> = </tspan><tspan class="eq-model">Model</tspan><tspan class="eq-op"> + </tspan><tspan class="eq-harness">Harness</tspan></text>
+              <text class="eq-sub" x="600" y="602" text-anchor="middle">模型是引擎，harness 是方向盘、刹车与验收线。</text>
+            </g>
+          </g>
+        </svg>
+        <div class="auto-progress" aria-hidden="true"><i id="autoFill"></i></div>
+        <div class="stage-index" aria-hidden="true"><span id="stageSceneNum">01</span><span class="stage-index-slash">/</span><span>07</span></div>
+      </div>
+
+      <div class="stage-footer">
+        <span class="stage-formula" id="stageFormula">y ~ P(· | x)</span>
+        <span class="stage-coordinates">RESPONSE SPACE ↑ &nbsp; INTERACTION TIME →</span>
+        <span class="stage-live"><i></i> LIVE DIAGRAM</span>
+      </div>
+    </section>
+  </main>
+
+  <footer class="transport">
+    <div class="transport-meta">
+      <span class="t-label">SCENE</span>
+      <span class="t-count" id="tCount">01 / 07</span>
+      <span class="t-divider"></span>
+      <span class="t-chapter" id="tChapter">裸模型</span>
+    </div>
+
+    <nav class="dots" id="dots" aria-label="场景导航"></nav>
+
+    <div class="transport-controls">
+      <button class="icon-btn round" id="prevBtn" type="button" aria-label="上一场景" title="上一场景 ←">
+        <svg viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M11 4L6 9l5 5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+      <button class="auto-btn" id="playBtn" type="button" aria-pressed="true" aria-label="暂停自动演示" title="自动演示 / 暂停（Space）">
+        <svg class="pause-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><rect x="4" y="3" width="2.5" height="10" rx=".8"/><rect x="9.5" y="3" width="2.5" height="10" rx=".8"/></svg>
+        <svg class="play-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M5 3.2v9.6c0 .7.8 1.1 1.4.7l6.1-4.8a.9.9 0 000-1.4L6.4 2.5C5.8 2.1 5 2.5 5 3.2z"/></svg>
+        <span id="playLabel">自动演示中</span>
+      </button>
+      <button class="icon-btn round" id="nextBtn" type="button" aria-label="下一场景" title="下一场景 →">
+        <svg viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M7 4l5 5-5 5" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+    </div>
+  </footer>
+
+  <div class="keyboard-hint" aria-hidden="true"><kbd>←</kbd><kbd>→</kbd> 切换 <span>·</span> <kbd>Space</kbd> 自动演示 <span>·</span> <kbd>F</kbd> 全屏</div>
+</div>
+
+<dialog class="notes-dialog" id="notesDialog" aria-labelledby="notesTitle">
+  <div class="dialog-shell">
+    <header class="dialog-head">
+      <div>
+        <div class="dialog-kicker">SOURCE / FIELD NOTES</div>
+        <h2 id="notesTitle">从草图到概念</h2>
+      </div>
+      <button class="icon-btn round dialog-close" id="closeNotes" type="button" aria-label="关闭">
+        <svg viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M4.5 4.5l9 9M13.5 4.5l-9 9" stroke="currentColor" stroke-linecap="round"/></svg>
+      </button>
+    </header>
+    <div class="dialog-body">
+      <figure class="source-figure">
+        <div class="source-image-wrap"><img src="origin-web.jpg" alt="原始手写笔记：LLM 输入输出、Harness 夹具、多轮、强化学习与生产化 Agent" loading="lazy"/></div>
+        <figcaption>原始手写笔记 · user input → LLM → output → harness</figcaption>
+      </figure>
+      <div class="notes-copy">
+        <section>
+          <h3>读图</h3>
+          <p>笔记的核心不是某一种 prompt 技巧，而是一个几何直觉：LLM 的输出是一个有宽度的空间；Harness 是从外部压下来的边界，让“可能的回答”收束成“可验收的回答”。</p>
+          <p>笔记继续把这条思路推到多轮、强化学习与生产化 Agent：每一轮都会把噪声带进下一轮，强夹具则换来生产确定性。</p>
+        </section>
+        <section>
+          <h3>概念对照</h3>
+          <dl class="notes-dl">
+            <div><dt>slots</dt><dd>可自由选择的决策点。每一步的自由度越多，可能路径就越多。</dd></div>
+            <div><dt>夹具 / harness</dt><dd>模型之外的约束与反馈系统：上下文、工具与权限、验证器、状态编排、治理。不是只等于一个 guardrail。</dd></div>
+            <div><dt>Good / Bad</dt><dd>落在接受边界内外的输出。把边界作为评测或学习信号，是 RL / 偏好学习的一种用法，并非所有 harness 都会直接训练模型。</dd></div>
+            <div><dt>AgentScope / LangGraph</dt><dd>两者提供 Agent 编排、状态与工具等基础设施，是 harness 的编排抓手，而不是 harness 的全部。</dd></div>
+          </dl>
+        </section>
+        <section>
+          <h3>这次演示扩充了什么</h3>
+          <ul class="notes-list">
+            <li>把输出发散拆成三个来源：任务复杂度、模型能力、信息与工具缺失。</li>
+            <li>把单轮夹具延伸为多轮交接处的重新收紧。</li>
+            <li>把夹具同时解释为生产约束与可学习信号。</li>
+            <li>补充“夹具不是越紧越好”的张力：约束要足够，也要保留必要的探索空间。</li>
+          </ul>
+        </section>
+        <section>
+          <h3>延伸阅读</h3>
+          <p class="dialog-refs">
+            <a href="https://github.com/deusyu/harness-engineering" target="_blank" rel="noopener">Harness Engineering 学习指南</a>
+            <a href="https://www.runoob.com/ai-agent/harness-engineering.html" target="_blank" rel="noopener">Harness Engineering（菜鸟教程）</a>
+            <a href="https://agentscope.io/" target="_blank" rel="noopener">AgentScope 官方</a>
+            <a href="https://www.langchain.com/langgraph" target="_blank" rel="noopener">LangGraph 官方</a>
+          </p>
+          <p class="dialog-disclaimer">概念演示 · 非任何产品的官方说明。图示中的轨迹为概念化示意，不代表真实模型概率。</p>
+        </section>
+      </div>
+    </div>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="app.js"></script>
+</body>
+</html>

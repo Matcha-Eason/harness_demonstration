@@ -1,5 +1,7 @@
 # v2 新增结果 · 2026-10-18
 
+2026-10-19 另新增 [DeepSeek Flash 1017 Max + DeepSeek Harness（dsh）](deepseek-flash1017-max-dsh/README.md)，提供[分文件版](https://matcha-eason.github.io/harness_demonstration/v2/deepseek-flash1017-max-dsh/index.html)和[单文件版](https://matcha-eason.github.io/harness_demonstration/v2/deepseek-flash1017-max-dsh/harness-demo.html)。以下对照与用量仍对应 2026-10-18 的 OpenCode、Codex 两份结果；dsh 版未附用量记录。
+
 两份成品的 `prompt.txt`、`origin.jpg` 已与 v2 原文件逐字节核对一致。
 
 ## 成品
